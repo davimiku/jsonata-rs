@@ -1,23 +1,25 @@
 use logos::{Lexer, Logos};
 
-// TODO: Figure out if there's a way to capture what's between the
-// backticks as a &str
-
-fn backtick_identifier(lex: &mut Lexer<Token>) -> Option<String> {
-    let slice = lex.slice();
-    Some(slice[1..slice.len() - 1].into())
-}
-
-fn identifier(lex: &mut Lexer<Token>) -> Option<String> {
-    let slice = lex.slice();
-    Some(slice.into())
+pub fn lex_tokens(input: &str) -> Vec<Token> {
+    Token::lexer(input).collect::<Vec<Token>>()
 }
 
 #[derive(Logos, Debug, PartialEq)]
-enum Token {
-    // Literals
+#[logos(subpattern decimal = r"[0-9][_0-9]*")]
+#[logos(subpattern hex = r"[0-9a-fA-F][_0-9a-fA-F]*")]
+#[logos(subpattern octal = r"[0-7][_0-7]*")]
+#[logos(subpattern binary = r"[0-1][_0-1]*")]
+#[logos(subpattern exp = r"[eE][+-]?[0-9][_0-9]*")]
+pub enum Token {
+    // Words
+    #[token("in")]
+    In,
+    #[token("and")]
+    And,
+    #[token("or")]
+    Or,
 
-    // Punctuation
+    // Grouping
     #[token("[")]
     LeftBracket,
     #[token("]")]
@@ -26,38 +28,98 @@ enum Token {
     LeftParen,
     #[token(")")]
     RightParen,
+    #[token("{")]
+    LeftCurly,
+    #[token("}")]
+    RightCurly,
 
-    #[token("=")]
-    Equal,
+    // Combination symbols
+    #[token(":=")]
+    ColonEqual,
+    #[token("<=")]
+    LeftCaretEqual,
+    #[token(">=")]
+    RightCaretEqual,
+    #[token("~>")]
+    TildeRightCaret,
     #[token("**")]
     StarStar,
+    #[token("..")]
+    DotDot,
+
+    // Single symbols
+    #[token("^")]
+    Caret,
+    #[token("<")]
+    LeftCaret,
+    #[token(">")]
+    RightCaret,
+    #[token("=")]
+    Equal,
     #[token("*")]
     Star,
-
+    #[token("#")]
+    Pound,
+    #[token("@")]
+    At,
+    #[token(":")]
+    Colon,
+    #[token(";")]
+    Semicolon,
+    #[token("&")]
+    Ampersand,
+    #[token("|")]
+    Pipe,
+    #[token("%")]
+    Percent,
     #[token(".")]
     Dot,
-
     #[token("$")]
     Dollar,
+    #[token("+")]
+    Plus,
+    #[token("-")]
+    Dash,
+    #[token("/")]
+    Slash,
 
-    #[regex("`([^`])*`", backtick_identifier)]
+    // Variables
+    // #[regex("\\$[a-zA-Z]+")]
+    // Variable(String),
+    #[regex("(?&decimal)")]
+    Integer,
+
+    // Identifiers
+    #[regex("`([^`])+`", backtick_identifier)]
     #[regex("[a-zA-Z]+", identifier)]
     Ident(String),
 
+    // Skip spaces and fallthrough for errors
     #[error]
     #[regex(r"[ \t\n\f]+", logos::skip)]
     Error,
 }
 
+// TODO: Figure out if there's a better way to capture what's between
+// the backticks as a &str
+
+/// Remove the backticks from the captured identifier
+fn backtick_identifier(lex: &mut Lexer<Token>) -> Option<String> {
+    let slice = lex.slice();
+    Some(slice[1..slice.len() - 1].into())
+}
+
+/// Convert the captured &str into String
+fn identifier(lex: &mut Lexer<Token>) -> Option<String> {
+    let slice = lex.slice();
+    Some(slice.into())
+}
+
 #[cfg(test)]
 mod tests {
 
-    use super::Token;
+    use super::*;
     use logos::Logos;
-
-    fn get_token_vector(input: &str) -> Vec<Token> {
-        Token::lexer(input).collect::<Vec<Token>>()
-    }
 
     #[test]
     fn it_works() {
@@ -65,15 +127,15 @@ mod tests {
     }
 
     #[test]
-    fn just_dot() {
-        let actual = get_token_vector(".");
+    fn single_dot() {
+        let actual = lex_tokens(".");
         let expected = vec![Token::Dot];
 
         assert_eq!(actual, expected);
     }
 
     #[test]
-    fn just_ident() {
+    fn single_ident() {
         let mut lex = Token::lexer("Surname");
         assert_eq!(lex.next(), Some(Token::Ident("Surname".to_string())));
         assert_eq!(lex.slice(), "Surname");
@@ -81,22 +143,24 @@ mod tests {
 
     #[test]
     fn field_reference() {
-        let mut lex = Token::lexer("Address.City");
-        assert_eq!(lex.next(), Some(Token::Ident("Address".to_string())));
-        assert_eq!(lex.next(), Some(Token::Dot));
-        assert_eq!(lex.next(), Some(Token::Ident("City".to_string())));
+        let actual = lex_tokens("Address.City");
+        let expected = vec![
+            Token::Ident("Address".to_string()),
+            Token::Dot,
+            Token::Ident("City".to_string()),
+        ];
+
+        assert_eq!(actual, expected);
     }
 
     #[test]
-    fn test_backticks() {
-        let mut lex = Token::lexer("`one`");
-        assert_eq!(lex.next(), Some(Token::Ident("one".to_string())));
+    fn range() {
+        let actual = lex_tokens("[1..5]");
     }
 
     #[test]
-    fn test_slice() {
-        let s = "`test`";
-        let s2 = &s[1..];
-        assert_eq!(s2, "test`");
+    fn backtick_ident() {
+        let mut lex = Token::lexer("`one two`");
+        assert_eq!(lex.next(), Some(Token::Ident("one two".to_string())));
     }
 }
