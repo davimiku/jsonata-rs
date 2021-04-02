@@ -100,7 +100,8 @@ pub enum Token {
 
     // Skip spaces and fallthrough for errors
     #[error]
-    #[regex(r"[ \t\n\f]+", logos::skip)]
+    #[regex(r"[ \t\n\f]+", logos::skip)] // any space
+    #[regex(r"/\*([^*]|\*+[^*/])*\*+/", logos::skip)] // block comments
     Error,
 }
 
