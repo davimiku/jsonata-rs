@@ -91,7 +91,7 @@ pub enum Token {
 
     // Identifiers
     #[regex("`([^`])+`", backtick_identifier)]
-    #[regex("[a-zA-Z]+", identifier)]
+    #[regex("[a-zA-Z]+", |lex| lex.slice().to_string())]
     Ident(String),
 
     // Skip spaces and fallthrough for errors
@@ -107,12 +107,6 @@ pub enum Token {
 fn backtick_identifier(lex: &mut Lexer<Token>) -> Option<String> {
     let slice = lex.slice();
     Some(slice[1..slice.len() - 1].into())
-}
-
-/// Convert the captured &str into String
-fn identifier(lex: &mut Lexer<Token>) -> Option<String> {
-    let slice = lex.slice();
-    Some(slice.into())
 }
 
 #[cfg(test)]
