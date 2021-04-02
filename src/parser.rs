@@ -1,32 +1,30 @@
 use std::iter::Peekable;
 
-use crate::ast::{Expression, Node, NodeType, Path, Program};
-use crate::lexer::{lex_tokens, Token};
+use crate::ast::{path::PathExpression, Program};
+use crate::lexer::Token;
 
-pub fn parse(s: &str) -> Result<Program, ParseError> {
-    let tokens = lex_tokens(s);
-    let tok_iter = tokens.into_iter();
+pub fn parse<I: Iterator<Item = Token>>(tok_iter: I) -> Result<Program, ParseError> {
     let mut parser = Parser::new(tok_iter);
     parser.parse()
 }
 
-pub struct Parser<'a, I: Iterator<Item = Token>> {
+pub struct Parser<I: Iterator<Item = Token>> {
     // tokens: Vec<Token>,
     tok_iter: Peekable<I>,
-    curr: Option<&'a Token>,
+    // curr: Option<&'a Token>,
 }
 
-impl<I: Iterator<Item = Token>> Parser<'_, I> {
+impl<I: Iterator<Item = Token>> Parser<I> {
     pub fn new(tok_iter: I) -> Self {
         let peekable_iter = tok_iter.peekable();
         Parser {
             tok_iter: peekable_iter,
-            curr: None,
+            // curr: None,
         }
     }
 
     pub fn parse(&mut self) -> Result<Program, ParseError> {
-        let mut program = Program { nodes: Vec::new() };
+        let mut program = Program::default();
 
         let mut next = self.tok_iter.next();
 
@@ -37,9 +35,15 @@ impl<I: Iterator<Item = Token>> Parser<'_, I> {
             let token = next.unwrap();
 
             match token {
+                Token::LeftParen => {
+                    // The program may have multiple statements
+                }
                 Token::Ident(s) => {
                     let path = self.parse_path(&s)?;
-                    program.nodes.push(make_path_node(path));
+                    program.return_expression = Some(Box::new(PathExpression {
+                        ident: s,
+                        member: path.member,
+                    }));
                 }
                 _ => {}
             }
@@ -48,10 +52,10 @@ impl<I: Iterator<Item = Token>> Parser<'_, I> {
         Ok(program)
     }
 
-    fn parse_path(&mut self, s: &String) -> Result<Path, ParseError> {
-        let mut path = Path {
+    fn parse_path(&mut self, s: &String) -> Result<PathExpression, ParseError> {
+        let mut path = PathExpression {
             ident: s.to_string(),
-            member: Box::new(None),
+            member: None,
         };
         match self.tok_iter.peek() {
             Some(Token::Dot) => {
@@ -61,7 +65,7 @@ impl<I: Iterator<Item = Token>> Parser<'_, I> {
                 match next {
                     Some(Token::Ident(s)) => {
                         let inner_path = self.parse_path(&s)?;
-                        *path.member = Some(inner_path);
+                        path.member = Some(Box::new(inner_path));
                     }
                     Some(_) => return Err(ParseError::NotImplemented),
                     None => return Err(ParseError::Syntax), // unexpected end of input
@@ -92,12 +96,6 @@ impl<I: Iterator<Item = Token>> Parser<'_, I> {
     }
 }
 
-fn make_path_node(path: Path) -> Node {
-    Node {
-        ntype: NodeType::ExpressionStatement(Expression::Path(path)),
-    }
-}
-
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ParseError {
     Syntax,
@@ -108,36 +106,41 @@ pub enum ParseError {
 #[cfg(test)]
 mod tests {
 
-    use super::*;
-    use crate::ast::{Node, Path};
+    // use super::*;
+    // use crate::{ast::PathExpression, evaluate::Evaluatable};
 
-    fn make_program(n: Node) -> Program {
-        Program { nodes: vec![n] }
-    }
+    // fn make_program<E: Evaluatable>(expr: Expression<E>) -> Program {
+    //     let program = Program::default();
+    //     program.return_expression = Some(Box::new(expr));
+    //     program
+    // }
 
-    #[test]
-    fn single_path_identifier() {
-        let result = parse("Surname");
-        let actual = result.unwrap();
-        let expected = make_path_node(Path {
-            ident: "Surname".to_string(),
-            member: Box::new(None),
-        });
-        assert_eq!(actual, make_program(expected));
-    }
+    // #[test]
+    // fn single_path_identifier() {
+    //     let result = parse("Surname");
+    //     let evalutated = result.unwrap().return_expression.unwrap();
+    //     let actual = PathExpression {
+    //         ident: evalutated.
+    //     }
+    //     let expected = PathExpression {
+    //         ident: "Surname".to_string(),
+    //         member: None,
+    //     };
+    //     assert_eq!(*actual, expected);
+    // }
 
-    #[test]
-    fn one_level_path() {
-        let result = parse("Address.City");
-        let actual = result.unwrap();
-        let expected = make_path_node(Path {
-            ident: "Address".to_string(),
-            member: Box::new(Some(Path {
-                ident: "City".to_string(),
-                member: Box::new(None),
-            })),
-        });
+    // #[test]
+    // fn one_level_path() {
+    //     let result = parse("Address.City");
+    //     let actual = result.unwrap();
+    //     let expected = Expression::Path(PathExpression {
+    //         ident: "Address".to_string(),
+    //         member: Box::new(Some(PathExpression {
+    //             ident: "City".to_string(),
+    //             member: Box::new(None),
+    //         })),
+    //     });
 
-        assert_eq!(actual, make_program(expected));
-    }
+    //     assert_eq!(actual, make_program(expected));
+    // }
 }

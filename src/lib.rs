@@ -1,4 +1,5 @@
 use ast::Program;
+use lexer::lex_tokens;
 use parser::{parse, ParseError};
 
 mod ast;
@@ -8,5 +9,6 @@ mod parser;
 mod tests;
 
 pub fn jsonata(s: &str) -> Result<Program, ParseError> {
-    parse(s)
+    let tokens = lex_tokens(s);
+    parse(tokens.into_iter())
 }
