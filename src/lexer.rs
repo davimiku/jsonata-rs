@@ -12,6 +12,8 @@ pub fn lex_tokens(input: &str) -> Vec<Token> {
 #[logos(subpattern exp = r"[eE][+-]?[0-9][_0-9]*")]
 pub enum Token {
     // Words
+    #[token("function")]
+    Function,
     #[token("in")]
     In,
     #[token("and")]
@@ -82,6 +84,8 @@ pub enum Token {
     Dash,
     #[token("/")]
     Slash,
+    #[token(",")]
+    Comma,
 
     // Variables
     // #[regex("\\$[a-zA-Z]+")]
