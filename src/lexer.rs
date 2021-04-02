@@ -154,6 +154,15 @@ mod tests {
     #[test]
     fn range() {
         let actual = lex_tokens("[1..5]");
+        let expected = vec![
+            Token::LeftBracket,
+            Token::Integer(1),
+            Token::DotDot,
+            Token::Integer(5),
+            Token::RightBracket,
+        ];
+
+        assert_eq!(actual, expected);
     }
 
     #[test]
