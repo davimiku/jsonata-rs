@@ -86,8 +86,8 @@ pub enum Token {
     // Variables
     // #[regex("\\$[a-zA-Z]+")]
     // Variable(String),
-    #[regex("(?&decimal)")]
-    Integer,
+    #[regex("(?&decimal)", |lex| lex.slice().parse())]
+    Integer(i32),
 
     // Identifiers
     #[regex("`([^`])+`", backtick_identifier)]
