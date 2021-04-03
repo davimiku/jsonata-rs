@@ -121,16 +121,11 @@ mod tests {
     use logos::Logos;
 
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-
-    #[test]
     fn single_dot() {
         let actual = lex_tokens(".");
         let expected = vec![Token::Dot];
 
-        assert_eq!(actual, expected);
+        assert_eq!(expected, actual);
     }
 
     #[test]
@@ -149,7 +144,7 @@ mod tests {
             Token::Ident("City".to_string()),
         ];
 
-        assert_eq!(actual, expected);
+        assert_eq!(expected, actual);
     }
 
     #[test]
@@ -163,7 +158,7 @@ mod tests {
             Token::RightBracket,
         ];
 
-        assert_eq!(actual, expected);
+        assert_eq!(expected, actual);
     }
 
     #[test]
