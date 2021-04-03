@@ -26,13 +26,11 @@ impl<I: Iterator<Item = Token>> Parser<I> {
     pub fn parse(&mut self) -> Result<Program, ParseError> {
         let mut program = Program::default();
 
-        let mut next = self.tok_iter.next();
-
         loop {
-            if next.is_none() {
+            if self.tok_iter.peek().is_none() {
                 break;
             }
-            let token = next.unwrap();
+            let token = self.tok_iter.next().unwrap();
 
             match token {
                 Token::LeftParen => {
@@ -47,7 +45,6 @@ impl<I: Iterator<Item = Token>> Parser<I> {
                 }
                 _ => {}
             }
-            next = self.tok_iter.next();
         }
         Ok(program)
     }
@@ -57,12 +54,10 @@ impl<I: Iterator<Item = Token>> Parser<I> {
             ident: s.to_string(),
             member: None,
         };
-        match self.tok_iter.peek() {
+        match self.tok_iter.next() {
             Some(Token::Dot) => {
                 // object property
-                self.tok_iter.next(); // dot
-                let next = self.tok_iter.next();
-                match next {
+                match self.tok_iter.next() {
                     Some(Token::Ident(s)) => {
                         let inner_path = self.parse_path(&s)?;
                         path.member = Some(Box::new(inner_path));
@@ -106,41 +101,77 @@ pub enum ParseError {
 #[cfg(test)]
 mod tests {
 
-    // use super::*;
-    // use crate::{ast::PathExpression, evaluate::Evaluatable};
+    impl<I: Iterator<Item = Token>> Parser<I> {
+        /// Advances the token iterator in the Parser
+        ///
+        /// Useful for tests to allow focusing on specific input
+        /// parsing.
+        fn advance(&mut self) {
+            self.tok_iter.next();
+        }
+    }
 
-    // fn make_program<E: Evaluatable>(expr: Expression<E>) -> Program {
-    //     let program = Program::default();
-    //     program.return_expression = Some(Box::new(expr));
-    //     program
-    // }
+    use std::vec::IntoIter;
 
-    // #[test]
-    // fn single_path_identifier() {
-    //     let result = parse("Surname");
-    //     let evalutated = result.unwrap().return_expression.unwrap();
-    //     let actual = PathExpression {
-    //         ident: evalutated.
-    //     }
-    //     let expected = PathExpression {
-    //         ident: "Surname".to_string(),
-    //         member: None,
-    //     };
-    //     assert_eq!(*actual, expected);
-    // }
+    use super::*;
+    use crate::lexer::lex_tokens;
 
-    // #[test]
-    // fn one_level_path() {
-    //     let result = parse("Address.City");
-    //     let actual = result.unwrap();
-    //     let expected = Expression::Path(PathExpression {
-    //         ident: "Address".to_string(),
-    //         member: Box::new(Some(PathExpression {
-    //             ident: "City".to_string(),
-    //             member: Box::new(None),
-    //         })),
-    //     });
+    fn make_parser(input: &str) -> Parser<IntoIter<Token>> {
+        Parser::new(lex_tokens(input).into_iter())
+    }
 
-    //     assert_eq!(actual, make_program(expected));
-    // }
+    #[test]
+    fn one_level_path() {
+        let input = "name";
+        let mut parser = make_parser(input);
+        parser.advance(); // simulate first token already processed
+
+        let actual = parser.parse_path(&input.to_string()).unwrap();
+        let expected = PathExpression {
+            ident: "name".to_string(),
+            member: None,
+        };
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn two_level_path() {
+        let input = "address.city";
+        let mut parser = make_parser(input);
+        parser.advance(); // simulate first token already processed
+
+        let actual = parser.parse_path(&"address".to_string()).unwrap();
+
+        let expected = PathExpression {
+            ident: "address".to_string(),
+            member: Some(Box::new(PathExpression {
+                ident: "city".to_string(),
+                member: None,
+            })),
+        };
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn three_level_path() {
+        let input = "address.location.latitude";
+        let mut parser = make_parser(input);
+        parser.advance(); // simulate first token already processed
+
+        let actual = parser.parse_path(&"address".to_string()).unwrap();
+
+        let expected = PathExpression {
+            ident: "address".to_string(),
+            member: Some(Box::new(PathExpression {
+                ident: "location".to_string(),
+                member: Some(Box::new(PathExpression {
+                    ident: "latitude".to_string(),
+                    member: None,
+                })),
+            })),
+        };
+
+        assert_eq!(expected, actual);
+    }
 }
