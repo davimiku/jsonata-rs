@@ -2,7 +2,7 @@
 use crate::jsonata;
 use serde_json::{json, Value};
 
-pub fn object_data() -> Value {
+pub(crate) fn object_data() -> Value {
     json!({
         "name": "ACME Corp.",
         "address": {
