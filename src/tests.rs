@@ -51,7 +51,7 @@ fn path_expression() {
     let actual = program.evaluate(data).unwrap().unwrap();
     let expected = json!("ACME Corp.");
 
-    assert_eq!(expected, actual);
+    assert_eq!(actual, expected);
 }
 
 #[test]
@@ -62,7 +62,7 @@ fn two_level_path_expression() {
     let actual = program.evaluate(data).unwrap().unwrap();
     let expected = json!("Main St.");
 
-    assert_eq!(expected, actual);
+    assert_eq!(actual, expected);
 }
 
 #[test]
@@ -73,7 +73,7 @@ fn three_level_path_expression() {
     let actual = program.evaluate(data).unwrap().unwrap();
     let expected = json!(100);
 
-    assert_eq!(expected, actual);
+    assert_eq!(actual, expected);
 }
 
 #[test]
@@ -94,6 +94,8 @@ fn path_expression_array_value() {
     let actual = program.evaluate(data).unwrap().unwrap();
     let expected = json!([1990, 1991]);
 
+    assert_eq!(actual, expected);
+}
     assert_eq!(expected, actual);
 }
 

@@ -125,7 +125,7 @@ mod tests {
         let actual = lex_tokens(".");
         let expected = vec![Token::Dot];
 
-        assert_eq!(expected, actual);
+        assert_eq!(actual, expected);
     }
 
     #[test]
@@ -144,7 +144,7 @@ mod tests {
             Token::Ident("City".to_string()),
         ];
 
-        assert_eq!(expected, actual);
+        assert_eq!(actual, expected);
     }
 
     #[test]
@@ -158,7 +158,7 @@ mod tests {
             Token::RightBracket,
         ];
 
-        assert_eq!(expected, actual);
+        assert_eq!(actual, expected);
     }
 
     #[test]

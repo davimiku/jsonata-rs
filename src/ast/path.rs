@@ -81,7 +81,7 @@ mod tests {
         let actual = path.get_member(&data).unwrap();
         let expected = json!("ACME Corp.");
 
-        assert_eq!(expected, actual);
+        assert_eq!(actual, expected);
     }
 
     #[test]
@@ -98,7 +98,7 @@ mod tests {
         let actual = path.get_member(&data).unwrap();
         let expected = json!("Main St.");
 
-        assert_eq!(expected, actual);
+        assert_eq!(actual, expected);
     }
 
     #[test]
@@ -115,7 +115,7 @@ mod tests {
         let actual = path.get_member(&data).unwrap();
         let expected = json!([1, 2]);
 
-        assert_eq!(expected, actual);
+        assert_eq!(actual, expected);
     }
 
     #[test]

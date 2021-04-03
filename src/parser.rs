@@ -131,7 +131,7 @@ mod tests {
             ident: "name".to_string(),
             member: None,
         };
-        assert_eq!(expected, actual);
+        assert_eq!(actual, expected);
     }
 
     #[test]
@@ -150,7 +150,7 @@ mod tests {
             })),
         };
 
-        assert_eq!(expected, actual);
+        assert_eq!(actual, expected);
     }
 
     #[test]
@@ -172,6 +172,6 @@ mod tests {
             })),
         };
 
-        assert_eq!(expected, actual);
+        assert_eq!(actual, expected);
     }
 }
