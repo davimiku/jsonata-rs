@@ -1,6 +1,9 @@
-pub mod path;
+pub(crate) mod concat;
+pub(crate) mod expression;
+pub(crate) mod literal;
+pub(crate) mod path;
 
-use crate::evaluate::{Context, Evaluatable, EvaluatableResult};
+use crate::evaluate::{Context, Evaluatable, EvaluationResult};
 use serde_json::Value;
 
 pub struct Program {
@@ -61,7 +64,7 @@ impl Default for Program {
 }
 
 impl Program {
-    pub fn evaluate(&mut self, data: Value) -> EvaluatableResult {
+    pub fn evaluate(&mut self, data: Value) -> EvaluationResult {
         self.set_data(data);
         //
         // TODO: Iterate through declarations to mutate context
@@ -90,32 +93,6 @@ pub enum Declaration {
     Variable,
     Function,
 }
-
-// #[derive(PartialEq, Eq, Debug, Clone)]
-// pub enum ExpressionType {
-//     Path,
-// Unary expressions
-// Unary,
-// Group,
-
-// Name,
-// String,
-// Number,
-// Value,
-// Wildcard,
-// Descendant,
-// Parent,
-// Condition,
-// Block,
-// Bind,
-// Regex,
-// Function,
-// Variable,
-// Lambda,
-// Partial,
-// Apply,
-// Transform,
-// }
 
 // #[derive(PartialEq, Eq, Debug, Clone)]
 // pub enum BinaryExpression {
