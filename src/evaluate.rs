@@ -7,10 +7,10 @@ use serde_json::Value;
 /// AST nodes implement this trait to be run by the interpreter
 pub trait Evaluatable {
     /// Runs this AST node
-    fn evaluate(&self, context: &mut Context) -> EvaluatableResult;
+    fn evaluate(&self, context: &mut Context) -> EvaluationResult;
 }
 
-pub type EvaluatableResult = Result<Option<Value>, EvaluationError>;
+pub type EvaluationResult = Result<Option<Value>, EvaluationError>;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub enum EvaluationError {
