@@ -1,6 +1,8 @@
+pub(crate) mod concat;
+
 use std::iter::Peekable;
 
-use crate::ast::{path::PathExpression, Program};
+use crate::ast::{literal::LiteralExpression, path::PathExpression, Program};
 use crate::lexer::Token;
 
 pub fn parse<I: Iterator<Item = Token>>(tok_iter: I) -> Result<Program, ParseError> {
@@ -27,6 +29,7 @@ impl<I: Iterator<Item = Token>> Parser<I> {
         let mut program = Program::default();
 
         loop {
+            // could clean this up with `match` or `if let`, TBD
             if self.tok_iter.peek().is_none() {
                 break;
             }
@@ -36,12 +39,30 @@ impl<I: Iterator<Item = Token>> Parser<I> {
                 Token::LeftParen => {
                     // The program may have multiple statements
                 }
+                Token::IntegerLiteral(i) => {
+                    let expr = LiteralExpression::from_int(i);
+                }
+                Token::StringLiteral(s) => {
+                    let expr = LiteralExpression::from_string(s);
+                    match self.tok_iter.next() {
+                        Some(Token::Ampersand) => {
+                            // String concatenation
+                            self.parse_string_concat(expr);
+                        }
+                        Some(_) => {}
+                        None => {}
+                    }
+                }
+
                 Token::Ident(s) => {
                     let path = self.parse_path(&s)?;
                     program.return_expression = Some(Box::new(PathExpression {
                         ident: s,
                         member: path.member,
                     }));
+                }
+                Token::RightParen => {
+                    // We've safely reached the end of the program
                 }
                 _ => {}
             }
@@ -88,6 +109,14 @@ impl<I: Iterator<Item = Token>> Parser<I> {
         }
 
         Ok(path)
+    }
+
+    fn parse_string_literal(&mut self, s: String) -> Result<LiteralExpression, ()> {
+        Ok(LiteralExpression::from_string(s))
+    }
+
+    fn parse_integer_literal(&mut self, i: i64) -> Result<LiteralExpression, ()> {
+        Ok(LiteralExpression::from_int(i))
     }
 }
 
