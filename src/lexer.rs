@@ -88,13 +88,18 @@ pub enum Token {
     Comma,
 
     // Variables
-    // #[regex("\\$[a-zA-Z]+")]
-    // Variable(String),
+    #[regex("\\$[a-zA-Z]+", |lex| lex.slice().to_string())]
+    Variable(String),
+
+    // Literals
     #[regex("(?&decimal)", |lex| lex.slice().parse())]
-    Integer(i32),
+    IntegerLiteral(i64),
+
+    #[regex(r#""(?:[^"]|\\")*""#, trim_first_last)]
+    StringLiteral(String),
 
     // Identifiers
-    #[regex("`([^`])+`", backtick_identifier)]
+    #[regex("`([^`])+`", trim_first_last)]
     #[regex("[a-zA-Z]+", |lex| lex.slice().to_string())]
     Ident(String),
 
@@ -105,11 +110,13 @@ pub enum Token {
     Error,
 }
 
-// TODO: Figure out if there's a better way to capture what's between
-// the backticks as a &str
-
-/// Remove the backticks from the captured identifier
-fn backtick_identifier(lex: &mut Lexer<Token>) -> Option<String> {
+/// Trims the first and last character of the captured slice
+///
+/// This function helps trim what the lexer has captured in case
+/// there is a leading and trailing character that can be removed.
+///
+/// Examples are quote or backtick surrounded items.
+fn trim_first_last(lex: &mut Lexer<Token>) -> Option<String> {
     let slice = lex.slice();
     Some(slice[1..slice.len() - 1].into())
 }
@@ -152,9 +159,9 @@ mod tests {
         let actual = lex_tokens("[1..5]");
         let expected = vec![
             Token::LeftBracket,
-            Token::Integer(1),
+            Token::IntegerLiteral(1),
             Token::DotDot,
-            Token::Integer(5),
+            Token::IntegerLiteral(5),
             Token::RightBracket,
         ];
 
@@ -163,7 +170,30 @@ mod tests {
 
     #[test]
     fn backtick_ident() {
-        let mut lex = Token::lexer("`one two`");
-        assert_eq!(lex.next(), Some(Token::Ident("one two".to_string())));
+        let actual = lex_tokens("`one two`");
+        let expected = vec![Token::Ident("one two".to_string())];
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn addition() {
+        let actual = lex_tokens("1 + 2");
+        let expected = vec![
+            Token::IntegerLiteral(1),
+            Token::Plus,
+            Token::IntegerLiteral(2),
+        ];
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn string_literal_concat() {
+        let actual = lex_tokens(r#""hello " & "world""#);
+        let expected = vec![
+            Token::StringLiteral("hello ".to_string()),
+            Token::Ampersand,
+            Token::StringLiteral("world".to_string()),
+        ];
+        assert_eq!(actual, expected);
     }
 }
