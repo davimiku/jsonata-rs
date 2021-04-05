@@ -17,8 +17,8 @@ impl LiteralExpression {
         LiteralExpression { val: s.into() }
     }
 
-    pub fn val(&self) -> &LiteralValue {
-        &self.val
+    pub fn from_bool(b: bool) -> Self {
+        LiteralExpression { val: b.into() }
     }
 }
 
@@ -28,7 +28,7 @@ impl Expression for LiteralExpression {
     }
 
     fn evaluate(&self, _context: &Context) -> EvaluationResult {
-        Ok(Some(self.val.into()))
+        Ok(Some(self.val.clone().into()))
     }
 }
 

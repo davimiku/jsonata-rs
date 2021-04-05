@@ -39,9 +39,9 @@ impl<I: Iterator<Item = Token>> Parser<I> {
                 Token::LeftParen => {
                     // The program may have multiple statements
                 }
-                Token::IntegerLiteral(i) => {
-                    let expr = LiteralExpression::from_int(i);
-                }
+                // Token::IntegerLiteral(i) => {
+                //     let expr = LiteralExpression::from_int(i);
+                // }
                 Token::StringLiteral(s) => {
                     let expr = LiteralExpression::from_string(s);
                     match self.tok_iter.next() {
@@ -53,7 +53,7 @@ impl<I: Iterator<Item = Token>> Parser<I> {
                         None => {}
                     }
                 }
-
+                // Token::BoolLiteral(b) => {}
                 Token::Ident(s) => {
                     let path = self.parse_path(&s)?;
                     program.return_expression = Some(Box::new(PathExpression {

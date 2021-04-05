@@ -20,6 +20,9 @@ pub enum Token {
     And,
     #[token("or")]
     Or,
+    // #[token("true")]
+    // #[token("false")]
+    // BoolLiteral(bool),
 
     // Grouping
     #[token("[")]
