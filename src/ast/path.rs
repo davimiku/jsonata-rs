@@ -1,6 +1,6 @@
 use serde_json::Value;
 
-use crate::evaluate::{Context, Evaluatable, EvaluatableResult};
+use crate::evaluate::{Context, Evaluatable, EvaluationResult};
 
 /// PathExpression is a way to get a Value from the JSON data
 ///
@@ -30,7 +30,7 @@ pub struct PathExpression {
 /// Evaluates a Path expression
 impl Evaluatable for PathExpression {
     /// Evaluate a Path expression
-    fn evaluate(&self, context: &mut Context) -> EvaluatableResult {
+    fn evaluate(&self, context: &mut Context) -> EvaluationResult {
         let result = self.get_member(context.data());
         Ok(result)
     }
@@ -66,7 +66,7 @@ mod tests {
 
     use serde_json::json;
 
-    use crate::tests::object_data;
+    use crate::e2e::object_data;
 
     use super::*;
 
