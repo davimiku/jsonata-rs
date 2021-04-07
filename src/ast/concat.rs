@@ -4,12 +4,12 @@ use crate::evaluate::{Context, EvaluationError};
 
 use super::expression::{Expression, ExpressionType};
 
-pub struct ConcatExpression {
-    pub left: Box<dyn Expression>,
-    pub right: Box<dyn Expression>,
+pub struct ConcatExpression<'a> {
+    pub left: &'a Box<dyn Expression>,
+    pub right: &'a Box<dyn Expression>,
 }
 
-impl Expression for ConcatExpression {
+impl Expression for ConcatExpression<'_> {
     fn etype(&self) -> ExpressionType {
         ExpressionType::StringConcat
     }

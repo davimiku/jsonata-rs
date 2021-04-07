@@ -2,7 +2,9 @@ pub(crate) mod concat;
 
 use std::iter::Peekable;
 
-use crate::ast::{literal::LiteralExpression, path::PathExpression, Program};
+use crate::ast::{
+    expression::Expression, literal::LiteralExpression, path::PathExpression, Program,
+};
 use crate::lexer::Token;
 
 pub fn parse<I: Iterator<Item = Token>>(tok_iter: I) -> Result<Program, ParseError> {
@@ -11,9 +13,9 @@ pub fn parse<I: Iterator<Item = Token>>(tok_iter: I) -> Result<Program, ParseErr
 }
 
 pub struct Parser<I: Iterator<Item = Token>> {
-    // tokens: Vec<Token>,
     tok_iter: Peekable<I>,
-    // curr: Option<&'a Token>,
+
+    last_expr: Option<Box<dyn Expression>>,
 }
 
 impl<I: Iterator<Item = Token>> Parser<I> {
@@ -21,8 +23,12 @@ impl<I: Iterator<Item = Token>> Parser<I> {
         let peekable_iter = tok_iter.peekable();
         Parser {
             tok_iter: peekable_iter,
-            // curr: None,
+            last_expr: None,
         }
+    }
+
+    fn last_expr_ref(&self) -> &Option<Box<dyn Expression>> {
+        &self.last_expr
     }
 
     pub fn parse(&mut self) -> Result<Program, ParseError> {
@@ -43,17 +49,13 @@ impl<I: Iterator<Item = Token>> Parser<I> {
                 //     let expr = LiteralExpression::from_int(i);
                 // }
                 Token::StringLiteral(s) => {
-                    let expr = LiteralExpression::from_string(s);
-                    match self.tok_iter.next() {
-                        Some(Token::Ampersand) => {
-                            // String concatenation
-                            self.parse_string_concat(expr);
-                        }
-                        Some(_) => {}
-                        None => {}
-                    }
+                    self.last_expr = Some(Box::new(LiteralExpression::from_string(s)));
                 }
                 // Token::BoolLiteral(b) => {}
+                Token::Ampersand => {
+                    // String concatenation
+                    let result = self.parse_string_concat();
+                }
                 Token::Ident(s) => {
                     let path = self.parse_path(&s)?;
                     program.return_expression = Some(Box::new(PathExpression {
@@ -120,9 +122,11 @@ impl<I: Iterator<Item = Token>> Parser<I> {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ParseError {
     Syntax,
+
+    UnexpectedUnary(String), // The symbol "____" cannot be used as a unary operator
 
     NotImplemented, // FIXME: Implement specific errors
 }
