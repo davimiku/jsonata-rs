@@ -66,7 +66,7 @@ mod tests {
 
     use serde_json::json;
 
-    use crate::e2e::object_data;
+    use crate::tests::object_data;
 
     use super::*;
 
