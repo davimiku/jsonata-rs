@@ -28,9 +28,9 @@ pub struct PathExpression {
 }
 
 /// Evaluates a Path expression
-impl Evaluatable for PathExpression {
+impl PathExpression {
     /// Evaluate a Path expression
-    fn evaluate(&self, context: &mut Context) -> EvaluationResult {
+    pub fn evaluate(&self, context: &mut Context) -> EvaluationResult {
         let result = self.get_member(context.data());
         Ok(result)
     }

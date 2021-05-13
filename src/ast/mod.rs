@@ -3,10 +3,12 @@ pub(crate) mod expression;
 pub(crate) mod literal;
 pub(crate) mod path;
 
-use crate::evaluate::{Context, Evaluatable, EvaluationResult};
+use crate::evaluate::{Context, EvaluationResult};
 use serde_json::Value;
 
-pub struct Program {
+use self::expression::Expression;
+
+pub(crate) struct Program {
     /// Contains the evaluation context of the program
     ///
     /// This tracks declared variables and functions, and
@@ -14,9 +16,7 @@ pub struct Program {
     ///
     pub context: Context,
 
-    // charRange: (u32, u32)  // from 0 to number of characters (do we need this?)
-    /// Declarations of variables and functions that
-    /// occur before the return expression.
+    /// Expressions in the JSONata program
     ///
     /// Example:
     /// ```
@@ -27,53 +27,22 @@ pub struct Program {
     /// )
     /// ```
     ///
-    /// In the example above, the variable
-    /// declarations for `$currency` and `$amount` are stored in this Vec.
+    /// In this case, there are three expressions, with the final expression
+    /// representing the return value.
     ///
-    /// These declarations modify the internal state of the execution context while
-    /// it is running but do not return a value.
-    pub declarations: Vec<Declaration>,
-
-    /// The final expression in the JSONata program
-    /// and represents the returned value of the program.
-    ///
-    /// Example:
-    /// ```
-    /// (
-    ///    $currency = Product.Price.Currency;
-    ///    $amount = Product.Price.Amount;
-    ///    $amount & $currency
-    /// )
-    /// ```
-    ///
-    /// In this case, the `$amount & $currency` is the return expression.
-    /// This particular expression is a Concatenation Binary Expression with
-    /// a 'left' expression of the Path expression stored in `$amount` and a
-    /// 'right' expression of the Path expression in `$currency`.
-    pub return_expression: Option<Box<dyn Evaluatable>>,
-}
-
-impl Default for Program {
-    fn default() -> Self {
-        Program {
-            declarations: Default::default(),
-            return_expression: None,
-            context: Default::default(),
-        }
-    }
+    /// Many JSONata programs will only have a single expression.
+    pub expressions: Vec<Expression>,
 }
 
 impl Program {
     pub fn evaluate(&mut self, data: Value) -> EvaluationResult {
         self.set_data(data);
-        //
-        // TODO: Iterate through declarations to mutate context
-        //
-        if let Some(expr) = &self.return_expression {
-            expr.evaluate(&mut self.context)
-        } else {
-            Ok(None)
+
+        let mut result = None;
+        for expr in &self.expressions {
+            result = expr.evaluate(&mut self.context)?;
         }
+        Ok(result)
     }
 
     fn set_data(&mut self, data: Value) {
@@ -87,19 +56,3 @@ pub struct Location {
     col: u32,
     char: u64,
 }
-
-#[derive(PartialEq, Eq, Debug, Clone)]
-pub enum Declaration {
-    Variable,
-    Function,
-}
-
-// #[derive(PartialEq, Eq, Debug, Clone)]
-// pub enum BinaryExpression {
-//     Numeric,
-//     Equality,
-//     Comparison,
-//     StringConcat,
-//     Range,
-//     Includes,
-// }
