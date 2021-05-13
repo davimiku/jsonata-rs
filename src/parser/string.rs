@@ -15,6 +15,8 @@ use nom::{
     IResult,
 };
 use nom::{character::complete::char as nom_char, combinator::value};
+
+use crate::ast::literal::LiteralValue;
 /// Parses a str containing `u{X}` where X
 /// is a hexadecimal number {0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f}
 /// occuring between 1 and 6 times to a char (Unicode scalar value)
@@ -89,7 +91,7 @@ where
 /// An unescaped double quote ends the string parsing.
 ///
 /// TODO: JSONata allows string literals to be delimited by single quotes
-pub fn parse_string<'a, E>(input: &'a str) -> IResult<&'a str, String, E>
+pub(crate) fn parse_string<'a, E>(input: &'a str) -> IResult<&'a str, String, E>
 where
     E: ParseError<&'a str> + FromExternalError<&'a str, std::num::ParseIntError>,
 {
@@ -102,6 +104,13 @@ where
     });
 
     delimited(nom_char('"'), build_string, nom_char('"'))(input)
+}
+
+pub(crate) fn literal_string<'a, E>(input: &'a str) -> IResult<&'a str, LiteralValue, E>
+where
+    E: ParseError<&'a str> + FromExternalError<&'a str, std::num::ParseIntError>,
+{
+    map(parse_string, |s| LiteralValue::from(s))(input)
 }
 
 #[cfg(test)]
