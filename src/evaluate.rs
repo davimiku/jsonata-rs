@@ -21,7 +21,7 @@ pub enum EvaluationError {
 pub struct Context {
     data: Value,
 
-    variables: HashMap<String, Value>,
+    variables: HashMap<String, Option<Value>>,
 }
 
 impl Default for Context {
@@ -33,15 +33,13 @@ impl Default for Context {
     }
 }
 
-// impl Default for Context {
-//     fn default() -> Self {
-
-//     }
-// }
-
 impl Context {
     pub fn data(&self) -> &Value {
         &self.data
+    }
+
+    pub fn set_var(&mut self, var_name: String, value: Option<Value>) {
+        self.variables.insert(var_name, value);
     }
 
     pub fn set_data(&mut self, data: Value) {
