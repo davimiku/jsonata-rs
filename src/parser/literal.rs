@@ -12,15 +12,16 @@ use nom::{
     IResult,
 };
 
-use crate::ast::literal::{LiteralExpression, LiteralValue};
+use crate::ast::{
+    expression::Expression,
+    literal::{LiteralExpression, LiteralValue},
+};
 
 use super::string::{literal_string, parse_string};
 // use crate::parser::string::parse_string;
 
 /// Parses a boolean value, either true or false
-pub(super) fn literal_bool<'a, E: ParseError<&'a str>>(
-    input: &'a str,
-) -> IResult<&'a str, LiteralValue, E> {
+fn literal_bool<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, LiteralValue, E> {
     alt((
         value(LiteralValue::Bool(true), tag("true")),
         value(LiteralValue::Bool(false), tag("false")),
@@ -28,18 +29,16 @@ pub(super) fn literal_bool<'a, E: ParseError<&'a str>>(
 }
 
 /// Parses the literal value `null`
-pub(super) fn literal_null<'a, E: ParseError<&'a str>>(
-    input: &'a str,
-) -> IResult<&'a str, LiteralValue, E> {
+fn literal_null<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, LiteralValue, E> {
     value(LiteralValue::Null, tag("null"))(input)
 }
 
-pub(super) fn literal_expression<'a, E>(input: &'a str) -> IResult<&'a str, LiteralExpression, E>
+pub(super) fn literal_expression<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
 where
     E: ParseError<&'a str> + FromExternalError<&'a str, std::num::ParseIntError>,
 {
     map(alt((literal_bool, literal_null, literal_string)), |val| {
-        val.into()
+        LiteralExpression::from(val).into()
     })(input)
 }
 
@@ -74,21 +73,21 @@ mod tests {
     fn literal_expression_parser() {
         assert_eq!(
             literal_expression::<(&str, ErrorKind)>("true").unwrap().1,
-            LiteralExpression::from(true)
+            LiteralExpression::from(true).into()
         );
         assert_eq!(
             literal_expression::<(&str, ErrorKind)>("false").unwrap().1,
-            LiteralExpression::from(false)
+            LiteralExpression::from(false).into()
         );
         assert_eq!(
             literal_expression::<(&str, ErrorKind)>("null").unwrap().1,
-            LiteralExpression::from(LiteralValue::Null)
+            LiteralExpression::from(LiteralValue::Null).into()
         );
         assert_eq!(
             literal_expression::<(&str, ErrorKind)>(r#""test""#)
                 .unwrap()
                 .1,
-            LiteralExpression::from(LiteralValue::from("test"))
+            LiteralExpression::from(LiteralValue::from("test")).into()
         )
     }
 }
