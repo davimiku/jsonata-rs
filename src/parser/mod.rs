@@ -1,24 +1,41 @@
+mod expr;
 mod ident;
+mod literal;
 mod string;
 
 use std::boxed::Box;
 use std::error::Error;
 
 use nom::{
-    bytes::complete::{is_not, tag, take_while},
-    error::{context, VerboseError},
-    number::complete::{double, float},
-    IResult,
+    bytes::complete::is_not,
+    character::complete::space0,
+    error::{ErrorKind, ParseError, VerboseError},
+    sequence::delimited,
+    AsChar, Err as NomErr, IResult, InputIter, InputLength, InputTake, InputTakeAtPosition, Parser,
 };
 use nom_locate::LocatedSpan;
 
-use crate::ast::literal::LiteralValue;
+use crate::ast::expression::Expression;
+
+use self::expr::parse_expression;
 type Span<'a> = LocatedSpan<&'a str>;
 
 /// Type-erased errors
 pub type BoxError = Box<dyn Error + Send + Sync>;
 
-fn not_whitespace(i: &str) -> nom::IResult<&str, &str> {
+/// Parses the provided parser, ignoring spaces before
+/// and after the matching input.
+fn trim<'a, F, I, O, E: ParseError<I>>(parser: F) -> impl FnMut(I) -> IResult<I, O, E>
+where
+    F: Parser<I, O, E>,
+    I: InputLength + InputIter + InputTakeAtPosition + InputTake + Clone,
+    <I as InputIter>::Item: AsChar + Clone,
+    <I as InputTakeAtPosition>::Item: AsChar + Clone,
+{
+    delimited(space0, parser, space0)
+}
+
+fn not_whitespace(i: &str) -> IResult<&str, &str> {
     is_not(" \t")(i)
 }
 
@@ -30,7 +47,7 @@ fn escaped_backslash(i: &str) -> IResult<&str, &str> {
     nom::combinator::recognize(nom::character::complete::char('\\'))(i)
 }
 
-fn transform_escaped(i: &str) -> nom::IResult<&str, std::string::String> {
+fn transform_escaped(i: &str) -> IResult<&str, std::string::String> {
     nom::bytes::complete::escaped_transform(
         nom::bytes::complete::is_not("\\"),
         '\\',
@@ -38,11 +55,11 @@ fn transform_escaped(i: &str) -> nom::IResult<&str, std::string::String> {
     )(i)
 }
 
-type Res<T, U> = IResult<T, U, VerboseError<T>>;
-
-fn null_literal(i: &str) -> Res<&str, LiteralValue> {
-    context("null", tag("null"))(i).map(|(next, _)| (next, LiteralValue::Null))
+pub(crate) fn parse(input: &str) -> Result<Expression, NomErr<(&str, ErrorKind)>> {
+    parse_expression(input).map(|(_, ex)| ex)
 }
+
+type Res<T, U> = IResult<T, U, VerboseError<T>>;
 
 #[cfg(test)]
 mod tests {
@@ -53,20 +70,6 @@ mod tests {
         error::{ErrorKind, VerboseError, VerboseErrorKind},
         Err as NomErr,
     };
-
-    #[test]
-    fn test_null_literal() {
-        assert_eq!(null_literal("null"), Ok(("", LiteralValue::Null)));
-        assert_eq!(
-            null_literal("llun"),
-            Err(NomErr::Error(VerboseError {
-                errors: vec![
-                    ("llun", VerboseErrorKind::Nom(ErrorKind::Tag)),
-                    ("llun", VerboseErrorKind::Context("null"))
-                ],
-            }))
-        );
-    }
 
     // #[test]
     // fn one_level_path() {
