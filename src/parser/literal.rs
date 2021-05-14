@@ -17,8 +17,7 @@ use crate::ast::{
     literal::{LiteralExpression, LiteralValue},
 };
 
-use super::string::{literal_string, parse_string};
-// use crate::parser::string::parse_string;
+use super::string::literal_string;
 
 /// Parses a boolean value, either true or false
 fn literal_bool<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, LiteralValue, E> {
