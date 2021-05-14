@@ -34,7 +34,7 @@ use super::{literal::LiteralExpression, path::PathExpression};
 // }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum Expression {
+pub enum Expression {
     Literal(LiteralExpression),
 
     Variable(VariableBindingExpression),
@@ -52,8 +52,26 @@ impl Expression {
     }
 }
 
+impl From<LiteralExpression> for Expression {
+    fn from(expr: LiteralExpression) -> Self {
+        Expression::Literal(expr)
+    }
+}
+
+impl From<VariableBindingExpression> for Expression {
+    fn from(expr: VariableBindingExpression) -> Self {
+        Expression::Variable(expr)
+    }
+}
+
+impl From<PathExpression> for Expression {
+    fn from(expr: PathExpression) -> Self {
+        Expression::Path(expr)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct VariableBindingExpression {
+pub struct VariableBindingExpression {
     pub var_name: String,
     pub bound_expression: Box<Expression>,
 }
