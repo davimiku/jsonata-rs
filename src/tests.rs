@@ -43,76 +43,17 @@ pub(crate) fn object_data() -> Value {
 
 #[cfg(test)]
 mod tests {
-    use serde_json::{json, Value};
+    use serde_json::Value;
+
+    use crate::jsonata;
 
     use super::object_data;
 
-    fn get_value_unwrapped(input: &str) -> Value {
-        let data = object_data();
-        let mut program = crate::jsonata(input).unwrap();
-
-        program.evaluate(data).unwrap().unwrap()
-    }
-
-    fn get_value_option(input: &str) -> Option<Value> {
-        let data = object_data();
-        let mut program = crate::jsonata(input).unwrap();
-
-        program.evaluate(data).unwrap()
-    }
-
     #[test]
-    fn path_expression() {
-        let input = "name";
-        let actual = get_value_unwrapped(input);
-        let expected = json!("ACME Corp.");
-
-        assert_eq!(actual, expected);
+    fn literal() {
+        let input = "true";
+        let mut program = jsonata(input).unwrap();
+        let result = program.evaluate(object_data()).unwrap();
+        assert_eq!(result, Some(Value::Bool(true)));
     }
-
-    #[test]
-    fn two_level_path_expression() {
-        let input = "address.street";
-        let actual = get_value_unwrapped(input);
-        let expected = json!("Main St.");
-
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn three_level_path_expression() {
-        let input = "address.location.latitude";
-        let actual = get_value_unwrapped(input);
-        let expected = json!(100);
-
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn path_expression_missing() {
-        let input = "notexist";
-        let actual = get_value_option(input);
-
-        assert!(actual.is_none());
-    }
-
-    #[test]
-    fn path_expression_array_value() {
-        let input = "years";
-        let actual = get_value_unwrapped(input);
-        let expected = json!([1990, 1991]);
-
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn path_expression_array_index() {
-        let input = "years[1]";
-        let actual = get_value_unwrapped(input);
-        let expected = json!(1991);
-
-        assert_eq!(actual, expected);
-    }
-
-    // FIXME: Test for underscore names
 }
