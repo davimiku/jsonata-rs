@@ -8,7 +8,7 @@ use serde_json::Value;
 
 use self::expression::Expression;
 
-pub(crate) struct Program {
+pub struct Program {
     /// Contains the evaluation context of the program
     ///
     /// This tracks declared variables and functions, and
@@ -16,35 +16,36 @@ pub(crate) struct Program {
     ///
     pub context: Context,
 
-    /// Expressions in the JSONata program
+    /// Top-level expression of the JSONata program
     ///
-    /// Example:
-    /// ```
-    /// (
-    ///    $currency = Product.Price.Currency;
-    ///    $amount = Product.Price.Amount;
-    ///    $amount & $currency
-    /// )
-    /// ```
-    ///
-    /// In this case, there are three expressions, with the final expression
-    /// representing the return value.
-    ///
-    /// Many JSONata programs will only have a single expression.
-    pub expressions: Vec<Expression>,
+    /// Expressions can (and usually do) have child
+    /// expressions.
+    pub expression: Expression,
 }
 
 impl Program {
+    /// Create a new JSONata program with the provided
+    /// top-level expression
+    ///
+    /// Creates a default Context and a program that
+    /// is ready to be evaluated.
+    pub fn new(expression: Expression) -> Self {
+        Program {
+            context: Context::default(),
+            expression,
+        }
+    }
+
+    /// Evaluate the JSONata program with the given data.
+    ///
+    /// The data is in Value format as parsed by serde-json.
     pub fn evaluate(&mut self, data: Value) -> EvaluationResult {
         self.set_data(data);
 
-        let mut result = None;
-        for expr in &self.expressions {
-            result = expr.evaluate(&mut self.context)?;
-        }
-        Ok(result)
+        Ok(self.expression.evaluate(&mut self.context)?)
     }
 
+    /// Sets the JSON data into the program's internal state
     fn set_data(&mut self, data: Value) {
         self.context.set_data(data)
     }
