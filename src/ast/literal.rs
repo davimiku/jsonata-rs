@@ -2,33 +2,38 @@ use serde_json::Value;
 
 use crate::evaluate::{Context, EvaluationResult};
 
-use super::expression::{Expression, ExpressionType};
-
+#[derive(Debug, Clone, PartialEq)]
 pub struct LiteralExpression {
     val: LiteralValue,
 }
 
 impl LiteralExpression {
-    pub fn from_int(i: i64) -> Self {
+    pub fn evaluate(&self, _: &Context) -> EvaluationResult {
+        Ok(Some(self.val.clone().into()))
+    }
+}
+
+impl From<i64> for LiteralExpression {
+    fn from(i: i64) -> Self {
         LiteralExpression { val: i.into() }
     }
+}
 
-    pub fn from_string(s: String) -> Self {
+impl From<String> for LiteralExpression {
+    fn from(s: String) -> Self {
         LiteralExpression { val: s.into() }
     }
+}
 
-    pub fn from_bool(b: bool) -> Self {
+impl From<bool> for LiteralExpression {
+    fn from(b: bool) -> Self {
         LiteralExpression { val: b.into() }
     }
 }
 
-impl Expression for LiteralExpression {
-    fn etype(&self) -> ExpressionType {
-        ExpressionType::Literal
-    }
-
-    fn evaluate(&self, _context: &Context) -> EvaluationResult {
-        Ok(Some(self.val.clone().into()))
+impl From<LiteralValue> for LiteralExpression {
+    fn from(val: LiteralValue) -> Self {
+        LiteralExpression { val }
     }
 }
 
@@ -38,17 +43,18 @@ pub enum LiteralValue {
     // Float(f64),
     String(String),
     Bool(bool),
+    Null,
 }
 
 impl From<LiteralValue> for Value {
-    /// Convert value from the lexer into a
-    /// serde_json Value.
+    /// Convert value from the parser into a serde Value.
     fn from(val: LiteralValue) -> Self {
         match val {
             LiteralValue::Integer(i) => Value::Number(i.into()),
             // LiteralValue::Float(f64)
             LiteralValue::String(s) => Value::String(s),
             LiteralValue::Bool(b) => Value::Bool(b),
+            LiteralValue::Null => Value::Null,
         }
     }
 }
@@ -57,6 +63,13 @@ impl From<String> for LiteralValue {
     /// Convert from a String to a LiteralValue
     fn from(s: String) -> Self {
         LiteralValue::String(s)
+    }
+}
+
+impl From<&str> for LiteralValue {
+    /// Convert from a &str to a LiteralValue
+    fn from(s: &str) -> Self {
+        LiteralValue::String(s.to_string())
     }
 }
 
