@@ -9,8 +9,10 @@
 //! Field references can be inside of backticks
 
 use nom::{
-    bytes::complete::tag, character::complete::alphanumeric1, error::ParseError,
-    sequence::preceded, IResult,
+    bytes::complete::{tag, take_while},
+    error::ParseError,
+    sequence::preceded,
+    IResult,
 };
 
 // Notes about the current JSONata implementation (TODO: remove)
@@ -27,7 +29,10 @@ use nom::{
 pub(super) fn parse_variable_ident<'a, E: ParseError<&'a str>>(
     input: &'a str,
 ) -> IResult<&'a str, &'a str, E> {
-    preceded(tag("$"), alphanumeric1)(input)
+    preceded(
+        tag("$"),
+        take_while(|c: char| c.is_alphanumeric() || c == '_'),
+    )(input)
 }
 
 #[cfg(test)]
