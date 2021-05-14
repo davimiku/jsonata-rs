@@ -1,15 +1,19 @@
+use nom::error::ErrorKind;
+use parser::parse;
+
 use ast::Program;
-use lexer::lex_tokens;
-use parser::{parse, ParseError};
 
 mod ast;
+mod builtins;
 mod evaluate;
-mod lexer;
 mod parser;
 #[cfg(test)]
 mod tests;
 
-pub fn jsonata(input: &str) -> Result<Program, ParseError> {
-    let tokens = lex_tokens(input);
-    parse(tokens.into_iter())
+// TODO: Make a custom error type for this crate
+// that can be converted from nom::Err
+
+pub fn jsonata(input: &str) -> Result<Program, nom::Err<(&str, ErrorKind)>> {
+    let expression = parse(input)?;
+    Ok(Program::new(expression))
 }
