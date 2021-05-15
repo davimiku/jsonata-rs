@@ -19,6 +19,12 @@ impl From<i64> for LiteralExpression {
     }
 }
 
+impl From<&str> for LiteralExpression {
+    fn from(s: &str) -> Self {
+        LiteralExpression { val: s.into() }
+    }
+}
+
 impl From<String> for LiteralExpression {
     fn from(s: String) -> Self {
         LiteralExpression { val: s.into() }
