@@ -51,42 +51,43 @@ mod tests {
     fn bool_parser_true() {
         let input = "true";
         let res = literal_bool::<(&str, ErrorKind)>(input);
-        assert_eq!(res.unwrap().1, LiteralValue::Bool(true))
+        assert_eq!(res, Ok(("", LiteralValue::Bool(true))))
     }
 
     #[test]
     fn bool_parser_false() {
         let input = "false";
         let res = literal_bool::<(&str, ErrorKind)>(input);
-        assert_eq!(res.unwrap().1, LiteralValue::Bool(false));
+        assert_eq!(res, Ok(("", LiteralValue::Bool(false))));
     }
 
     #[test]
     fn null_parser() {
         let input = "null";
         let res = literal_null::<(&str, ErrorKind)>(input);
-        assert_eq!(res.unwrap().1, LiteralValue::Null)
+        assert_eq!(res, Ok(("", LiteralValue::Null)))
     }
 
     #[test]
     fn literal_expression_parser() {
         assert_eq!(
-            literal_expression::<(&str, ErrorKind)>("true").unwrap().1,
-            LiteralExpression::from(true).into()
+            literal_expression::<(&str, ErrorKind)>("true"),
+            Ok(("", LiteralExpression::from(true).into()))
         );
         assert_eq!(
-            literal_expression::<(&str, ErrorKind)>("false").unwrap().1,
-            LiteralExpression::from(false).into()
+            literal_expression::<(&str, ErrorKind)>("false"),
+            Ok(("", LiteralExpression::from(false).into()))
         );
         assert_eq!(
-            literal_expression::<(&str, ErrorKind)>("null").unwrap().1,
-            LiteralExpression::from(LiteralValue::Null).into()
+            literal_expression::<(&str, ErrorKind)>("null"),
+            Ok(("", LiteralExpression::from(LiteralValue::Null).into()))
         );
         assert_eq!(
-            literal_expression::<(&str, ErrorKind)>(r#""test""#)
-                .unwrap()
-                .1,
-            LiteralExpression::from(LiteralValue::from("test")).into()
+            literal_expression::<(&str, ErrorKind)>(r#""test""#),
+            Ok((
+                "",
+                LiteralExpression::from(LiteralValue::from("test")).into()
+            ))
         )
     }
 }
