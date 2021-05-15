@@ -1,6 +1,6 @@
 use serde_json::Value;
 
-use crate::evaluate::{Context, Evaluatable, EvaluationResult};
+use crate::evaluate::{Context, EvaluationResult};
 
 /// PathExpression is a way to get a Value from the JSON data
 ///
@@ -27,7 +27,6 @@ pub struct PathExpression {
     pub member: Option<Box<PathExpression>>,
 }
 
-/// Evaluates a Path expression
 impl PathExpression {
     /// Evaluate a Path expression
     pub fn evaluate(&self, context: &mut Context) -> EvaluationResult {
