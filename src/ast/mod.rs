@@ -1,3 +1,4 @@
+pub(crate) mod binary;
 pub(crate) mod concat;
 pub(crate) mod expression;
 pub(crate) mod literal;

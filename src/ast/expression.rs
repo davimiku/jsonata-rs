@@ -1,6 +1,10 @@
 use crate::evaluate::{Context, EvaluationResult};
 
-use super::{literal::LiteralExpression, path::PathExpression};
+use super::{
+    binary::{EqualsExpression, InclusionExpression},
+    literal::LiteralExpression,
+    path::PathExpression,
+};
 
 // #[derive(PartialEq, Eq, Debug, Clone)]
 // pub enum ExpressionType {
@@ -40,6 +44,9 @@ pub enum Expression {
     Variable(VariableBindingExpression),
 
     Path(PathExpression),
+
+    Equals(EqualsExpression),
+    Includes(InclusionExpression),
 }
 
 impl Expression {
@@ -48,6 +55,8 @@ impl Expression {
             Expression::Literal(expr) => expr.evaluate(context),
             Expression::Variable(expr) => expr.evaluate(context),
             Expression::Path(expr) => expr.evaluate(context),
+            Expression::Equals(expr) => expr.evaluate(context),
+            Expression::Includes(expr) => expr.evaluate(context),
         }
     }
 }
@@ -67,6 +76,18 @@ impl From<VariableBindingExpression> for Expression {
 impl From<PathExpression> for Expression {
     fn from(expr: PathExpression) -> Self {
         Expression::Path(expr)
+    }
+}
+
+impl From<EqualsExpression> for Expression {
+    fn from(expr: EqualsExpression) -> Self {
+        Expression::Equals(expr)
+    }
+}
+
+impl From<InclusionExpression> for Expression {
+    fn from(expr: InclusionExpression) -> Self {
+        Expression::Includes(expr)
     }
 }
 
