@@ -64,65 +64,25 @@ type Res<T, U> = IResult<T, U, VerboseError<T>>;
 #[cfg(test)]
 mod tests {
 
+    use crate::ast::{expression::VariableBindingExpression, literal::LiteralExpression};
+
     use super::*;
 
-    use nom::{
-        error::{ErrorKind, VerboseError, VerboseErrorKind},
-        Err as NomErr,
-    };
-
-    // #[test]
-    // fn one_level_path() {
-    //     let input = "name";
-    //     let mut parser = make_parser(input);
-    //     parser.advance(); // simulate first token already processed
-
-    //     let actual = parser.parse_path(&input.to_string()).unwrap();
-    //     let expected = PathExpression {
-    //         ident: "name".to_string(),
-    //         member: None,
-    //     };
-    //     assert_eq!(actual, expected);
-    // }
-
-    // #[test]
-    // fn two_level_path() {
-    //     let input = "address.city";
-    //     let mut parser = make_parser(input);
-    //     parser.advance(); // simulate first token already processed
-
-    //     let actual = parser.parse_path(&"address".to_string()).unwrap();
-
-    //     let expected = PathExpression {
-    //         ident: "address".to_string(),
-    //         member: Some(Box::new(PathExpression {
-    //             ident: "city".to_string(),
-    //             member: None,
-    //         })),
-    //     };
-
-    //     assert_eq!(actual, expected);
-    // }
-
-    // #[test]
-    // fn three_level_path() {
-    //     let input = "address.location.latitude";
-    //     let mut parser = make_parser(input);
-    //     parser.advance(); // simulate first token already processed
-
-    //     let actual = parser.parse_path(&"address".to_string()).unwrap();
-
-    //     let expected = PathExpression {
-    //         ident: "address".to_string(),
-    //         member: Some(Box::new(PathExpression {
-    //             ident: "location".to_string(),
-    //             member: Some(Box::new(PathExpression {
-    //                 ident: "latitude".to_string(),
-    //                 member: None,
-    //             })),
-    //         })),
-    //     };
-
-    //     assert_eq!(actual, expected);
-    // }
+    // use nom::{
+    //     error::{ErrorKind, VerboseError, VerboseErrorKind},
+    //     Err as NomErr,
+    // };
+    #[test]
+    fn expression_parser<'a>() {
+        let input = "$myvar := false";
+        let res = parse(input);
+        assert_eq!(
+            res.unwrap(),
+            VariableBindingExpression {
+                var_name: "myvar".to_string(),
+                bound_expression: Box::new(Expression::Literal(LiteralExpression::from(false)))
+            }
+            .into()
+        )
+    }
 }
