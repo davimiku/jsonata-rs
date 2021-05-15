@@ -1,3 +1,4 @@
+mod binary;
 mod expr;
 mod ident;
 mod literal;
