@@ -37,6 +37,12 @@ impl From<LiteralValue> for LiteralExpression {
     }
 }
 
+impl From<()> for LiteralExpression {
+    fn from(val: ()) -> Self {
+        LiteralExpression { val: val.into() }
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum LiteralValue {
     Integer(i64),
@@ -84,5 +90,12 @@ impl From<bool> for LiteralValue {
     /// Convert from a bool to a LiteralValue
     fn from(b: bool) -> Self {
         LiteralValue::Bool(b)
+    }
+}
+
+impl From<()> for LiteralValue {
+    /// Convert from an empty tuple (representing null)
+    fn from(_: ()) -> Self {
+        LiteralValue::Null
     }
 }
