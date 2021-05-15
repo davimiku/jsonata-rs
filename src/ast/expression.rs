@@ -1,7 +1,7 @@
 use crate::evaluate::{Context, EvaluationResult};
 
 use super::{
-    binary::{EqualsExpression, InclusionExpression},
+    binary::{CompareExpression, InclusionExpression},
     literal::LiteralExpression,
     path::PathExpression,
 };
@@ -45,7 +45,7 @@ pub enum Expression {
 
     Path(PathExpression),
 
-    Equals(EqualsExpression),
+    Compare(CompareExpression),
     Includes(InclusionExpression),
 }
 
@@ -55,7 +55,7 @@ impl Expression {
             Expression::Literal(expr) => expr.evaluate(context),
             Expression::Variable(expr) => expr.evaluate(context),
             Expression::Path(expr) => expr.evaluate(context),
-            Expression::Equals(expr) => expr.evaluate(context),
+            Expression::Compare(expr) => expr.evaluate(context),
             Expression::Includes(expr) => expr.evaluate(context),
         }
     }
@@ -79,9 +79,9 @@ impl From<PathExpression> for Expression {
     }
 }
 
-impl From<EqualsExpression> for Expression {
-    fn from(expr: EqualsExpression) -> Self {
-        Expression::Equals(expr)
+impl From<CompareExpression> for Expression {
+    fn from(expr: CompareExpression) -> Self {
+        Expression::Compare(expr)
     }
 }
 
