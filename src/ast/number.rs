@@ -2,7 +2,10 @@
 //! to be PartialEq and PartialOrd
 
 use core::f64;
-use std::{cmp::Ordering, ops::Add};
+use std::{
+    cmp::Ordering,
+    ops::{Add, Neg, Sub},
+};
 
 use serde_json::Number;
 
@@ -152,6 +155,26 @@ impl Add for JSONataNumber {
             (JSONataNumber::PosInt(u), JSONataNumber::Float(f)) => (f + u as f64).into(),
             (JSONataNumber::Float(f), JSONataNumber::NegInt(i)) => (f + i as f64).into(),
             (JSONataNumber::Float(f), JSONataNumber::PosInt(u)) => (f + u as f64).into(),
+        }
+    }
+}
+
+impl Sub for JSONataNumber {
+    type Output = JSONataNumber;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        self + (-rhs)
+    }
+}
+
+impl Neg for JSONataNumber {
+    type Output = JSONataNumber;
+
+    fn neg(self) -> Self::Output {
+        match self {
+            JSONataNumber::NegInt(i) => JSONataNumber::from(-i),
+            JSONataNumber::PosInt(u) => JSONataNumber::from(-(u as i64)),
+            JSONataNumber::Float(f) => JSONataNumber::from(-f),
         }
     }
 }
