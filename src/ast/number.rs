@@ -293,4 +293,55 @@ mod tests {
             JSONataNumber::from(2.8) + JSONataNumber::from(5_u64)
         );
     }
+
+    #[test]
+    fn sub() {
+        assert_eq!(
+            // u64 - u64
+            JSONataNumber::from(-1_i64),
+            JSONataNumber::from(2_u64) - JSONataNumber::from(3_u64)
+        );
+        assert_eq!(
+            // i64 - i64
+            JSONataNumber::from(1_u64),
+            JSONataNumber::from(-2_i64) - JSONataNumber::from(-3_i64)
+        );
+        assert_eq!(
+            // f64 - f64
+            JSONataNumber::from(-0.5),
+            JSONataNumber::from(2.5) - JSONataNumber::from(3)
+        );
+
+        assert_eq!(
+            // i64 - u64
+            JSONataNumber::from(-9_i64),
+            JSONataNumber::from(-2_i64) - JSONataNumber::from(7_u64)
+        );
+        assert_eq!(
+            // u64 - i64
+            JSONataNumber::from(9_u64),
+            JSONataNumber::from(2_u64) - JSONataNumber::from(-7_i64)
+        );
+
+        assert_eq!(
+            // i64 - f64
+            JSONataNumber::from(-9.6),
+            JSONataNumber::from(-2_i64) - JSONataNumber::from(7.6)
+        );
+        assert_eq!(
+            // u64 - f64
+            JSONataNumber::from(-4.3),
+            JSONataNumber::from(3_u64) - JSONataNumber::from(7.3)
+        );
+        assert_eq!(
+            // f64 - i64
+            JSONataNumber::from(7.1),
+            JSONataNumber::from(2.1) - JSONataNumber::from(-5_i64)
+        );
+        assert_eq!(
+            // f64 - u64
+            JSONataNumber::from(-2.2),
+            JSONataNumber::from(2.8) - JSONataNumber::from(5_u64)
+        );
+    }
 }
