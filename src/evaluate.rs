@@ -4,16 +4,16 @@ use std::collections::HashMap;
 
 use serde_json::Value;
 
-/// AST nodes implement this trait to be run by the interpreter
-pub trait Evaluatable {
-    /// Runs this AST node
-    fn evaluate(&self, context: &mut Context) -> EvaluationResult;
-}
-
 pub type EvaluationResult = Result<Option<Value>, EvaluationError>;
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub enum EvaluationError {
+    /// The values {} and {} on either side of operator "{}" must be of the same data type
+    BinaryInconsistentDataType(Value, Value, String),
+
+    /// The expressions on either side of operator "{}" must evaluate to numeric or string values
+    BinaryInvalidDataType(String),
+
     NotImplemented, // FIXME: implement
 }
 
