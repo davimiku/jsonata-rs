@@ -7,7 +7,7 @@ use std::cmp::Ordering;
 use serde_json::Number;
 
 #[derive(Clone, Debug)]
-pub(super) enum JSONataNumber {
+pub(crate) enum JSONataNumber {
     NegInt(i64),
     PosInt(u64),
     Float(f64),
@@ -49,9 +49,29 @@ impl From<u64> for JSONataNumber {
     }
 }
 
+impl From<u32> for JSONataNumber {
+    fn from(u: u32) -> Self {
+        JSONataNumber::PosInt(u as u64)
+    }
+}
+
 impl From<i64> for JSONataNumber {
     fn from(i: i64) -> Self {
-        JSONataNumber::NegInt(i)
+        if i < 0 {
+            JSONataNumber::NegInt(i)
+        } else {
+            JSONataNumber::PosInt(i as u64)
+        }
+    }
+}
+
+impl From<i32> for JSONataNumber {
+    fn from(i: i32) -> Self {
+        if i < 0 {
+            JSONataNumber::NegInt(i as i64)
+        } else {
+            JSONataNumber::PosInt(i as u64)
+        }
     }
 }
 
