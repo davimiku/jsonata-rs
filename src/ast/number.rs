@@ -2,7 +2,7 @@
 //! to be PartialEq and PartialOrd
 
 use core::f64;
-use std::cmp::Ordering;
+use std::{cmp::Ordering, ops::Add};
 
 use serde_json::Number;
 
@@ -14,32 +14,31 @@ pub(crate) enum JSONataNumber {
 }
 
 impl JSONataNumber {
-    pub fn new(n: Number) -> Self {
-        match (n.is_i64(), n.is_u64(), n.is_f64()) {
-            // NegInt -- i64
-            (true, false, false) => JSONataNumber::NegInt(n.as_i64().unwrap()),
-
-            // PosInt -- u64
-            (false, true, false) => JSONataNumber::PosInt(n.as_u64().unwrap()),
-
-            // Float -- f64
-            (false, false, true) => JSONataNumber::Float(n.as_f64().unwrap()),
-
-            // serde_json guarantees this case is unreachable
-            (_, _, _) => unreachable!(),
+    pub fn from_serde_number(n: Number) -> Self {
+        if n.is_u64() {
+            JSONataNumber::PosInt(n.as_u64().unwrap())
+        } else if n.is_i64() {
+            JSONataNumber::NegInt(n.as_i64().unwrap())
+        } else if n.is_f64() {
+            JSONataNumber::Float(n.as_f64().unwrap())
+        } else {
+            // serde_json guarantees Number will be one of these variants
+            // Number has a private internal field (enum N) that is only
+            // these three variants PosInt, NegInt, Float
+            unreachable!()
         }
     }
 }
 
 impl From<Number> for JSONataNumber {
     fn from(n: Number) -> Self {
-        JSONataNumber::new(n)
+        JSONataNumber::from_serde_number(n)
     }
 }
 
 impl From<&Number> for JSONataNumber {
     fn from(n: &Number) -> Self {
-        JSONataNumber::new(n.clone())
+        JSONataNumber::from_serde_number(n.clone())
     }
 }
 
@@ -137,6 +136,26 @@ impl PartialOrd for JSONataNumber {
     }
 }
 
+impl Add for JSONataNumber {
+    type Output = JSONataNumber;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (JSONataNumber::NegInt(a), JSONataNumber::NegInt(b)) => (a + b).into(),
+            (JSONataNumber::PosInt(a), JSONataNumber::PosInt(b)) => (a + b).into(),
+            (JSONataNumber::Float(a), JSONataNumber::Float(b)) => (a + b).into(),
+
+            (JSONataNumber::NegInt(i), JSONataNumber::PosInt(u)) => (i + u as i64).into(),
+            (JSONataNumber::PosInt(u), JSONataNumber::NegInt(i)) => (i + u as i64).into(),
+
+            (JSONataNumber::NegInt(i), JSONataNumber::Float(f)) => (f + i as f64).into(),
+            (JSONataNumber::PosInt(u), JSONataNumber::Float(f)) => (f + u as f64).into(),
+            (JSONataNumber::Float(f), JSONataNumber::NegInt(i)) => (f + i as f64).into(),
+            (JSONataNumber::Float(f), JSONataNumber::PosInt(u)) => (f + u as f64).into(),
+        }
+    }
+}
+
 impl JSONataNumber {
     fn compare_f64_and_u64(f: f64, u: u64) -> Option<Ordering> {
         if u < (f64::MAX as u64) {
@@ -199,5 +218,56 @@ mod tests {
 
         assert!(JSONataNumber::from(i64::MIN + 1) > JSONataNumber::from(f64::MIN + 1.0));
         assert!(!(JSONataNumber::from(f64::MIN + 1.0) > JSONataNumber::from(i64::MIN + 1)));
+    }
+
+    #[test]
+    fn add() {
+        assert_eq!(
+            // u64 + u64
+            JSONataNumber::from(5_u64),
+            JSONataNumber::from(2_u64) + JSONataNumber::from(3_u64)
+        );
+        assert_eq!(
+            // i64 + i64
+            JSONataNumber::from(-5_i64),
+            JSONataNumber::from(-2_i64) + JSONataNumber::from(-3_i64)
+        );
+        assert_eq!(
+            // f64 + f64
+            JSONataNumber::from(6.0),
+            JSONataNumber::from(2.7) + JSONataNumber::from(3.3)
+        );
+
+        assert_eq!(
+            // i64 + u64
+            JSONataNumber::from(5_u64),
+            JSONataNumber::from(-2_i64) + JSONataNumber::from(7_u64)
+        );
+        assert_eq!(
+            // u64 + i64
+            JSONataNumber::from(-5_i64),
+            JSONataNumber::from(2_u64) + JSONataNumber::from(-7_i64)
+        );
+
+        assert_eq!(
+            // i64 + f64
+            JSONataNumber::from(5.6),
+            JSONataNumber::from(-2_i64) + JSONataNumber::from(7.6)
+        );
+        assert_eq!(
+            // u64 + f64
+            JSONataNumber::from(10.3),
+            JSONataNumber::from(3_u64) + JSONataNumber::from(7.3)
+        );
+        assert_eq!(
+            // f64 + i64
+            JSONataNumber::from(-2.9),
+            JSONataNumber::from(2.1) + JSONataNumber::from(-5_i64)
+        );
+        assert_eq!(
+            // f64 + u64
+            JSONataNumber::from(7.8),
+            JSONataNumber::from(2.8) + JSONataNumber::from(5_u64)
+        );
     }
 }
