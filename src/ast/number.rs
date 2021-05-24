@@ -4,12 +4,12 @@
 use core::f64;
 use std::{
     cmp::Ordering,
-    ops::{Add, Neg, Sub},
+    ops::{Add, Mul, Neg, Sub},
 };
 
 use serde_json::Number;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub(crate) enum JSONataNumber {
     NegInt(i64),
     PosInt(u64),
@@ -164,6 +164,26 @@ impl Sub for JSONataNumber {
 
     fn sub(self, rhs: Self) -> Self::Output {
         self + (-rhs)
+    }
+}
+
+impl Mul for JSONataNumber {
+    type Output = JSONataNumber;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (JSONataNumber::NegInt(a), JSONataNumber::NegInt(b)) => (a * b).into(),
+            (JSONataNumber::PosInt(a), JSONataNumber::PosInt(b)) => (a * b).into(),
+            (JSONataNumber::Float(a), JSONataNumber::Float(b)) => (a * b).into(),
+
+            (JSONataNumber::NegInt(i), JSONataNumber::PosInt(u)) => (i * u as i64).into(),
+            (JSONataNumber::PosInt(u), JSONataNumber::NegInt(i)) => (i * u as i64).into(),
+
+            (JSONataNumber::NegInt(i), JSONataNumber::Float(f)) => (f * i as f64).into(),
+            (JSONataNumber::PosInt(u), JSONataNumber::Float(f)) => (f * u as f64).into(),
+            (JSONataNumber::Float(f), JSONataNumber::NegInt(i)) => (f * i as f64).into(),
+            (JSONataNumber::Float(f), JSONataNumber::PosInt(u)) => (f * u as f64).into(),
+        }
     }
 }
 
