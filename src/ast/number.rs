@@ -1,10 +1,12 @@
-//! Define a custom number type JSONataNumber
-//! to be PartialEq and PartialOrd
+//! This crate contains the definition and implementation
+//! of `JSONataNumber`, which can be used for some operations
+//! that `serde_json::Number` does not support, including
+//! comparisons and mathematical operations.
 
 use core::f64;
 use std::{
     cmp::Ordering,
-    ops::{Add, Mul, Neg, Sub},
+    ops::{Add, Div, Mul, Neg, Rem, Sub},
 };
 
 use serde_json::Number;
@@ -187,6 +189,47 @@ impl Mul for JSONataNumber {
     }
 }
 
+impl Div for JSONataNumber {
+    type Output = JSONataNumber;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (JSONataNumber::NegInt(a), JSONataNumber::NegInt(b)) => ((a / b) as f64).into(),
+            (JSONataNumber::PosInt(a), JSONataNumber::PosInt(b)) => ((a / b) as f64).into(),
+            (JSONataNumber::Float(a), JSONataNumber::Float(b)) => ((a / b) as f64).into(),
+
+            (JSONataNumber::NegInt(i), JSONataNumber::PosInt(u)) => ((i / u as i64) as f64).into(),
+            (JSONataNumber::PosInt(u), JSONataNumber::NegInt(i)) => ((i / u as i64) as f64).into(),
+
+            (JSONataNumber::NegInt(i), JSONataNumber::Float(f)) => (f / i as f64).into(),
+            (JSONataNumber::PosInt(u), JSONataNumber::Float(f)) => (f / u as f64).into(),
+            (JSONataNumber::Float(f), JSONataNumber::NegInt(i)) => (f / i as f64).into(),
+            (JSONataNumber::Float(f), JSONataNumber::PosInt(u)) => (f / u as f64).into(),
+        }
+    }
+}
+
+impl Rem for JSONataNumber {
+    type Output = JSONataNumber;
+
+    // FIXME: Understand remainder operator and how it works with negative numbers, and how to round
+    fn rem(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (JSONataNumber::NegInt(_), JSONataNumber::NegInt(_)) => JSONataNumber::from(0), // TODO:
+            (JSONataNumber::PosInt(a), JSONataNumber::PosInt(b)) => (a % b).into(),
+            (JSONataNumber::Float(_), JSONataNumber::Float(_)) => JSONataNumber::from(0), // TODO:
+
+            (JSONataNumber::NegInt(_), JSONataNumber::PosInt(_)) => JSONataNumber::from(0), // TODO:
+            (JSONataNumber::PosInt(_), JSONataNumber::NegInt(_)) => JSONataNumber::from(0), // TODO:
+
+            (JSONataNumber::NegInt(_), JSONataNumber::Float(_)) => JSONataNumber::from(0), // TODO:
+            (JSONataNumber::PosInt(_), JSONataNumber::Float(_)) => JSONataNumber::from(0), // TODO:
+            (JSONataNumber::Float(_), JSONataNumber::NegInt(_)) => JSONataNumber::from(0), // TODO:
+            (JSONataNumber::Float(_), JSONataNumber::PosInt(_)) => JSONataNumber::from(0), // TODO:
+        }
+    }
+}
+
 impl Neg for JSONataNumber {
     type Output = JSONataNumber;
 
@@ -363,5 +406,29 @@ mod tests {
             JSONataNumber::from(-2.2),
             JSONataNumber::from(2.8) - JSONataNumber::from(5_u64)
         );
+    }
+
+    #[test]
+    fn mul() {
+        assert_eq!(
+            JSONataNumber::from(8_u64),
+            JSONataNumber::from(2_u64) * JSONataNumber::from(4_u64)
+        );
+        // TODO: Add more tests
+    }
+
+    #[test]
+    fn div() {
+        assert!(true);
+        // TODO: Add tests
+    }
+
+    #[test]
+    fn rem() {
+        assert_eq!(
+            JSONataNumber::from(1_u64),
+            JSONataNumber::from(7_u64) % JSONataNumber::from(3_u64)
+        );
+        // TODO: Add tests
     }
 }
