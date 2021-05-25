@@ -1,11 +1,11 @@
 //! Binary expression AST representation
 //!
 
-use serde_json::Value;
+use serde_json::{Number, Value};
 
-use crate::evaluate::{Context, EvaluationResult};
+use crate::evaluate::{Context, EvaluationError, EvaluationResult};
 
-use super::expression::Expression;
+use super::{expression::Expression, number::JSONataNumber, value::JSONataValue};
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct CompareExpression {
@@ -20,8 +20,8 @@ enum CompareType {
     NotEquals,
     Greater,
     GreaterEquals,
-    Lesser,
-    LesserEquals,
+    Less,
+    LessEquals,
 }
 
 impl CompareExpression {
@@ -34,8 +34,8 @@ impl CompareExpression {
             CompareType::NotEquals => CompareExpression::not_equals(lhs, rhs),
             CompareType::Greater => CompareExpression::greater(lhs, rhs),
             CompareType::GreaterEquals => CompareExpression::greater_equals(lhs, rhs),
-            CompareType::Lesser => CompareExpression::lesser(lhs, rhs),
-            CompareType::LesserEquals => CompareExpression::lesser_equals(lhs, rhs),
+            CompareType::Less => CompareExpression::less(lhs, rhs),
+            CompareType::LessEquals => CompareExpression::less_equals(lhs, rhs),
         }
     }
 
@@ -47,6 +47,7 @@ impl CompareExpression {
     /// Otherwise, deep equality is tested.
     ///
     /// This operation cannot error at runtime TODO: I think?
+    /// FIXME: use JSONataNumber for numeric comparisons
     fn equals(lhs: Option<Value>, rhs: Option<Value>) -> EvaluationResult {
         if lhs.is_none() || rhs.is_none() {
             Ok(Some(false.into()))
@@ -75,16 +76,31 @@ impl CompareExpression {
     /// Tests if the left-hand side is greater than the right-hand side.
     ///
     /// If either value is None, the return value is None.
+    /// TODO: Would we rather have an error here?
     ///
     /// The lhs and rhs must both be numbers or both be strings, otherwise a runtime error
     /// is thrown.
     fn greater(lhs: Option<Value>, rhs: Option<Value>) -> EvaluationResult {
-        todo!()
+        match (lhs, rhs) {
+            (None, None) => Ok(None),
+            (None, Some(_)) => Ok(None),
+            (Some(_), None) => Ok(None),
+            (Some(l), Some(r)) => match (l, r) {
+                (Value::Number(a), Value::Number(b)) => {
+                    let j_num_lhs: JSONataNumber = a.into();
+                    let j_num_rhs: JSONataNumber = b.into();
+                    Ok(Some((j_num_lhs > j_num_rhs).into()))
+                }
+                (Value::String(a), Value::String(b)) => Ok(Some((a > b).into())),
+                (_, _) => Err(EvaluationError::BinaryInvalidDataType(">".into())),
+            },
+        }
     }
 
     /// Tests if the left-hand side is greater than or equal to right-hand side.
     ///
     /// If either value is None, the return value is None.
+    /// TODO: Would we rather have an error here?
     ///
     /// The lhs and rhs must both be numbers or both be strings, otherwise a runtime error
     /// is thrown.
@@ -95,20 +111,22 @@ impl CompareExpression {
     /// Tests if the left-hand side is lesser than the right-hand side.
     ///
     /// If either value is None, the return value is None.
+    /// TODO: Would we rather have an error here?
     ///
     /// The lhs and rhs must both be numbers or both be strings, otherwise a runtime error
     /// is thrown.
-    fn lesser(lhs: Option<Value>, rhs: Option<Value>) -> EvaluationResult {
+    fn less(lhs: Option<Value>, rhs: Option<Value>) -> EvaluationResult {
         todo!()
     }
 
     /// Tests if the left-hand side is lesser than or equal to right-hand side.
     ///
     /// If either value is None, the return value is None.
+    /// TODO: Would we rather have an error here?
     ///
     /// The lhs and rhs must both be numbers or both be strings, otherwise a runtime error
     /// is thrown.
-    fn lesser_equals(lhs: Option<Value>, rhs: Option<Value>) -> EvaluationResult {
+    fn less_equals(lhs: Option<Value>, rhs: Option<Value>) -> EvaluationResult {
         todo!()
     }
 }
@@ -169,14 +187,31 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test() {
+        let a = Value::Number(5.into());
+        println!("{}", a.is_i64());
+        println!("{}", a.is_u64());
+        println!("{}", a.is_number());
+    }
+
+    #[test]
     fn equals() {
-        let mut context = Context::default();
-        let expr = CompareExpression {
-            lhs: Box::new(LiteralExpression::from("test").into()),
-            rhs: Box::new(LiteralExpression::from("test").into()),
-            compare_type: CompareType::Equals,
-        };
-        assert_eq!(Ok(Some(Value::Bool(true))), expr.evaluate(&mut context));
+        assert_eq!(
+            Ok(Some(true.into())),
+            CompareExpression::equals(Some(json!("test")), Some(json!("test"))),
+        );
+        assert_eq!(
+            Ok(Some(true.into())),
+            CompareExpression::equals(Some(json!(1)), Some(json!(1))),
+        );
+        assert_eq!(
+            Ok(Some(true.into())),
+            CompareExpression::equals(Some(json!(1.0)), Some(json!(1))),
+        );
+        assert_eq!(
+            Ok(Some(true.into())),
+            CompareExpression::equals(Some(json!(-2)), Some(json!(-2))),
+        );
     }
 
     #[test]
@@ -198,5 +233,45 @@ mod tests {
         let lhs: Option<Value> = None;
         let rhs: Option<Value> = None;
         assert_eq!(Ok(Some(false.into())), CompareExpression::equals(lhs, rhs));
+    }
+
+    #[test]
+    fn greater_num() {
+        assert_eq!(
+            Ok(Some(json!(true))),
+            CompareExpression::greater(Some(json!(4)), Some(json!(3))),
+        );
+        assert_eq!(
+            Ok(Some(json!(true))),
+            CompareExpression::greater(Some(json!(4)), Some(json!(-3))),
+        );
+        assert_eq!(
+            Ok(Some(json!(true))),
+            CompareExpression::greater(Some(json!(4.2)), Some(json!(4.1))),
+        );
+        assert_eq!(
+            Ok(Some(json!(false))),
+            CompareExpression::greater(Some(json!(3)), Some(json!(4))),
+        );
+        assert_eq!(
+            Ok(Some(json!(false))),
+            CompareExpression::greater(Some(json!(-3)), Some(json!(4))),
+        );
+        assert_eq!(
+            Ok(Some(json!(false))),
+            CompareExpression::greater(Some(json!(4.1)), Some(json!(4.2))),
+        );
+    }
+
+    #[test]
+    fn greater_string() {
+        assert!(true);
+        // TODO:
+    }
+
+    #[test]
+    fn greater_invalid_datatype() {
+        assert!(true);
+        // TODO:
     }
 }
