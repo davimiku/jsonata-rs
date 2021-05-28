@@ -4,7 +4,7 @@ use crate::evaluate::EvaluationError;
 
 use self::number::JSONataNumber;
 
-mod number;
+pub(crate) mod number;
 
 pub struct JSONataValue(Value);
 

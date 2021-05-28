@@ -2,7 +2,7 @@ use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 
 use serde_json::{Number, Value};
 
-pub struct JSONataNumber(Number);
+pub(crate) struct JSONataNumber(Number);
 
 #[derive(Debug, Clone, Copy)]
 enum NType {
