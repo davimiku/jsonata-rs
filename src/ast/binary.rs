@@ -63,7 +63,7 @@ impl Display for BinaryOpType {
 
 impl CompareExpression {
     /// Evaluate a Equals expression for whether the two expressions are equal
-    pub fn evaluate(&self, context: &mut Context) -> EvaluationResult {
+    pub(super) fn evaluate(&self, context: &mut Context) -> EvaluationResult {
         let lhs = self.lhs.evaluate(context)?;
         let rhs = self.rhs.evaluate(context)?;
         match self.compare_type {
@@ -182,7 +182,7 @@ pub struct InclusionExpression {
 
 impl InclusionExpression {
     /// Evaluate whether the lhs value is included in the rhs value
-    pub fn evaluate(&self, context: &mut Context) -> EvaluationResult {
+    pub(super) fn evaluate(&self, context: &mut Context) -> EvaluationResult {
         let res = InclusionExpression::is_included(
             self.lhs.evaluate(context)?,
             self.rhs.evaluate(context)?,
