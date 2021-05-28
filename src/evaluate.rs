@@ -11,10 +11,11 @@ pub enum EvaluationError {
     /// The values {} and {} on either side of operator "{}" must be of the same data type
     BinaryInconsistentDataType(Value, Value, String),
 
-    /// The expressions on either side of operator "{}" must evaluate to numeric or string values
-    BinaryInvalidDataType(String),
+    /// The expressions on either side of operator "{}" must evaluate to numeric values
+    BinaryMustBeNumber(String),
 
-    NotImplemented, // FIXME: implement
+    /// The expressions on either side of operator "{}" must evaluate to numeric or string values
+    BinaryMustBeNumberOrString(String),
 }
 
 #[derive(Debug)]
