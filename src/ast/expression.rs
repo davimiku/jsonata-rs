@@ -2,6 +2,7 @@ use crate::evaluate::{Context, EvaluationResult};
 
 use super::{
     binary::{CompareExpression, InclusionExpression},
+    concat::ConcatExpression,
     literal::LiteralExpression,
     path::PathExpression,
 };
@@ -37,7 +38,7 @@ use super::{
 //     Transform,
 // }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum Expression {
     Literal(LiteralExpression),
 
@@ -46,6 +47,7 @@ pub enum Expression {
     Path(PathExpression),
 
     Compare(CompareExpression),
+    Concat(ConcatExpression),
     Includes(InclusionExpression),
 }
 
@@ -56,6 +58,7 @@ impl Expression {
             Expression::Variable(expr) => expr.evaluate(context),
             Expression::Path(expr) => expr.evaluate(context),
             Expression::Compare(expr) => expr.evaluate(context),
+            Expression::Concat(expr) => expr.evaluate(context),
             Expression::Includes(expr) => expr.evaluate(context),
         }
     }
@@ -91,7 +94,13 @@ impl From<InclusionExpression> for Expression {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+impl From<ConcatExpression> for Expression {
+    fn from(expr: ConcatExpression) -> Self {
+        Expression::Concat(expr)
+    }
+}
+
+#[derive(Debug, PartialEq)]
 pub struct VariableBindingExpression {
     pub var_name: String,
     pub bound_expression: Box<Expression>,
