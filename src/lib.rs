@@ -9,6 +9,7 @@ mod evaluate;
 mod parser;
 #[cfg(test)]
 mod tests;
+mod value;
 
 // TODO: Make a custom error type for this crate
 // that can be converted from nom::Err
