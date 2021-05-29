@@ -2,56 +2,74 @@
 //!
 //! - variable binding expression var_name: (), bound_expression: () var_name: (), bound_expression: () var_name: (), bound_expression: ()
 
+use std::num::ParseIntError;
+
 use nom::{
     branch::alt,
     bytes::complete::tag,
     combinator::map,
     error::{FromExternalError, ParseError},
-    multi::separated_list1,
     sequence::separated_pair,
     IResult,
 };
 
 use crate::ast::{
-    expression::{Expression, VariableBindingExpression},
-    path::PathExpression,
+    expr::{Expression, VariableBindingExpression},
+    path::{MapExpression, PathExpression},
 };
 
 use super::{
     ident::{path_ident, variable_ident},
-    literal::literal_expression,
+    literal::literal_expr,
     trim,
 };
 
-/// Path expressions represent a location in the parsed JSON
-/// to query from.
+/// Map expression
+///
+/// The Map expression is part of the family of path operators and is
+/// a dyadic expression with the LHS evaluated and passed as the context to the
+/// RHS.
 ///
 /// ```
 /// Account.Name
 /// ```
 ///
-/// The path expression above is the ident "Account", which
-/// also has a "member" expression for the ident "Name". The
-/// "Name" expression has no more member path expression.
-fn path<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, Expression, E> {
-    map(separated_list1(tag("."), path_ident), |v| {
-        let first_ident = match v.get(0) {
-            Some(s) => *s,
-            None => "", // FIXME: Can this scenario ever happen? Can separated_list1 yield a zero-element vec? (I don't think so)
-        };
+/// This operator is left associative meaning that the expression a.b.c.d
+/// is evaluated like ((a.b).c).d; i.e. left to right
+fn map_expr<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
+where
+    E: ParseError<&'a str> + FromExternalError<&'a str, ParseIntError>,
+{
+    map(separated_pair(expr, tag("."), expr), |(lhs, rhs)| {
+        MapExpression {
+            lhs: Box::new(lhs),
+            rhs: Box::new(rhs),
+        }
+        .into()
+    })(input)
+}
 
-        let first_expr = PathExpression {
-            ident: first_ident.to_string(),
-            member: None,
-        };
-        let final_expr = v.into_iter().skip(1).fold(first_expr, |mut acc, el| {
-            acc.member = Some(Box::new(PathExpression {
-                ident: el.to_string(),
-                member: None,
-            }));
-            acc
-        });
-        Expression::Path(final_expr)
+/// Path expressions represent a location in the parsed JSON
+/// to query from.
+///
+/// ```
+/// Account
+/// ```
+///
+/// ```
+/// `Hello World`
+/// ```
+///
+/// The path expression is either a non-delimited sequence of alphanumeric
+/// (such as Account), where the first character must be alphabetic. Alternatively,
+/// backticks can delimit the expression (such as `Hello World`) which is often used
+/// when there is a space or other character in the identifier.
+fn path_expr<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, Expression, E> {
+    map(path_ident, |ident| {
+        PathExpression {
+            ident: ident.to_string(),
+        }
+        .into()
     })(input)
 }
 
@@ -62,16 +80,17 @@ fn path<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, Expressi
 /// $my_var := "hello, world"  // also returns "hello, world"
 /// ```
 ///
-fn variable_binding<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
+fn variable_binding_expr<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
 where
     E: ParseError<&'a str> + FromExternalError<&'a str, std::num::ParseIntError>,
 {
-    let parser = separated_pair(variable_ident, trim(tag(":=")), parse_expression);
+    let parser = separated_pair(variable_ident, trim(tag(":=")), expr);
     map(parser, |(s, val)| {
-        Expression::Variable(VariableBindingExpression {
+        VariableBindingExpression {
             var_name: s.to_string(),
             bound_expression: Box::new(val),
-        })
+        }
+        .into()
     })(input)
 }
 
@@ -79,11 +98,11 @@ where
 ///
 /// Calls each of the other parsers in order until a parser
 /// yiels success, or returns a ParseError
-pub(super) fn parse_expression<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
+pub(super) fn expr<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
 where
     E: ParseError<&'a str> + FromExternalError<&'a str, std::num::ParseIntError>,
 {
-    alt((literal_expression, variable_binding))(input)
+    alt((path_expr, literal_expr, variable_binding_expr))(input)
 }
 
 #[cfg(test)]
@@ -95,49 +114,47 @@ mod tests {
     use super::*;
 
     #[test]
-    fn path_one_level() {
+    fn path_expr_non_delimited() {
         let input = "name";
-        let actual = path::<(&str, ErrorKind)>(input).unwrap().1;
+        let actual = path_expr::<(&str, ErrorKind)>(input).unwrap().1;
 
         let expected = PathExpression {
             ident: "name".to_string(),
-            member: None,
         }
         .into();
         assert_eq!(actual, expected);
     }
 
     #[test]
-    fn path_two_levels() {
+    fn path_expr_delimited() {
+        let input = "`hello world`";
+        let actual = path_expr::<(&str, ErrorKind)>(input).unwrap().1;
+
+        let expected = PathExpression {
+            ident: "hello world".to_string(),
+        }
+        .into();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn map_expr_simple() {
         let input = "address.city";
-        let actual = path::<(&str, ErrorKind)>(input).unwrap().1;
+        let actual = map_expr::<(&str, ErrorKind)>(input).unwrap().1;
 
-        let expected = PathExpression {
-            ident: "address".to_string(),
-            member: Some(Box::new(PathExpression {
-                ident: "city".to_string(),
-                member: None,
-            })),
-        }
-        .into();
-
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn path_three_levels() {
-        let input = "address.location.latitude";
-        let actual = path::<(&str, ErrorKind)>(input).unwrap().1;
-
-        let expected = PathExpression {
-            ident: "address".to_string(),
-            member: Some(Box::new(PathExpression {
-                ident: "location".to_string(),
-                member: Some(Box::new(PathExpression {
-                    ident: "latitude".to_string(),
-                    member: None,
-                })),
-            })),
+        let expected = MapExpression {
+            lhs: Box::new(
+                PathExpression {
+                    ident: "address".to_string(),
+                }
+                .into(),
+            ),
+            rhs: Box::new(
+                PathExpression {
+                    ident: "city".to_string(),
+                }
+                .into(),
+            ),
         }
         .into();
 
@@ -147,7 +164,7 @@ mod tests {
     #[test]
     fn variable_binding_parser<'a>() {
         let input = "$myvar := true";
-        let res = variable_binding::<(&str, ErrorKind)>(input);
+        let res = variable_binding_expr::<(&str, ErrorKind)>(input);
         assert_eq!(
             res.unwrap().1,
             VariableBindingExpression {
@@ -161,7 +178,7 @@ mod tests {
     #[test]
     fn expression_parser<'a>() {
         let input = "$myvar := null";
-        let res = parse_expression::<(&str, ErrorKind)>(input);
+        let res = expr::<(&str, ErrorKind)>(input);
         assert_eq!(
             res.unwrap().1,
             VariableBindingExpression {
