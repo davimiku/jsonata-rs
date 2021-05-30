@@ -1,6 +1,6 @@
 //! Execution of the Abstract Syntax Tree (AST)
 
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 use serde_json::Value;
 
@@ -24,6 +24,26 @@ pub enum EvaluationError {
     FunctionIncorrectNumArguments(String, usize, usize),
 }
 
+impl Display for EvaluationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EvaluationError::DyadicInconsistentDataType(val1, val2, op) => {
+                f.write_fmt(format_args!("The values '{}' and '{}' on either side of operator '{}' must be of the same data type", val1, val2, op))
+            }
+            EvaluationError::DyadicMustBeNumber(op) => {
+                f.write_fmt(format_args!("The expressions on either side of operator '{}' must evaluate to numeric values", op))
+            }
+            EvaluationError::DyadicMustBeNumberOrString(op) => {
+                f.write_fmt(format_args!("The expressions on either side of operator '{}' must evaluate to numeric or string values", op))
+            }
+            EvaluationError::FunctionInvalidArgument(func_name, arg_num, expected) => {
+                f.write_fmt(format_args!("Function '{}': argument '{}' must be '{}'", func_name, arg_num, expected))
+            }
+            EvaluationError::FunctionIncorrectNumArguments(func_name, num_expected, num_actual) => {
+                f.write_fmt(format_args!("Function '{}': requires '{}' arguments, '{}' were provided", func_name, num_expected, num_actual))
+            }
+        }
+    }
 }
 
 #[derive(Debug)]
