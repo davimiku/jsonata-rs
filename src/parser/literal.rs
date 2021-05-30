@@ -13,7 +13,7 @@ use nom::{
 };
 
 use crate::ast::{
-    expression::Expression,
+    expr::Expression,
     literal::{LiteralExpression, LiteralValue},
 };
 
@@ -32,7 +32,7 @@ fn literal_null<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, 
     value(LiteralValue::Null, tag("null"))(input)
 }
 
-pub(super) fn literal_expression<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
+pub(super) fn literal_expr<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
 where
     E: ParseError<&'a str> + FromExternalError<&'a str, std::num::ParseIntError>,
 {
@@ -71,19 +71,19 @@ mod tests {
     #[test]
     fn literal_expression_parser() {
         assert_eq!(
-            literal_expression::<(&str, ErrorKind)>("true"),
+            literal_expr::<(&str, ErrorKind)>("true"),
             Ok(("", LiteralExpression::from(true).into()))
         );
         assert_eq!(
-            literal_expression::<(&str, ErrorKind)>("false"),
+            literal_expr::<(&str, ErrorKind)>("false"),
             Ok(("", LiteralExpression::from(false).into()))
         );
         assert_eq!(
-            literal_expression::<(&str, ErrorKind)>("null"),
+            literal_expr::<(&str, ErrorKind)>("null"),
             Ok(("", LiteralExpression::from(LiteralValue::Null).into()))
         );
         assert_eq!(
-            literal_expression::<(&str, ErrorKind)>(r#""test""#),
+            literal_expr::<(&str, ErrorKind)>(r#""test""#),
             Ok((
                 "",
                 LiteralExpression::from(LiteralValue::from("test")).into()

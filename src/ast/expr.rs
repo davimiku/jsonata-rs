@@ -3,7 +3,7 @@ use crate::evaluate::{Context, EvaluationResult};
 use super::{
     binary::{CompareExpression, ConcatExpression, InclusionExpression},
     literal::LiteralExpression,
-    path::PathExpression,
+    path::{MapExpression, PathExpression},
 };
 
 // #[derive(PartialEq, Eq, Debug, Clone)]
@@ -43,6 +43,8 @@ pub enum Expression {
 
     Variable(VariableBindingExpression),
 
+    // Related to path operators or path expressions
+    Map(MapExpression),
     Path(PathExpression),
 
     Compare(CompareExpression),
@@ -55,6 +57,7 @@ impl Expression {
         match self {
             Expression::Literal(expr) => expr.evaluate(context),
             Expression::Variable(expr) => expr.evaluate(context),
+            Expression::Map(expr) => expr.evaluate(context),
             Expression::Path(expr) => expr.evaluate(context),
             Expression::Compare(expr) => expr.evaluate(context),
             Expression::Concat(expr) => expr.evaluate(context),
@@ -72,6 +75,12 @@ impl From<LiteralExpression> for Expression {
 impl From<VariableBindingExpression> for Expression {
     fn from(expr: VariableBindingExpression) -> Self {
         Expression::Variable(expr)
+    }
+}
+
+impl From<MapExpression> for Expression {
+    fn from(expr: MapExpression) -> Self {
+        Expression::Map(expr)
     }
 }
 

@@ -8,17 +8,18 @@ use std::boxed::Box;
 use std::error::Error;
 
 use nom::{
-    bytes::complete::is_not,
+    bytes::complete::{is_not, tag, take_until},
     character::complete::space0,
+    combinator::value,
     error::{ErrorKind, ParseError, VerboseError},
-    sequence::delimited,
+    sequence::{delimited, tuple},
     AsChar, Err as NomErr, IResult, InputIter, InputLength, InputTake, InputTakeAtPosition, Parser,
 };
 use nom_locate::LocatedSpan;
 
-use crate::ast::expression::Expression;
+use crate::ast::expr::Expression;
 
-use self::expr::parse_expression;
+use self::expr::expr;
 type Span<'a> = LocatedSpan<&'a str>;
 
 /// Type-erased errors
@@ -34,6 +35,13 @@ where
     <I as InputTakeAtPosition>::Item: AsChar + Clone,
 {
     delimited(space0, parser, space0)
+}
+
+/// Parses a C-Style comment
+///
+/// Comments begin with the `/*` characters and close with the `*/` characters.
+fn comment<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, (), E> {
+    value((), tuple((tag("/*"), take_until("*/"), tag("*/"))))(input)
 }
 
 fn not_whitespace(i: &str) -> IResult<&str, &str> {
@@ -57,7 +65,7 @@ fn transform_escaped(i: &str) -> IResult<&str, std::string::String> {
 }
 
 pub(crate) fn parse(input: &str) -> Result<Expression, NomErr<(&str, ErrorKind)>> {
-    parse_expression(input).map(|(_, ex)| ex)
+    expr(input).map(|(_, ex)| ex)
 }
 
 type Res<T, U> = IResult<T, U, VerboseError<T>>;
@@ -65,7 +73,7 @@ type Res<T, U> = IResult<T, U, VerboseError<T>>;
 #[cfg(test)]
 mod tests {
 
-    use crate::ast::{expression::VariableBindingExpression, literal::LiteralExpression};
+    use crate::ast::{expr::VariableBindingExpression, literal::LiteralExpression};
 
     use super::*;
 
