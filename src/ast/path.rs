@@ -304,9 +304,7 @@ mod tests {
     /// test data for easier processing.
     fn get_orders() -> Value {
         let data = object_data();
-        let path = PathExpression {
-            ident: "orders".to_string(),
-        };
+        let path: PathExpression = "orders".into();
 
         path.get_value(&data).unwrap()
     }
@@ -314,9 +312,7 @@ mod tests {
     #[test]
     fn path_get_primitive() {
         let data = object_data();
-        let path = PathExpression {
-            ident: "name".to_string(),
-        };
+        let path: PathExpression = "name".into();
 
         let actual = path.get_value(&data).unwrap();
         let expected = json!("ACME Corp.");
@@ -327,9 +323,7 @@ mod tests {
     #[test]
     fn path_get_object() {
         let data = object_data();
-        let path = PathExpression {
-            ident: "address".to_string(),
-        };
+        let path: PathExpression = "address".into();
 
         let actual = path.get_value(&data).unwrap();
         let expected = json!({ "street": "Main St." });
@@ -343,9 +337,7 @@ mod tests {
         assert!(orders.is_array());
 
         // Get the ids within the orders
-        let ids_path = PathExpression {
-            ident: "id".to_string(),
-        };
+        let ids_path: PathExpression = "id".into();
         let actual = ids_path.get_value(&orders).unwrap();
         let expected = json!([1, 2]);
 
@@ -356,9 +348,7 @@ mod tests {
     fn path_get_nonexisting_from_array() {
         let orders = get_orders();
 
-        let path = PathExpression {
-            ident: "does_not_exist".to_string(),
-        };
+        let path: PathExpression = "does_not_exist".into();
 
         let actual = path.get_value(&orders);
         assert!(actual.is_none());
