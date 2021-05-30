@@ -15,7 +15,7 @@ use nom::{
 };
 
 use crate::ast::{
-    dyadic::{CompareExpression, CompareType},
+    dyadic::{CompareExpression, CompareOpType},
     expr::{Expression, VariableBindingExpression},
     path::MapExpression,
 };
@@ -84,7 +84,7 @@ where
 /// Parses looking for a comparison operator
 ///
 /// The valid operators are defined in the CompareType enum
-fn comparison_operator<'a, E>(input: &'a str) -> IResult<&'a str, CompareType, E>
+fn comparison_operator<'a, E>(input: &'a str) -> IResult<&'a str, CompareOpType, E>
 where
     E: ParseError<&'a str>,
 {
@@ -98,12 +98,12 @@ where
             tag("="),
         )),
         |s| match s {
-            ">=" => CompareType::GreaterEquals,
-            "<=" => CompareType::LessEquals,
-            "!=" => CompareType::NotEquals,
-            ">" => CompareType::Greater,
-            "<" => CompareType::Less,
-            "=" => CompareType::Equals,
+            ">=" => CompareOpType::GreaterEquals,
+            "<=" => CompareOpType::LessEquals,
+            "!=" => CompareOpType::NotEquals,
+            ">" => CompareOpType::Greater,
+            "<" => CompareOpType::Less,
+            "=" => CompareOpType::Equals,
             _ => unreachable!(),
         },
     )(input)

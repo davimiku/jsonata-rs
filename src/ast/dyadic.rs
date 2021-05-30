@@ -12,7 +12,7 @@ use crate::{
 
 use super::expr::Expression;
 #[derive(PartialEq, Debug)]
-pub enum CompareType {
+pub enum CompareOpType {
     Equals,
     NotEquals,
     Greater,
@@ -40,7 +40,7 @@ pub enum DyadicOpType {
 pub struct CompareExpression {
     pub lhs: Box<Expression>,
     pub rhs: Box<Expression>,
-    pub compare_type: CompareType,
+    pub compare_type: CompareOpType,
 }
 
 impl Display for DyadicOpType {
@@ -67,12 +67,12 @@ impl CompareExpression {
         let lhs = self.lhs.evaluate(context)?;
         let rhs = self.rhs.evaluate(context)?;
         match self.compare_type {
-            CompareType::Equals => CompareExpression::equals(lhs, rhs),
-            CompareType::NotEquals => CompareExpression::not_equals(lhs, rhs),
-            CompareType::Greater => CompareExpression::greater(lhs, rhs),
-            CompareType::GreaterEquals => CompareExpression::greater_equals(lhs, rhs),
-            CompareType::Less => CompareExpression::less(lhs, rhs),
-            CompareType::LessEquals => CompareExpression::less_equals(lhs, rhs),
+            CompareOpType::Equals => CompareExpression::equals(lhs, rhs),
+            CompareOpType::NotEquals => CompareExpression::not_equals(lhs, rhs),
+            CompareOpType::Greater => CompareExpression::greater(lhs, rhs),
+            CompareOpType::GreaterEquals => CompareExpression::greater_equals(lhs, rhs),
+            CompareOpType::Less => CompareExpression::less(lhs, rhs),
+            CompareOpType::LessEquals => CompareExpression::less_equals(lhs, rhs),
         }
     }
 
