@@ -12,7 +12,7 @@ use crate::{
 
 use super::expr::Expression;
 #[derive(PartialEq, Debug)]
-enum CompareType {
+pub enum CompareType {
     Equals,
     NotEquals,
     Greater,
@@ -40,7 +40,7 @@ pub enum DyadicOpType {
 pub struct CompareExpression {
     pub lhs: Box<Expression>,
     pub rhs: Box<Expression>,
-    compare_type: CompareType,
+    pub compare_type: CompareType,
 }
 
 impl Display for DyadicOpType {
@@ -109,8 +109,6 @@ impl CompareExpression {
     /// currently implemented below.
     ///
     /// If both sides are Some, deep non-equality is tested.
-    ///
-    /// This operation cannot error at runtime TODO: I think?
     fn not_equals(lhs: Option<Value>, rhs: Option<Value>) -> EvaluationResult {
         Ok(Some((!CompareExpression::equals_raw(lhs, rhs)).into()))
     }

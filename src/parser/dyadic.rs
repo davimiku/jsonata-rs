@@ -6,14 +6,19 @@
 use std::num::ParseIntError;
 
 use nom::{
+    branch::alt,
     bytes::complete::tag,
     combinator::map,
     error::{FromExternalError, ParseError},
-    sequence::separated_pair,
+    sequence::{separated_pair, tuple},
     IResult,
 };
 
-use crate::ast::{expr::Expression, path::MapExpression};
+use crate::ast::{
+    dyadic::{CompareExpression, CompareType},
+    expr::Expression,
+    path::MapExpression,
+};
 
 use super::{expr_parser, trim};
 
@@ -22,6 +27,8 @@ use super::{expr_parser, trim};
 /// The Map expression is part of the family of path operators and is
 /// a dyadic expression with the LHS evaluated and passed as the context to the
 /// RHS.
+///
+/// ## Example
 ///
 /// ```
 /// Account.Name
@@ -45,8 +52,61 @@ where
     )(input)
 }
 
-fn comparison<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, Expression, E> {
-    todo!()
+/// Compare expression
+///
+/// The compare expression may be the variants as defined in `CompareType`.
+///
+/// ## Example
+///
+/// ```
+/// bugs > features
+/// ```
+///
+/// The CompareExpression is constructed with the LHS, RHS, and which comparison
+/// operator is used between them.
+pub(super) fn comparison_expr<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
+where
+    E: ParseError<&'a str> + FromExternalError<&'a str, ParseIntError>,
+{
+    map(
+        tuple((trim(expr_parser), comparison_operator, trim(expr_parser))),
+        |(lhs, compare_type, rhs)| {
+            CompareExpression {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+                compare_type,
+            }
+            .into()
+        },
+    )(input)
+}
+
+/// Parses looking for a comparison operator
+///
+/// The valid operators are defined in the CompareType enum
+fn comparison_operator<'a, E>(input: &'a str) -> IResult<&'a str, CompareType, E>
+where
+    E: ParseError<&'a str>,
+{
+    map(
+        alt((
+            tag(">="),
+            tag("<="),
+            tag("!="),
+            tag(">"),
+            tag("<"),
+            tag("="),
+        )),
+        |s| match s {
+            ">=" => CompareType::GreaterEquals,
+            "<=" => CompareType::LessEquals,
+            "!=" => CompareType::NotEquals,
+            ">" => CompareType::Greater,
+            "<" => CompareType::Less,
+            "=" => CompareType::Equals,
+            _ => unreachable!(),
+        },
+    )(input)
 }
 
 #[cfg(test)]

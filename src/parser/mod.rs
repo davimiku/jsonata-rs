@@ -20,6 +20,7 @@ use nom_locate::LocatedSpan;
 
 use crate::ast::expr::Expression;
 
+use self::dyadic::comparison_expr;
 use self::{
     dyadic::map_expr,
     expr::variable_binding_expr,
@@ -78,7 +79,13 @@ pub fn expr_parser<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
 where
     E: ParseError<&'a str> + FromExternalError<&'a str, std::num::ParseIntError>,
 {
-    alt((map_expr, path_expr, literal_expr, variable_binding_expr))(input)
+    alt((
+        map_expr,
+        path_expr,
+        comparison_expr,
+        literal_expr,
+        variable_binding_expr,
+    ))(input)
 }
 
 pub(crate) fn parse(input: &str) -> Result<Expression, NomErr<(&str, ErrorKind)>> {
