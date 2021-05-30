@@ -63,6 +63,13 @@ impl Default for Context {
 }
 
 impl Context {
+    pub fn from_data(data: Value) -> Context {
+        Context {
+            data,
+            variables: HashMap::new(),
+        }
+    }
+
     pub fn data(&self) -> &Value {
         &self.data
     }
