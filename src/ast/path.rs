@@ -55,6 +55,14 @@ pub struct MapExpression {
 }
 
 impl MapExpression {
+    /// Constructor from Path expressions
+    pub fn from_paths(path1: PathExpression, path2: PathExpression) -> Self {
+        MapExpression {
+            lhs: Box::new(path1.into()),
+            rhs: Box::new(path2.into()),
+        }
+    }
+
     /// Evaluate a Map expression
     pub fn evaluate(&self, context: &mut Context) -> EvaluationResult {
         let lhs = self.lhs.evaluate(context)?;
@@ -183,6 +191,13 @@ pub struct PathExpression {
 }
 
 impl PathExpression {
+    /// Constructor from a &str
+    pub fn from_str(ident: &str) -> Self {
+        PathExpression {
+            ident: ident.to_string(),
+        }
+    }
+
     /// Evaluate a Path expression
     pub fn evaluate(&self, context: &mut Context) -> EvaluationResult {
         Ok(self.get_value(context.data()))
@@ -203,6 +218,14 @@ impl PathExpression {
             }
         } else {
             None
+        }
+    }
+}
+
+impl From<&str> for PathExpression {
+    fn from(s: &str) -> Self {
+        PathExpression {
+            ident: s.to_string(),
         }
     }
 }
