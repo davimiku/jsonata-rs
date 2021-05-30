@@ -134,7 +134,9 @@ impl CompareExpression {
                     Ok(Some((j_num_lhs > j_num_rhs).into()))
                 }
                 (Value::String(a), Value::String(b)) => Ok(Some((a > b).into())),
-                (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(">".into())),
+                (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(
+                    DyadicOpType::Greater,
+                )),
             },
         }
     }
@@ -147,7 +149,22 @@ impl CompareExpression {
     /// The lhs and rhs must both be numbers or both be strings, otherwise a runtime error
     /// is thrown.
     fn greater_equals(lhs: Option<Value>, rhs: Option<Value>) -> EvaluationResult {
-        todo!()
+        match (lhs, rhs) {
+            (None, None) => Ok(None),
+            (None, Some(_)) => Ok(None),
+            (Some(_), None) => Ok(None),
+            (Some(l), Some(r)) => match (l, r) {
+                (Value::Number(a), Value::Number(b)) => {
+                    let j_num_lhs: JSONataNumber = a.into();
+                    let j_num_rhs: JSONataNumber = b.into();
+                    Ok(Some((j_num_lhs >= j_num_rhs).into()))
+                }
+                (Value::String(a), Value::String(b)) => Ok(Some((a >= b).into())),
+                (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(
+                    DyadicOpType::GreaterEquals,
+                )),
+            },
+        }
     }
 
     /// Tests if the left-hand side is lesser than the right-hand side.
@@ -158,7 +175,22 @@ impl CompareExpression {
     /// The lhs and rhs must both be numbers or both be strings, otherwise a runtime error
     /// is thrown.
     fn less(lhs: Option<Value>, rhs: Option<Value>) -> EvaluationResult {
-        todo!()
+        match (lhs, rhs) {
+            (None, None) => Ok(None),
+            (None, Some(_)) => Ok(None),
+            (Some(_), None) => Ok(None),
+            (Some(l), Some(r)) => match (l, r) {
+                (Value::Number(a), Value::Number(b)) => {
+                    let j_num_lhs: JSONataNumber = a.into();
+                    let j_num_rhs: JSONataNumber = b.into();
+                    Ok(Some((j_num_lhs < j_num_rhs).into()))
+                }
+                (Value::String(a), Value::String(b)) => Ok(Some((a < b).into())),
+                (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(
+                    DyadicOpType::Less,
+                )),
+            },
+        }
     }
 
     /// Tests if the left-hand side is lesser than or equal to right-hand side.
@@ -169,7 +201,22 @@ impl CompareExpression {
     /// The lhs and rhs must both be numbers or both be strings, otherwise a runtime error
     /// is thrown.
     fn less_equals(lhs: Option<Value>, rhs: Option<Value>) -> EvaluationResult {
-        todo!()
+        match (lhs, rhs) {
+            (None, None) => Ok(None),
+            (None, Some(_)) => Ok(None),
+            (Some(_), None) => Ok(None),
+            (Some(l), Some(r)) => match (l, r) {
+                (Value::Number(a), Value::Number(b)) => {
+                    let j_num_lhs: JSONataNumber = a.into();
+                    let j_num_rhs: JSONataNumber = b.into();
+                    Ok(Some((j_num_lhs <= j_num_rhs).into()))
+                }
+                (Value::String(a), Value::String(b)) => Ok(Some((a <= b).into())),
+                (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(
+                    DyadicOpType::LessEquals,
+                )),
+            },
+        }
     }
 }
 
