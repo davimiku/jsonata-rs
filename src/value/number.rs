@@ -1,4 +1,7 @@
-use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
+use std::{
+    cmp::Ordering,
+    ops::{Add, Div, Mul, Neg, Rem, Sub},
+};
 
 use serde_json::{Number, Value};
 
@@ -14,6 +17,31 @@ enum NType {
 impl JSONataNumber {
     pub fn to_value(self) -> Value {
         Value::Number(self.0)
+    }
+}
+
+impl JSONataNumber {
+    fn compare_f64_and_u64(f: f64, u: u64) -> Option<Ordering> {
+        if u < (f64::MAX as u64) {
+            f.partial_cmp(&(u as f64))
+        } else if u < (f.floor() as u64) {
+            Some(Ordering::Greater)
+        } else if u > (f.ceil() as u64) {
+            Some(Ordering::Less)
+        } else {
+            None
+        }
+    }
+
+    fn compare_f64_and_i64(f: f64, i: i64) -> Option<Ordering> {
+        if i < 0 {
+            match JSONataNumber::compare_f64_and_u64(-f, (-i) as u64) {
+                Some(ordering) => Some(ordering.reverse()),
+                None => None,
+            }
+        } else {
+            JSONataNumber::compare_f64_and_u64(f, i as u64)
+        }
     }
 }
 
@@ -78,6 +106,62 @@ impl From<u64> for JSONataNumber {
 impl From<f64> for JSONataNumber {
     fn from(f: f64) -> Self {
         JSONataNumber(Number::from_f64(f).unwrap())
+    }
+}
+
+impl PartialOrd for JSONataNumber {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        let a = &self.0;
+        let b = &other.0;
+
+        // u64 > u64 ?
+        if a.is_u64() && b.is_u64() {
+            a.as_u64().partial_cmp(&b.as_u64())
+
+        // i64 > i64 ?
+        } else if a.is_i64() && b.is_i64() {
+            a.as_i64().partial_cmp(&b.as_i64())
+
+        // u64 > i64 ?
+        } else if a.is_u64() && b.is_i64() {
+            // a must be between i64::MAX and u64::MAX, so larger than b
+            Some(Ordering::Greater)
+
+        // i64 > u64 ?
+        } else if a.is_i64() && b.is_u64() {
+            // b must be between i64::MAX and u64::MAX, so larger than a
+            Some(Ordering::Less)
+
+        // f64 > f64 ?
+        } else if a.is_f64() && b.is_f64() {
+            a.as_f64().partial_cmp(&b.as_f64())
+
+        // i64 > f64 ?
+        } else if a.is_i64() && b.is_f64() {
+            match JSONataNumber::compare_f64_and_i64(b.as_f64().unwrap(), a.as_i64().unwrap()) {
+                Some(ordering) => Some(ordering.reverse()),
+                None => None,
+            }
+
+        // f64 > i64 ?
+        } else if a.is_f64() && b.is_i64() {
+            JSONataNumber::compare_f64_and_i64(a.as_f64().unwrap(), b.as_i64().unwrap())
+
+        // u64 > f64 ?
+        } else if a.is_u64() && b.is_f64() {
+            match JSONataNumber::compare_f64_and_u64(b.as_f64().unwrap(), a.as_u64().unwrap()) {
+                Some(ordering) => Some(ordering.reverse()),
+                None => None,
+            }
+
+        // f64 > u64 ?
+        } else if a.is_f64() && b.is_u64() {
+            JSONataNumber::compare_f64_and_u64(a.as_f64().unwrap(), b.as_u64().unwrap())
+
+        // Should be unreachable
+        } else {
+            unreachable!()
+        }
     }
 }
 
