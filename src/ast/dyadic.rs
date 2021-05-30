@@ -22,7 +22,7 @@ enum CompareType {
 }
 
 #[derive(PartialEq, Debug, Clone)]
-enum DyadicOpType {
+pub enum DyadicOpType {
     Equals,
     NotEquals,
     Greater,

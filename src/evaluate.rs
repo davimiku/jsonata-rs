@@ -4,18 +4,20 @@ use std::{collections::HashMap, fmt::Display};
 
 use serde_json::Value;
 
+use crate::ast::dyadic::DyadicOpType;
+
 pub type EvaluationResult = Result<Option<Value>, EvaluationError>;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum EvaluationError {
     /// The values '{}' and '{}' on either side of operator '{}' must be of the same data type
-    DyadicInconsistentDataType(Value, Value, String),
+    DyadicInconsistentDataType(Value, Value, DyadicOpType),
 
     /// The expressions on either side of operator '{}' must evaluate to numeric values
-    DyadicMustBeNumber(String),
+    DyadicMustBeNumber(DyadicOpType),
 
     /// The expressions on either side of operator '{}' must evaluate to numeric or string values
-    DyadicMustBeNumberOrString(String),
+    DyadicMustBeNumberOrString(DyadicOpType),
 
     /// Function '{}': argument '{}' must be '{}'
     FunctionInvalidArgument(String, usize, String),
