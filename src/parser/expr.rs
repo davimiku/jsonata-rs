@@ -40,13 +40,16 @@ fn map_expr<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
 where
     E: ParseError<&'a str> + FromExternalError<&'a str, ParseIntError>,
 {
-    map(separated_pair(expr, tag("."), expr), |(lhs, rhs)| {
-        MapExpression {
-            lhs: Box::new(lhs),
-            rhs: Box::new(rhs),
-        }
-        .into()
-    })(input)
+    map(
+        separated_pair(trim(expr), tag("."), trim(expr)),
+        |(lhs, rhs)| {
+            MapExpression {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            }
+            .into()
+        },
+    )(input)
 }
 
 /// Path expressions represent a location in the parsed JSON
