@@ -132,6 +132,60 @@ impl FilterExpression {
     }
 }
 
+/// The order-by operator is used to sort an array of values into ascending or descending order
+/// according to one or more expressions defined within the parentheses.
+///
+/// By default, the array will be sorted into ascending order. For example:
+///
+/// ```
+/// Account.Order.Product^(Price)
+/// ```
+///
+/// sorts all of the products into order of increasing price
+/// (Price is a numeric field in the Product object).
+///
+/// To sort in descending order, the sort expression must be preceded by the > symbol. For example:
+///
+/// ```
+/// Account.Order.Product^(>Price)
+/// ```
+///
+/// sorts all of the products into order of decreasing price. The < symbol can be used explicitly
+/// indicate ascending order, although that is the default behaviour.
+///
+/// Secondary (and more) sort expressions can be specified by separating them with commas (,).
+/// The secondary expression will be used to determine order if the primary expression ranks
+/// two values the same. For example,
+///
+/// ```
+/// Account.Order.Product^(>Price, <Quantity)
+/// ```
+///
+/// orders the products primarily by decreasing price, but for products of the same price,
+/// by increasing quantity.
+///
+/// The sort expression(s) can be any valid JSONata expression that evaluates to a number or a string.
+/// If it evaluates to a string then the array is sorted in order of unicode codepoint.
+///
+/// ## Examples
+///
+/// ```
+/// Account.Order.Product^(Price * Quantity) /* Increasing order of price times quantity. */
+/// student[type='fulltime']^(DoB).name /* The names of all full time students sorted by date of birth (the DoB value is an ISO 8601 date format) */
+/// ```
+#[derive(PartialEq, Debug)]
+pub struct OrderByExpression {
+    pub lhs: Box<Expression>,
+    pub order_by: (), /* potentially introduce OrderByPredicateExpression to be able to parse preceding `>` or `<` */
+}
+
+impl OrderByExpression {
+    /// Evaluate a OrderByExpression
+    pub fn evaluate(&self, context: &mut Context) -> EvaluationResult {
+        todo!()
+    }
+}
+
 /// The reduce operator can be used as the last step in a path expression
 /// to group and aggregate its input sequence into a single object.
 ///
@@ -165,6 +219,13 @@ impl FilterExpression {
 #[derive(PartialEq, Debug)]
 pub struct ReduceExpression {
     pub lhs: Box<Expression>,
+}
+
+impl ReduceExpression {
+    /// Evaluate a ReduceExpression
+    pub fn evaluate(&self, context: &mut Context) -> EvaluationResult {
+        todo!()
+    }
 }
 
 /// PathExpression is a way to get a Value from the JSON data
