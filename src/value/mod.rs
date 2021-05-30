@@ -16,20 +16,36 @@ impl JSONataValue {
     pub fn value(&self) -> &Value {
         &self.0
     }
-}
 
+    // TODO: Perhaps use Cell<T> to be able to .take
+    // from a Value so that a JSONataValue can take ownership
+    // of a Value to avoid the clone
+    //
+    // pub fn from_val(val: &Value) -> Self {
+    //     let mut val = val;
+    //     JSONataValue::from_val_internal(val)
+    // }
+
+    // fn from_val_internal(val: &mut Value) -> Self {
+    //     JSONataValue(val.take())
+    // }
+}
 impl From<Value> for JSONataValue {
     fn from(val: Value) -> Self {
         JSONataValue(val)
     }
 }
 
+// TODO: See above, may be possible to avoid the clone
 impl From<&Value> for JSONataValue {
-    /// Convert from &Value to JSONataValue
-    ///
-    /// TODO: Sprinkle some lifetime magic to remove the need for a clone
     fn from(val: &Value) -> Self {
         JSONataValue(val.clone())
+    }
+}
+
+impl From<&mut Value> for JSONataValue {
+    fn from(val: &mut Value) -> Self {
+        JSONataValue(val.take())
     }
 }
 
