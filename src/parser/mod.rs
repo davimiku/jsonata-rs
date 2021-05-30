@@ -1,17 +1,18 @@
 mod dyadic;
 mod expr;
 mod ident;
-mod literal;
+mod monadic;
 mod string;
 
 use std::boxed::Box;
 use std::error::Error;
 
 use nom::{
+    branch::alt,
     bytes::complete::{is_not, tag, take_until},
     character::complete::space0,
     combinator::value,
-    error::{ErrorKind, ParseError, VerboseError},
+    error::{ErrorKind, FromExternalError, ParseError, VerboseError},
     sequence::{delimited, tuple},
     AsChar, Err as NomErr, IResult, InputIter, InputLength, InputTake, InputTakeAtPosition, Parser,
 };
@@ -19,7 +20,12 @@ use nom_locate::LocatedSpan;
 
 use crate::ast::expr::Expression;
 
-use self::expr::expr;
+use self::{
+    dyadic::map_expr,
+    expr::variable_binding_expr,
+    monadic::{literal_expr, path_expr},
+};
+
 type Span<'a> = LocatedSpan<&'a str>;
 
 /// Type-erased errors
@@ -64,8 +70,19 @@ fn transform_escaped(i: &str) -> IResult<&str, std::string::String> {
     )(i)
 }
 
+/// Top-level function for expression parsing
+///
+/// Calls each of the other parsers in order until a parser
+/// yiels success, or returns a ParseError
+pub fn expr_parser<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
+where
+    E: ParseError<&'a str> + FromExternalError<&'a str, std::num::ParseIntError>,
+{
+    alt((map_expr, path_expr, literal_expr, variable_binding_expr))(input)
+}
+
 pub(crate) fn parse(input: &str) -> Result<Expression, NomErr<(&str, ErrorKind)>> {
-    expr(input).map(|(_, ex)| ex)
+    expr_parser(input).map(|(_, ex)| ex)
 }
 
 type Res<T, U> = IResult<T, U, VerboseError<T>>;
@@ -77,12 +94,8 @@ mod tests {
 
     use super::*;
 
-    // use nom::{
-    //     error::{ErrorKind, VerboseError, VerboseErrorKind},
-    //     Err as NomErr,
-    // };
     #[test]
-    fn expression_parser<'a>() {
+    fn expression_parser_test<'a>() {
         let input = "$myvar := false";
         let res = parse(input);
         assert_eq!(
@@ -90,6 +103,20 @@ mod tests {
             VariableBindingExpression {
                 var_name: "myvar".to_string(),
                 bound_expression: Box::new(Expression::Literal(LiteralExpression::from(false)))
+            }
+            .into()
+        )
+    }
+
+    #[test]
+    fn expr_parser_test<'a>() {
+        let input = "$myvar := null";
+        let res = expr_parser::<(&str, ErrorKind)>(input);
+        assert_eq!(
+            res.unwrap().1,
+            VariableBindingExpression {
+                var_name: "myvar".to_string(),
+                bound_expression: Box::new(LiteralExpression::from(()).into())
             }
             .into()
         )

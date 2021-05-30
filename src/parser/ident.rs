@@ -19,14 +19,6 @@ use nom::{
     IResult,
 };
 
-// Notes about the current JSONata implementation (TODO: remove)
-// - variables must start with `$`
-// - local variable bindings shadow built-ins
-// - using an undefined variable is not an error sometimes, but other times it is
-// - field reference starting with "$" doesn't work unless it has quotes, which means...
-// - quoted values might be literal strings or field references
-// - field references that are quoted don't handle unicode correctly
-
 /// Parses an identifier for a path element
 ///
 /// Identifiers may start with an alphabetic or underscore character

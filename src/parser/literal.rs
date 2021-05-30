@@ -19,28 +19,6 @@ use crate::ast::{
 
 use super::string::literal_string;
 
-/// Parses a boolean value, either true or false
-fn literal_bool<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, LiteralValue, E> {
-    alt((
-        value(LiteralValue::Bool(true), tag("true")),
-        value(LiteralValue::Bool(false), tag("false")),
-    ))(input)
-}
-
-/// Parses the literal value `null`
-fn literal_null<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, LiteralValue, E> {
-    value(LiteralValue::Null, tag("null"))(input)
-}
-
-pub(super) fn literal_expr<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
-where
-    E: ParseError<&'a str> + FromExternalError<&'a str, std::num::ParseIntError>,
-{
-    map(alt((literal_bool, literal_null, literal_string)), |val| {
-        LiteralExpression::from(val).into()
-    })(input)
-}
-
 #[cfg(test)]
 mod tests {
     use nom::error::ErrorKind;
