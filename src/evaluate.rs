@@ -16,6 +16,14 @@ pub enum EvaluationError {
 
     /// The expressions on either side of operator '{}' must evaluate to numeric or string values
     DyadicMustBeNumberOrString(String),
+
+    /// Function '{}': argument '{}' must be '{}'
+    FunctionInvalidArgument(String, usize, String),
+
+    /// Function '{}': requires '{}' arguments, '{}' were provided
+    FunctionIncorrectNumArguments(String, usize, usize),
+}
+
 }
 
 #[derive(Debug)]
