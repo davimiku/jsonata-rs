@@ -1,13 +1,12 @@
-pub(crate) mod binary;
-pub(crate) mod concat;
-pub(crate) mod expression;
+pub(crate) mod dyadic;
+pub(crate) mod expr;
 pub(crate) mod literal;
 pub(crate) mod path;
 
 use crate::evaluate::{Context, EvaluationResult};
 use serde_json::Value;
 
-use self::expression::Expression;
+use self::expr::Expression;
 
 pub struct Program {
     /// Contains the evaluation context of the program

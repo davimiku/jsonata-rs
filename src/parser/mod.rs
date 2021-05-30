@@ -1,4 +1,4 @@
-mod binary;
+mod dyadic;
 mod expr;
 mod ident;
 mod literal;

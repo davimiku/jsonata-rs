@@ -1,7 +1,7 @@
 use crate::evaluate::{Context, EvaluationResult};
 
 use super::{
-    binary::{CompareExpression, ConcatExpression, InclusionExpression},
+    dyadic::{CompareExpression, ConcatExpression, InclusionExpression},
     literal::LiteralExpression,
     path::{MapExpression, PathExpression},
 };

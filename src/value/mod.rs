@@ -89,7 +89,7 @@ impl TryNumericOps for JSONataValue {
             (Value::Number(left), Value::Number(right)) => {
                 Ok((JSONataNumber::from(left) + JSONataNumber::from(right)).to_value())
             }
-            (_, _) => Err(EvaluationError::BinaryMustBeNumber("+".to_string())),
+            (_, _) => Err(EvaluationError::DyadicMustBeNumber("+".to_string())),
         }
     }
 
@@ -98,7 +98,7 @@ impl TryNumericOps for JSONataValue {
             (Value::Number(left), Value::Number(right)) => {
                 Ok((JSONataNumber::from(left) - JSONataNumber::from(right)).to_value())
             }
-            (_, _) => Err(EvaluationError::BinaryMustBeNumber("-".to_string())),
+            (_, _) => Err(EvaluationError::DyadicMustBeNumber("-".to_string())),
         }
     }
 
@@ -107,7 +107,7 @@ impl TryNumericOps for JSONataValue {
             (Value::Number(left), Value::Number(right)) => {
                 Ok((JSONataNumber::from(left) * JSONataNumber::from(right)).to_value())
             }
-            (_, _) => Err(EvaluationError::BinaryMustBeNumber("*".to_string())),
+            (_, _) => Err(EvaluationError::DyadicMustBeNumber("*".to_string())),
         }
     }
 
@@ -116,7 +116,7 @@ impl TryNumericOps for JSONataValue {
             (Value::Number(left), Value::Number(right)) => {
                 Ok((JSONataNumber::from(left) / JSONataNumber::from(right)).to_value())
             }
-            (_, _) => Err(EvaluationError::BinaryMustBeNumber("/".to_string())),
+            (_, _) => Err(EvaluationError::DyadicMustBeNumber("/".to_string())),
         }
     }
 

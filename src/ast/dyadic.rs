@@ -1,4 +1,4 @@
-//! Binary expression AST representation
+//! Dyadic expression AST representation
 //!
 
 use std::fmt::{Display, Write};
@@ -10,7 +10,7 @@ use crate::{
     value::{number::JSONataNumber, JSONataValue},
 };
 
-use super::expression::Expression;
+use super::expr::Expression;
 #[derive(PartialEq, Debug)]
 enum CompareType {
     Equals,
@@ -22,7 +22,7 @@ enum CompareType {
 }
 
 #[derive(PartialEq, Debug, Clone)]
-enum BinaryOpType {
+enum DyadicOpType {
     Equals,
     NotEquals,
     Greater,
@@ -43,20 +43,20 @@ pub struct CompareExpression {
     compare_type: CompareType,
 }
 
-impl Display for BinaryOpType {
+impl Display for DyadicOpType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            BinaryOpType::Equals => f.write_char('='),
-            BinaryOpType::NotEquals => f.write_str("!="),
-            BinaryOpType::Greater => f.write_char('>'),
-            BinaryOpType::GreaterEquals => f.write_str(">="),
-            BinaryOpType::Less => f.write_char('<'),
-            BinaryOpType::LessEquals => f.write_str("<="),
-            BinaryOpType::Add => f.write_char('+'),
-            BinaryOpType::Sub => f.write_char('-'),
-            BinaryOpType::Mul => f.write_char('*'),
-            BinaryOpType::Div => f.write_char('/'),
-            BinaryOpType::Rem => f.write_char('%'),
+            DyadicOpType::Equals => f.write_char('='),
+            DyadicOpType::NotEquals => f.write_str("!="),
+            DyadicOpType::Greater => f.write_char('>'),
+            DyadicOpType::GreaterEquals => f.write_str(">="),
+            DyadicOpType::Less => f.write_char('<'),
+            DyadicOpType::LessEquals => f.write_str("<="),
+            DyadicOpType::Add => f.write_char('+'),
+            DyadicOpType::Sub => f.write_char('-'),
+            DyadicOpType::Mul => f.write_char('*'),
+            DyadicOpType::Div => f.write_char('/'),
+            DyadicOpType::Rem => f.write_char('%'),
         }
     }
 }
@@ -123,21 +123,20 @@ impl CompareExpression {
     /// The lhs and rhs must both be numbers or both be strings, otherwise a runtime error
     /// is thrown.
     fn greater(lhs: Option<Value>, rhs: Option<Value>) -> EvaluationResult {
-        // match (lhs, rhs) {
-        //     (None, None) => Ok(None),
-        //     (None, Some(_)) => Ok(None),
-        //     (Some(_), None) => Ok(None),
-        //     (Some(l), Some(r)) => match (l, r) {
-        //         (Value::Number(a), Value::Number(b)) => {
-        //             let j_num_lhs: JSONataNumber = a.into();
-        //             let j_num_rhs: JSONataNumber = b.into();
-        //             Ok(Some((j_num_lhs > j_num_rhs).into()))
-        //         }
-        //         (Value::String(a), Value::String(b)) => Ok(Some((a > b).into())),
-        //         (_, _) => Err(EvaluationError::BinaryMustBeNumberOrString(">".into())),
-        //     },
-        // }
-        todo!()
+        match (lhs, rhs) {
+            (None, None) => Ok(None),
+            (None, Some(_)) => Ok(None),
+            (Some(_), None) => Ok(None),
+            (Some(l), Some(r)) => match (l, r) {
+                (Value::Number(a), Value::Number(b)) => {
+                    let j_num_lhs: JSONataNumber = a.into();
+                    let j_num_rhs: JSONataNumber = b.into();
+                    Ok(Some((j_num_lhs > j_num_rhs).into()))
+                }
+                (Value::String(a), Value::String(b)) => Ok(Some((a > b).into())),
+                (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(">".into())),
+            },
+        }
     }
 
     /// Tests if the left-hand side is greater than or equal to right-hand side.
@@ -239,22 +238,15 @@ impl ConcatExpression {
     }
 }
 
+/// TODO: Remove after checking why this was tested.
+/// Value::Number(5.into()).is_i64()  is true!!
+
 #[cfg(test)]
 mod tests {
 
     use serde_json::json;
 
-    use crate::ast::literal::LiteralExpression;
-
     use super::*;
-
-    #[test]
-    fn test() {
-        let a = Value::Number(5.into());
-        println!("{}", a.is_i64());
-        println!("{}", a.is_u64());
-        println!("{}", a.is_number());
-    }
 
     #[test]
     fn equals() {

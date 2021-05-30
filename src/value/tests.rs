@@ -45,7 +45,7 @@ fn add() {
     for (lhs, rhs) in err_cases {
         assert_eq!(
             JSONataValue(lhs).try_add(JSONataValue(rhs)),
-            Err(EvaluationError::BinaryMustBeNumber("+".to_string()))
+            Err(EvaluationError::DyadicMustBeNumber("+".to_string()))
         )
     }
 }

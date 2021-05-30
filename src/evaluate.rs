@@ -8,14 +8,14 @@ pub type EvaluationResult = Result<Option<Value>, EvaluationError>;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum EvaluationError {
-    /// The values {} and {} on either side of operator "{}" must be of the same data type
-    BinaryInconsistentDataType(Value, Value, String),
+    /// The values '{}' and '{}' on either side of operator '{}' must be of the same data type
+    DyadicInconsistentDataType(Value, Value, String),
 
-    /// The expressions on either side of operator "{}" must evaluate to numeric values
-    BinaryMustBeNumber(String),
+    /// The expressions on either side of operator '{}' must evaluate to numeric values
+    DyadicMustBeNumber(String),
 
-    /// The expressions on either side of operator "{}" must evaluate to numeric or string values
-    BinaryMustBeNumberOrString(String),
+    /// The expressions on either side of operator '{}' must evaluate to numeric or string values
+    DyadicMustBeNumberOrString(String),
 }
 
 #[derive(Debug)]
