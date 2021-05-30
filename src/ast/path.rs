@@ -353,4 +353,15 @@ mod tests {
         let actual = path.get_value(&orders);
         assert!(actual.is_none());
     }
+
+    #[test]
+    fn simple_map_expression() {
+        let data = object_data();
+        let mut context = Context::from_data(data);
+        let map = MapExpression::from_paths("address".into(), "street".into());
+
+        let actual = map.evaluate(&mut context);
+
+        assert_eq!(actual, Ok(Some(json!("Main St."))));
+    }
 }
