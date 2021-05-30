@@ -2,6 +2,163 @@ use serde_json::Value;
 
 use crate::evaluate::{Context, EvaluationResult};
 
+use super::expr::Expression;
+
+/*
+FIXME:
+
+This probably needs to be refactored to something like:
+
+struct PathExpression {
+    pub context: Value,
+    pub ident: String,
+}
+
+struct MapExpression {
+    lhs: Box<Expression>,
+    rhs: Box<Expression>,
+}
+
+Rename Context struct to State, and add a mut `context` member to the struct of type Value.
+
+Map works by evaluating the lhs (and forcing into an array if needed),
+or short-circuiting and returning None if lhs evaluates to None (or empty array)
+
+Then map iterates through each value produced from lhs and uses that value as the context for
+evaluating rhs. Evaluation of rhs is also coerced into an array, or return None.
+
+Account.Order.OrderID.$uppercase() => [ "ORDER103", "ORDER104"]
+
+Account.Order.Product.(Price * Quantity) => [ 68.9, 21.67, 137.8, 107.99 ]
+
+*/
+
+/// MapExpression is a way to compose several expressions related
+/// to paths to get values from the JSON data.
+///
+/// Example:
+/// ```json
+/// {
+///   "Account": {
+///      "Name": "Mike Wazowski"
+///    }
+/// }
+/// ```
+///
+/// The MapExpression `Account.Name` which can be thought of as
+/// `PathExpression(Account) --map--> PathExpression(Name)` would yield
+/// the value "Mike Wazowski".
+#[derive(PartialEq, Debug)]
+pub struct MapExpression {
+    pub lhs: Box<Expression>,
+    pub rhs: Box<Expression>,
+}
+
+impl MapExpression {
+    /// Evaluate a Map expression
+    pub fn evaluate(&self, context: &mut Context) -> EvaluationResult {
+        let lhs = self.lhs.evaluate(context)?;
+        if let Some(data) = lhs {
+            self.rhs.evaluate(&mut Context::from_data(data))
+        } else {
+            Ok(None)
+        }
+    }
+}
+
+/// The filter operator (a.k.a predicate) is used to select only the items
+/// in the input sequence that satisfy the predicate expression contained
+/// between the square brackets.
+///
+/// If the predicate expression is an integer, or an expression that evaluates
+/// to an integer, then the item at that position (zero offset) in the input
+/// sequence is the only item selected for the result sequence. If the number
+/// is non-integer, then it is rounded down to the nearest integer.
+///
+/// If the predicate expression is an array of integers, or an expression that
+/// evaluates to an array of integers, then the items at those positions (zero offset)
+/// in the input sequence is the only item selected for the result sequence.
+///
+/// If the predicate expression evaluates to any other value, then it is cast to a Boolean
+/// as if using the $boolean() function. If this evaluates to true, then the item is
+/// retained in the result sequence. Otherwise it is rejected.
+///
+/// ## Examples
+///
+/// ```
+/// Phone[type='mobile']  /* Sequence of all Phone objects with a `type` key equal to "mobile" */
+/// ```
+///
+/// ```
+/// Phone[3]    /* Singleton sequence of the index-3 Phone */
+/// ```
+///
+/// ```
+/// Phone[[0..2]]  /* Sequence of the index-0, index-1, index-2 Phone */
+/// ```
+#[derive(PartialEq, Debug)]
+pub struct FilterExpression {
+    pub lhs: Box<Expression>,
+    pub pred: Box<Expression>,
+}
+
+impl FilterExpression {
+    /// Evaluate a Filter expression
+    pub fn evaluate(&self, context: &mut Context) -> EvaluationResult {
+        let lhs = self.lhs.evaluate(context)?;
+        if let Some(data) = lhs {
+            // lhs evaluation becomes the context for evaluation of the predicate
+            let mut new_context = Context::from_data(data);
+            let pred = self.pred.evaluate(&mut new_context)?;
+            if let Some(pred_val) = pred {
+                // If value is int, then return item at that index of the array
+                // or if it's not an array, then return the item itself only if
+                // the index is zero  (i.e. treating as a singleton sequence)
+                todo!()
+            } else {
+                Ok(None)
+            }
+        } else {
+            Ok(None)
+        }
+    }
+}
+
+/// The reduce operator can be used as the last step in a path expression
+/// to group and aggregate its input sequence into a single object.
+///
+/// The key/value pairs between the curly braces determine the groupings
+/// (by evaluating the key expression) and the aggregated values for each group.
+///
+/// The JSONata object constructor syntax allows you to specify an expression for
+/// the key in any key/value pair (the value can obviously be an expression too).
+/// The key expression must evaluate to a string since this is a restriction on
+/// JSON objects. The key and value expressions are evaluated for each item in the
+/// input context (see processing model). The result of each key/value expression
+/// pair is inserted into the resulting JSON object.
+///
+/// If the evaluation of any key expression results in a key that is already in the
+/// result object, then the result of its associated value expression will be grouped
+/// with the value(s) already associated with that key. Note that the value expressions
+/// are not evaluated until all of the grouping has been performed. This allows for
+/// aggregation expressions to be evaluated over the collection of items for each group.
+///
+/// ## Examples
+///
+/// ```
+/// Account.Order.Product{`Product Name`: Price}
+/// ```
+///
+/// ```
+/// Account.Order.Product {
+///  `Product Name`: {"Price": Price, "Qty": Quantity}
+/// }
+/// ```
+#[derive(PartialEq, Debug)]
+pub struct ReduceExpression {
+    pub lhs: Box<Expression>,
+}
+
 /// PathExpression is a way to get a Value from the JSON data
 ///
 /// Example:
@@ -14,49 +171,39 @@ use crate::evaluate::{Context, EvaluationResult};
 /// }
 /// ```
 /// The following raw expressions yield these values:
-/// * `name` --> `ACME Corp.`
-/// * `address.street` --> `Main St.`
+/// * `name` --> `"ACME Corp."`
+/// * `address` --> `{ "street": "Main St." }`
 ///
 /// The PathExpression struct holds the identifier to get from the
-/// JSON data and recursively nested PathExpression structs for any
-/// amount of nested members.
+/// JSON data.
 ///
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(PartialEq, Debug)]
 pub struct PathExpression {
     pub ident: String,
-    pub member: Option<Box<PathExpression>>,
 }
 
 impl PathExpression {
     /// Evaluate a Path expression
     pub fn evaluate(&self, context: &mut Context) -> EvaluationResult {
-        let result = self.get_member(context.data());
-        Ok(result)
+        Ok(self.get_value(context.data()))
     }
 }
 
 impl PathExpression {
-    fn get_member(&self, data: &Value) -> Option<Value> {
+    fn get_value(&self, data: &Value) -> Option<Value> {
         if data.is_object() {
             let value = data.get(self.ident.clone())?;
-            if let Some(m) = &self.member {
-                return m.get_member(value);
-            } else {
-                return Some(value.clone());
-            }
+            Some(value.clone())
         } else if let Some(arr) = data.as_array() {
-            let mut values: Vec<Value> = Vec::new();
-            for value in arr {
-                if let Some(member) = self.get_member(value) {
-                    values.push(member);
-                }
-            }
+            let values: Vec<Value> = arr.iter().filter_map(|val| self.get_value(val)).collect();
             if values.len() > 0 {
-                return Some(Value::Array(values));
+                Some(Value::Array(values))
+            } else {
+                None
             }
+        } else {
+            None
         }
-
-        None
     }
 }
 
@@ -69,49 +216,53 @@ mod tests {
 
     use super::*;
 
+    /// Helper function to get a nested member from the
+    /// test data for easier processing.
+    fn get_orders() -> Value {
+        let data = object_data();
+        let path = PathExpression {
+            ident: "orders".to_string(),
+        };
+
+        path.get_value(&data).unwrap()
+    }
+
     #[test]
-    fn path_get_member() {
+    fn path_get_primitive() {
         let data = object_data();
         let path = PathExpression {
             ident: "name".to_string(),
-            member: None,
         };
 
-        let actual = path.get_member(&data).unwrap();
+        let actual = path.get_value(&data).unwrap();
         let expected = json!("ACME Corp.");
 
         assert_eq!(actual, expected);
     }
 
     #[test]
-    fn path_get_nested_member() {
+    fn path_get_object() {
         let data = object_data();
         let path = PathExpression {
             ident: "address".to_string(),
-            member: Some(Box::new(PathExpression {
-                ident: "street".to_string(),
-                member: None,
-            })),
         };
 
-        let actual = path.get_member(&data).unwrap();
-        let expected = json!("Main St.");
+        let actual = path.get_value(&data).unwrap();
+        let expected = json!({ "street": "Main St." });
 
         assert_eq!(actual, expected);
     }
 
     #[test]
-    fn path_get_multiple_members_from_array() {
-        let data = object_data();
-        let path = PathExpression {
-            ident: "orders".to_string(),
-            member: Some(Box::new(PathExpression {
-                ident: "id".to_string(),
-                member: None,
-            })),
-        };
+    fn path_get_multiple_values_from_array() {
+        let orders = get_orders();
+        assert!(orders.is_array());
 
-        let actual = path.get_member(&data).unwrap();
+        // Get the ids within the orders
+        let ids_path = PathExpression {
+            ident: "id".to_string(),
+        };
+        let actual = ids_path.get_value(&orders).unwrap();
         let expected = json!([1, 2]);
 
         assert_eq!(actual, expected);
@@ -119,16 +270,13 @@ mod tests {
 
     #[test]
     fn path_get_nonexisting_from_array() {
-        let data = object_data();
+        let orders = get_orders();
+
         let path = PathExpression {
-            ident: "orders".to_string(),
-            member: Some(Box::new(PathExpression {
-                ident: "notexist".to_string(),
-                member: None,
-            })),
+            ident: "does_not_exist".to_string(),
         };
 
-        let actual = path.get_member(&data);
+        let actual = path.get_value(&orders);
         assert!(actual.is_none());
     }
 }
