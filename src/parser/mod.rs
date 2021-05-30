@@ -1,5 +1,4 @@
 mod dyadic;
-mod expr;
 mod ident;
 mod monadic;
 mod string;
@@ -21,9 +20,9 @@ use nom_locate::LocatedSpan;
 use crate::ast::expr::Expression;
 
 use self::dyadic::comparison_expr;
+use self::dyadic::variable_binding_expr;
 use self::{
     dyadic::map_expr,
-    expr::variable_binding_expr,
     monadic::{literal_expr, path_expr},
 };
 
