@@ -6,6 +6,7 @@ mod traits;
 use serde_json::Value;
 
 use crate::ast::dyadic::DyadicOpType;
+use crate::ast::dyadic::NumericOpType;
 use crate::evaluate::EvaluationError;
 
 use self::number::JSONataNumber;
@@ -90,7 +91,9 @@ impl TryNumericOps for JSONataValue {
             (Value::Number(left), Value::Number(right)) => {
                 Ok((JSONataNumber::from(left) + JSONataNumber::from(right)).to_value())
             }
-            (_, _) => Err(EvaluationError::DyadicMustBeNumber(DyadicOpType::Add)),
+            (_, _) => Err(EvaluationError::DyadicMustBeNumber(
+                NumericOpType::Add.into(),
+            )),
         }
     }
 
@@ -99,7 +102,9 @@ impl TryNumericOps for JSONataValue {
             (Value::Number(left), Value::Number(right)) => {
                 Ok((JSONataNumber::from(left) - JSONataNumber::from(right)).to_value())
             }
-            (_, _) => Err(EvaluationError::DyadicMustBeNumber(DyadicOpType::Sub)),
+            (_, _) => Err(EvaluationError::DyadicMustBeNumber(
+                NumericOpType::Sub.into(),
+            )),
         }
     }
 
@@ -108,7 +113,9 @@ impl TryNumericOps for JSONataValue {
             (Value::Number(left), Value::Number(right)) => {
                 Ok((JSONataNumber::from(left) * JSONataNumber::from(right)).to_value())
             }
-            (_, _) => Err(EvaluationError::DyadicMustBeNumber(DyadicOpType::Mul)),
+            (_, _) => Err(EvaluationError::DyadicMustBeNumber(
+                NumericOpType::Mul.into(),
+            )),
         }
     }
 
@@ -117,7 +124,9 @@ impl TryNumericOps for JSONataValue {
             (Value::Number(left), Value::Number(right)) => {
                 Ok((JSONataNumber::from(left) / JSONataNumber::from(right)).to_value())
             }
-            (_, _) => Err(EvaluationError::DyadicMustBeNumber(DyadicOpType::Div)),
+            (_, _) => Err(EvaluationError::DyadicMustBeNumber(
+                NumericOpType::Div.into(),
+            )),
         }
     }
 

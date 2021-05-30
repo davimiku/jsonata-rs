@@ -8,7 +8,7 @@ use crate::ast::dyadic::DyadicOpType;
 
 pub type EvaluationResult = Result<Option<Value>, EvaluationError>;
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Debug)]
 pub enum EvaluationError {
     /// The values '{}' and '{}' on either side of operator '{}' must be of the same data type
     DyadicInconsistentDataType(Value, Value, DyadicOpType),

@@ -21,14 +21,21 @@ pub enum CompareOpType {
     LessEquals,
 }
 
-#[derive(PartialEq, Debug, Clone)]
-pub enum DyadicOpType {
-    Equals,
-    NotEquals,
-    Greater,
-    GreaterEquals,
-    Less,
-    LessEquals,
+impl Display for CompareOpType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CompareOpType::Equals => f.write_char('='),
+            CompareOpType::NotEquals => f.write_str("!="),
+            CompareOpType::Greater => f.write_char('>'),
+            CompareOpType::GreaterEquals => f.write_str(">="),
+            CompareOpType::Less => f.write_char('<'),
+            CompareOpType::LessEquals => f.write_str("<="),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum NumericOpType {
     Add,
     Sub,
     Mul,
@@ -36,29 +43,50 @@ pub enum DyadicOpType {
     Rem,
 }
 
+impl Display for NumericOpType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NumericOpType::Add => f.write_char('+'),
+            NumericOpType::Sub => f.write_char('-'),
+            NumericOpType::Mul => f.write_char('*'),
+            NumericOpType::Div => f.write_char('/'),
+            NumericOpType::Rem => f.write_char('%'),
+        }
+    }
+}
+
 #[derive(PartialEq, Debug)]
-pub struct CompareExpression {
-    pub lhs: Box<Expression>,
-    pub rhs: Box<Expression>,
-    pub compare_type: CompareOpType,
+pub enum DyadicOpType {
+    Compare(CompareOpType),
+    Numeric(NumericOpType),
 }
 
 impl Display for DyadicOpType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            DyadicOpType::Equals => f.write_char('='),
-            DyadicOpType::NotEquals => f.write_str("!="),
-            DyadicOpType::Greater => f.write_char('>'),
-            DyadicOpType::GreaterEquals => f.write_str(">="),
-            DyadicOpType::Less => f.write_char('<'),
-            DyadicOpType::LessEquals => f.write_str("<="),
-            DyadicOpType::Add => f.write_char('+'),
-            DyadicOpType::Sub => f.write_char('-'),
-            DyadicOpType::Mul => f.write_char('*'),
-            DyadicOpType::Div => f.write_char('/'),
-            DyadicOpType::Rem => f.write_char('%'),
+            DyadicOpType::Compare(c) => f.write_fmt(format_args!("{}", c)),
+            DyadicOpType::Numeric(n) => f.write_fmt(format_args!("{}", n)),
         }
     }
+}
+
+impl From<CompareOpType> for DyadicOpType {
+    fn from(c: CompareOpType) -> Self {
+        DyadicOpType::Compare(c)
+    }
+}
+
+impl From<NumericOpType> for DyadicOpType {
+    fn from(n: NumericOpType) -> Self {
+        DyadicOpType::Numeric(n)
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub struct CompareExpression {
+    pub lhs: Box<Expression>,
+    pub rhs: Box<Expression>,
+    pub compare_type: CompareOpType,
 }
 
 impl CompareExpression {
@@ -133,7 +161,7 @@ impl CompareExpression {
                 }
                 (Value::String(a), Value::String(b)) => Ok(Some((a > b).into())),
                 (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(
-                    DyadicOpType::Greater,
+                    CompareOpType::Greater.into(),
                 )),
             },
         }
@@ -159,7 +187,7 @@ impl CompareExpression {
                 }
                 (Value::String(a), Value::String(b)) => Ok(Some((a >= b).into())),
                 (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(
-                    DyadicOpType::GreaterEquals,
+                    CompareOpType::GreaterEquals.into(),
                 )),
             },
         }
@@ -185,7 +213,7 @@ impl CompareExpression {
                 }
                 (Value::String(a), Value::String(b)) => Ok(Some((a < b).into())),
                 (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(
-                    DyadicOpType::Less,
+                    CompareOpType::Less.into(),
                 )),
             },
         }
@@ -211,7 +239,7 @@ impl CompareExpression {
                 }
                 (Value::String(a), Value::String(b)) => Ok(Some((a <= b).into())),
                 (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(
-                    DyadicOpType::LessEquals,
+                    CompareOpType::LessEquals.into(),
                 )),
             },
         }
