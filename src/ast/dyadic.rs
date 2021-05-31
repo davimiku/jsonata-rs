@@ -311,9 +311,6 @@ impl ConcatExpression {
     }
 }
 
-/// TODO: Remove after checking why this was tested.
-/// Value::Number(5.into()).is_i64()  is true!!
-
 #[cfg(test)]
 mod tests {
 
