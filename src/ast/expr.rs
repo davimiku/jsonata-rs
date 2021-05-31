@@ -3,7 +3,7 @@ use crate::evaluate::{Context, EvaluationResult};
 use super::{
     dyadic::{CompareExpression, ConcatExpression, InclusionExpression},
     literal::LiteralExpression,
-    path::{MapExpression, PathExpression},
+    path::{FilterExpression, MapExpression, PathExpression, ReduceExpression},
 };
 
 // #[derive(PartialEq, Eq, Debug, Clone)]
@@ -46,6 +46,8 @@ pub enum Expression {
     // Related to path operators or path expressions
     Map(MapExpression),
     Path(PathExpression),
+    Filter(FilterExpression),
+    Reduce(ReduceExpression),
 
     Compare(CompareExpression),
     Concat(ConcatExpression),
@@ -59,6 +61,8 @@ impl Expression {
             Expression::Variable(expr) => expr.evaluate(context),
             Expression::Map(expr) => expr.evaluate(context),
             Expression::Path(expr) => expr.evaluate(context),
+            Expression::Filter(expr) => expr.evaluate(context),
+            Expression::Reduce(expr) => expr.evaluate(context),
             Expression::Compare(expr) => expr.evaluate(context),
             Expression::Concat(expr) => expr.evaluate(context),
             Expression::Includes(expr) => expr.evaluate(context),
