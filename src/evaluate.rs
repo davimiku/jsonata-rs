@@ -49,23 +49,23 @@ impl Display for EvaluationError {
 }
 
 #[derive(Debug)]
-pub struct Context {
-    data: Value,
+pub struct Context<'a> {
+    data: &'a Value,
 
     variables: HashMap<String, Option<Value>>,
 }
 
-impl Default for Context {
+impl Default for Context<'_> {
     fn default() -> Self {
         Context {
-            data: Value::Null,
+            data: &Value::Null,
             variables: HashMap::new(),
         }
     }
 }
 
-impl Context {
-    pub fn from_data(data: Value) -> Context {
+impl<'a> Context<'a> {
+    pub fn from_data(data: &'a Value) -> Context<'a> {
         Context {
             data,
             variables: HashMap::new(),
@@ -80,7 +80,7 @@ impl Context {
         self.variables.insert(var_name, value);
     }
 
-    pub fn set_data(&mut self, data: Value) {
+    pub fn set_data(&mut self, data: &'a Value) {
         self.data = data
     }
     // pub(crate) fn create_function<P, B>(

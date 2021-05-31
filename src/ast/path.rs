@@ -70,7 +70,7 @@ impl MapExpression {
             // TODO: Check if data is an Array, if so, then the RHS would
             // be evaluated for each item in the array.
             // `users.id` where users is an Array
-            self.rhs.evaluate(&mut Context::from_data(data))
+            self.rhs.evaluate(&mut Context::from_data(&data))
         } else {
             Ok(None)
         }
@@ -119,7 +119,7 @@ impl FilterExpression {
         let lhs = self.lhs.evaluate(context)?;
         if let Some(data) = lhs {
             // lhs evaluation becomes the context for evaluation of the predicate
-            let mut new_context = Context::from_data(data);
+            let mut new_context = Context::from_data(&data);
             let pred = self.pred.evaluate(&mut new_context)?;
             if let Some(pred_val) = pred {
                 // If value is int, then return item at that index of the array
@@ -360,7 +360,7 @@ mod tests {
     #[test]
     fn simple_map_expression() {
         let data = object_data();
-        let mut context = Context::from_data(data);
+        let mut context = Context::from_data(&data);
         let map = MapExpression::from_paths("address".into(), "street".into());
 
         let actual = map.evaluate(&mut context);
@@ -371,7 +371,7 @@ mod tests {
     #[test]
     fn map_with_array_lhs() {
         let data = object_data();
-        let mut context = Context::from_data(data);
+        let mut context = Context::from_data(&data);
         let map = MapExpression::from_paths("orders".into(), "id".into());
 
         let actual = map.evaluate(&mut context);

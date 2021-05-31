@@ -53,7 +53,7 @@ mod tests {
     fn literal() {
         let input = "true";
         let mut program = jsonata(input).unwrap();
-        let result = program.evaluate(object_data()).unwrap();
+        let result = program.evaluate(&object_data()).unwrap();
         assert_eq!(result, Some(Value::Bool(true)));
     }
 }

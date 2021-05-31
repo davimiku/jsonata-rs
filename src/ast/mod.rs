@@ -8,13 +8,13 @@ use serde_json::Value;
 
 use self::expr::Expression;
 
-pub struct Program {
+pub struct Program<'a> {
     /// Contains the evaluation context of the program
     ///
     /// This tracks declared variables and functions, and
     /// TODO the current location for reporting of runtime errors
     ///
-    pub context: Context,
+    pub context: Context<'a>,
 
     /// Top-level expression of the JSONata program
     ///
@@ -23,7 +23,7 @@ pub struct Program {
     pub expression: Expression,
 }
 
-impl Program {
+impl<'a> Program<'a> {
     /// Create a new JSONata program with the provided
     /// top-level expression
     ///
@@ -39,14 +39,14 @@ impl Program {
     /// Evaluate the JSONata program with the given data.
     ///
     /// The data is in Value format as parsed by serde-json.
-    pub fn evaluate(&mut self, data: Value) -> EvaluationResult {
+    pub fn evaluate(&mut self, data: &'a Value) -> EvaluationResult {
         self.set_data(data);
 
         Ok(self.expression.evaluate(&mut self.context)?)
     }
 
     /// Sets the JSON data into the program's internal state
-    fn set_data(&mut self, data: Value) {
+    fn set_data(&mut self, data: &'a Value) {
         self.context.set_data(data)
     }
 }
