@@ -67,6 +67,9 @@ impl MapExpression {
     pub fn evaluate(&self, context: &mut Context) -> EvaluationResult {
         let lhs = self.lhs.evaluate(context)?;
         if let Some(data) = lhs {
+            // TODO: Check if data is an Array, if so, then the RHS would
+            // be evaluated for each item in the array.
+            // `users.id` where users is an Array
             self.rhs.evaluate(&mut Context::from_data(data))
         } else {
             Ok(None)
@@ -363,5 +366,16 @@ mod tests {
         let actual = map.evaluate(&mut context);
 
         assert_eq!(actual, Ok(Some(json!("Main St."))));
+    }
+
+    #[test]
+    fn map_with_array_lhs() {
+        let data = object_data();
+        let mut context = Context::from_data(data);
+        let map = MapExpression::from_paths("orders".into(), "id".into());
+
+        let actual = map.evaluate(&mut context);
+
+        assert_eq!(actual, Ok(Some(json!([1, 2]))));
     }
 }
