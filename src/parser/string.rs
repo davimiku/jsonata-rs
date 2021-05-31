@@ -3,7 +3,7 @@
 //! - String must be enclosed by double quotes
 //! - May contain any character unescaped except / and ""
 //! - Unicode code points are represented as \u{X} where X is 1-6 hex characters
-//! -
+//! FIXME: JSONata uses the JSON escaping which is \uXXXX (only 4 characters)
 
 use nom::{
     branch::alt,
