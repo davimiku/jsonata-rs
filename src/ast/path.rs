@@ -326,10 +326,10 @@ mod tests {
     #[test]
     fn path_get_object() {
         let data = object_data();
-        let path: PathExpression = "address".into();
+        let path: PathExpression = "contact".into();
 
         let actual = path.get_value(&data).unwrap();
-        let expected = json!({ "street": "Main St." });
+        let expected = json!({ "name": "John Doe" });
 
         assert_eq!(actual, expected);
     }

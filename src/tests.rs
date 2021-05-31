@@ -3,6 +3,9 @@ use serde_json::{json, Value};
 pub(crate) fn object_data() -> Value {
     json!({
         "name": "ACME Corp.",
+        "contact": {
+            "name": "John Doe"
+        },
         "address": {
             "street": "Main St.",
             "location": {
