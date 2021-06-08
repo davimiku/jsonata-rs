@@ -10,12 +10,12 @@
 
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take_while},
+    bytes::complete::{tag, take_till1, take_while},
     character::complete::{alpha1, alphanumeric1},
     combinator::recognize,
     error::ParseError,
     multi::many0,
-    sequence::{pair, preceded},
+    sequence::{delimited, pair, preceded},
     IResult,
 };
 
@@ -27,9 +27,12 @@ use nom::{
 pub(super) fn path_ident<'a, E: ParseError<&'a str>>(
     input: &'a str,
 ) -> IResult<&'a str, &'a str, E> {
-    recognize(pair(
-        alt((alpha1, tag("_"))),
-        many0(alt((alphanumeric1, tag("_")))),
+    alt((
+        delimited(tag("`"), take_till1(|c| c == '`'), tag("`")),
+        recognize(pair(
+            alt((alpha1, tag("_"))),
+            many0(alt((alphanumeric1, tag("_")))),
+        )),
     ))(input)
 }
 
