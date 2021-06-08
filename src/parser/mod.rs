@@ -2,6 +2,8 @@ mod dyadic;
 mod ident;
 mod monadic;
 mod string;
+#[cfg(test)]
+mod tests;
 
 use std::boxed::Box;
 use std::error::Error;
@@ -13,7 +15,7 @@ use nom::{
     bytes::complete::{is_not, tag, take_until},
     character::complete::space0,
     combinator::value,
-    error::{ErrorKind, FromExternalError, ParseError, VerboseError},
+    error::{ErrorKind, FromExternalError, ParseError},
     sequence::{delimited, tuple},
     AsChar, Err as NomErr, IResult, InputIter, InputLength, InputTake, InputTakeAtPosition, Parser,
 };
@@ -136,39 +138,3 @@ pub(super) fn parse(input: &str) -> Result<Expression, NomErr<(&str, ErrorKind)>
 }
 
 // type Res<T, U> = IResult<T, U, VerboseError<T>>;
-
-#[cfg(test)]
-mod tests {
-
-    use crate::ast::{expr::VariableBindingExpression, literal::LiteralExpression};
-
-    use super::*;
-
-    #[test]
-    fn parse_test() {
-        let input = "$myvar := false";
-        let res = parse(input);
-        assert_eq!(
-            res.unwrap(),
-            VariableBindingExpression {
-                var_name: "myvar".to_string(),
-                bound_expression: Box::new(Expression::Literal(LiteralExpression::from(false)))
-            }
-            .into()
-        )
-    }
-
-    #[test]
-    fn expr_parser_test() {
-        let input = "$myvar := null";
-        let res = expr_parser::<(&str, ErrorKind)>(input);
-        assert_eq!(
-            res.unwrap().1,
-            VariableBindingExpression {
-                var_name: "myvar".to_string(),
-                bound_expression: Box::new(LiteralExpression::from(()).into())
-            }
-            .into()
-        )
-    }
-}
