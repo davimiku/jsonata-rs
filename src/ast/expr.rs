@@ -1,3 +1,5 @@
+use serde_json::Value;
+
 use crate::evaluate::{Context, EvaluationResult};
 
 use super::{
@@ -39,6 +41,8 @@ use super::{
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
+    Multi(MultiExpression),
+
     Literal(LiteralExpression),
 
     Variable(VariableBindingExpression),
@@ -57,6 +61,7 @@ pub enum Expression {
 impl Expression {
     pub fn evaluate(&self, context: &mut Context) -> EvaluationResult {
         match self {
+            Expression::Multi(expr) => expr.evaluate(context),
             Expression::Literal(expr) => expr.evaluate(context),
             Expression::Variable(expr) => expr.evaluate(context),
             Expression::Map(expr) => expr.evaluate(context),
@@ -73,6 +78,12 @@ impl Expression {
 impl From<LiteralExpression> for Expression {
     fn from(expr: LiteralExpression) -> Self {
         Expression::Literal(expr)
+    }
+}
+
+impl From<MultiExpression> for Expression {
+    fn from(expr: MultiExpression) -> Self {
+        Expression::Multi(expr)
     }
 }
 
@@ -109,6 +120,22 @@ impl From<InclusionExpression> for Expression {
 impl From<ConcatExpression> for Expression {
     fn from(expr: ConcatExpression) -> Self {
         Expression::Concat(expr)
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct MultiExpression {
+    pub expressions: Vec<Expression>,
+}
+
+impl MultiExpression {
+    /// Evaluate each expression, returning the final value.
+    fn evaluate(&self, context: &mut Context) -> EvaluationResult {
+        let mut value: Option<Value> = None;
+        for expr in &self.expressions {
+            value = expr.evaluate(context)?;
+        }
+        Ok(value)
     }
 }
 

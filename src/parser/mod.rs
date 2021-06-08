@@ -6,6 +6,8 @@ mod string;
 use std::boxed::Box;
 use std::error::Error;
 
+use nom::combinator::map;
+use nom::multi::separated_list0;
 use nom::{
     branch::alt,
     bytes::complete::{is_not, tag, take_until},
@@ -18,6 +20,7 @@ use nom::{
 use nom_locate::LocatedSpan;
 
 use crate::ast::expr::Expression;
+use crate::ast::expr::MultiExpression;
 
 use self::dyadic::comparison_expr;
 use self::dyadic::variable_binding_expr;
@@ -70,28 +73,69 @@ fn transform_escaped(i: &str) -> IResult<&str, std::string::String> {
     )(i)
 }
 
-/// Top-level function for expression parsing
+/// Parses a block delimited by parentheses into a vector of expressions
+///
+/// ```
+/// (
+///    Account;
+///    true;
+///    Address
+/// )
+/// ```
+/// The above JSONata program is parsed into a MultiExpression where the
+/// internal Vec<Expression> contains PathExpression(Account), LiteralExpression(true),
+/// and PathExpression(Address).
+///
+/// The final semi-colon is optional.
+fn multiexpression_parser<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
+where
+    E: ParseError<&'a str> + FromExternalError<&'a str, std::num::ParseIntError>,
+{
+    map(
+        delimited(tag("("), separated_list0(tag(";"), expr_parser), tag(")")),
+        |expressions| MultiExpression { expressions }.into(),
+    )(input)
+}
+
+/// Main function for expression parsing
 ///
 /// Calls each of the other parsers in order until a parser
-/// yiels success, or returns a ParseError
-pub fn expr_parser<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
+/// yields success, or returns a ParseError
+fn expr_parser<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
 where
     E: ParseError<&'a str> + FromExternalError<&'a str, std::num::ParseIntError>,
 {
     alt((
-        map_expr,
-        path_expr,
-        comparison_expr,
+        multiexpression_parser,
         literal_expr,
+        path_expr,
+        map_expr,
+        comparison_expr,
         variable_binding_expr,
     ))(input)
 }
 
-pub(crate) fn parse(input: &str) -> Result<Expression, NomErr<(&str, ErrorKind)>> {
+/// Parses the given input to produce an AST of expressions
+///
+/// The result of this function is always a single Expression node,
+/// however, Expressions may have many Expressions contained within them.
+///
+/// ```
+/// (
+///    /* Get the person's name, i.e. 'John' */
+///    $name := Account.Name;
+///    /* Return how many orders, i.e. 'John: 5 orders' */
+///    $name & ": " & $count(Orders) & " orders"
+/// )
+/// ```
+/// The above JSONata program evaluates to a single top-level expression,
+/// in this case, a MultiExpression which has a Vec<Expression> and evaluates
+/// each in order and uses the final value as its return value.
+pub(super) fn parse(input: &str) -> Result<Expression, NomErr<(&str, ErrorKind)>> {
     expr_parser(input).map(|(_, ex)| ex)
 }
 
-type Res<T, U> = IResult<T, U, VerboseError<T>>;
+// type Res<T, U> = IResult<T, U, VerboseError<T>>;
 
 #[cfg(test)]
 mod tests {
@@ -101,7 +145,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn expression_parser_test<'a>() {
+    fn parse_test() {
         let input = "$myvar := false";
         let res = parse(input);
         assert_eq!(
@@ -115,7 +159,7 @@ mod tests {
     }
 
     #[test]
-    fn expr_parser_test<'a>() {
+    fn expr_parser_test() {
         let input = "$myvar := null";
         let res = expr_parser::<(&str, ErrorKind)>(input);
         assert_eq!(
