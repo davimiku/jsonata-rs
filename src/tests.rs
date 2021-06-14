@@ -1,3 +1,4 @@
+use crate::jsonata;
 use serde_json::{json, Value};
 
 pub(crate) fn object_data() -> Value {
@@ -44,19 +45,10 @@ pub(crate) fn object_data() -> Value {
     })
 }
 
-#[cfg(test)]
-mod tests {
-    use serde_json::Value;
-
-    use crate::jsonata;
-
-    use super::object_data;
-
-    #[test]
-    fn literal() {
-        let input = "true";
-        let mut program = jsonata(input).unwrap();
-        let result = program.evaluate(&object_data()).unwrap();
-        assert_eq!(result, Some(Value::Bool(true)));
-    }
+#[test]
+fn literal() {
+    let input = "true";
+    let mut program = jsonata(input).unwrap();
+    let result = program.evaluate(&object_data()).unwrap();
+    assert_eq!(result, Some(Value::Bool(true)));
 }

@@ -2,7 +2,6 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     combinator::{map, value},
-    error::{FromExternalError, ParseError},
     IResult,
 };
 
@@ -12,7 +11,7 @@ use crate::ast::{
     path::PathExpression,
 };
 
-use super::{ident::path_ident, string::literal_string};
+use super::{ident::path_ident, string::literal_string, Span};
 
 /// Path expressions represent a location in the parsed JSON
 /// to query from.
@@ -29,49 +28,45 @@ use super::{ident::path_ident, string::literal_string};
 /// (such as Account), where the first character must be alphabetic. Alternatively,
 /// backticks can delimit the expression (such as `Hello World`) which is often used
 /// when there is a space or other character in the identifier.
-pub(super) fn path_expr<'a, E: ParseError<&'a str>>(
-    input: &'a str,
-) -> IResult<&'a str, Expression, E> {
+pub(super) fn path_expr(span: Span) -> IResult<Span, Expression> {
     map(path_ident, |ident| {
         PathExpression {
             ident: ident.to_string(),
         }
         .into()
-    })(input)
+    })(span)
 }
 
 /// Parses a boolean value, either true or false
-fn literal_bool<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, LiteralValue, E> {
+fn literal_bool(span: Span) -> IResult<Span, LiteralValue> {
     alt((
         value(LiteralValue::Bool(true), tag("true")),
         value(LiteralValue::Bool(false), tag("false")),
-    ))(input)
+    ))(span)
 }
 
 /// Parses the literal value `null`
-fn literal_null<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, LiteralValue, E> {
-    value(LiteralValue::Null, tag("null"))(input)
+fn literal_null(span: Span) -> IResult<Span, LiteralValue> {
+    value(LiteralValue::Null, tag("null"))(span)
 }
 
-pub(super) fn literal_expr<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
-where
-    E: ParseError<&'a str> + FromExternalError<&'a str, std::num::ParseIntError>,
-{
+pub(super) fn literal_expr(span: Span) -> IResult<Span, Expression> {
     map(alt((literal_bool, literal_null, literal_string)), |val| {
         LiteralExpression::from(val).into()
-    })(input)
+    })(span)
 }
 
 #[cfg(test)]
 mod tests {
-    use nom::error::ErrorKind;
+
+    use crate::parser::make_span;
 
     use super::*;
 
     #[test]
     fn path_expr_non_delimited() {
         let input = "name";
-        let actual = path_expr::<(&str, ErrorKind)>(input).unwrap().1;
+        let actual = path_expr(make_span(input)).unwrap().1;
 
         let expected = PathExpression {
             ident: "name".to_string(),
@@ -83,7 +78,7 @@ mod tests {
     #[test]
     fn path_expr_delimited() {
         let input = "`hello world`";
-        let actual = path_expr::<(&str, ErrorKind)>(input).unwrap().1;
+        let actual = path_expr(make_span(input)).unwrap().1;
 
         let expected = PathExpression {
             ident: "hello world".to_string(),
@@ -95,44 +90,42 @@ mod tests {
     #[test]
     fn bool_parser_true() {
         let input = "true";
-        let res = literal_bool::<(&str, ErrorKind)>(input);
-        assert_eq!(res, Ok(("", LiteralValue::Bool(true))))
+        let (_, actual) = literal_bool(make_span(input)).unwrap();
+        assert_eq!(actual, LiteralValue::Bool(true))
     }
 
     #[test]
     fn bool_parser_false() {
         let input = "false";
-        let res = literal_bool::<(&str, ErrorKind)>(input);
-        assert_eq!(res, Ok(("", LiteralValue::Bool(false))));
+        let (_, actual) = literal_bool(make_span(input)).unwrap();
+        assert_eq!(actual, LiteralValue::Bool(false));
     }
 
     #[test]
     fn null_parser() {
         let input = "null";
-        let res = literal_null::<(&str, ErrorKind)>(input);
-        assert_eq!(res, Ok(("", LiteralValue::Null)))
+        let (_, actual) = literal_null(make_span(input)).unwrap();
+        assert_eq!(actual, LiteralValue::Null)
     }
 
     #[test]
     fn literal_expression_parser() {
-        assert_eq!(
-            literal_expr::<(&str, ErrorKind)>("true"),
-            Ok(("", LiteralExpression::from(true).into()))
-        );
-        assert_eq!(
-            literal_expr::<(&str, ErrorKind)>("false"),
-            Ok(("", LiteralExpression::from(false).into()))
-        );
-        assert_eq!(
-            literal_expr::<(&str, ErrorKind)>("null"),
-            Ok(("", LiteralExpression::from(LiteralValue::Null).into()))
-        );
-        assert_eq!(
-            literal_expr::<(&str, ErrorKind)>(r#""test""#),
-            Ok((
-                "",
-                LiteralExpression::from(LiteralValue::from("test")).into()
-            ))
-        )
+        let actual = vec![
+            literal_expr(make_span("true")),
+            literal_expr(make_span("false")),
+            literal_expr(make_span("null")),
+            literal_expr(make_span(r#""test""#)),
+        ];
+        let expected = vec![
+            LiteralExpression::from(true),
+            LiteralExpression::from(false),
+            LiteralExpression::from(LiteralValue::Null),
+            LiteralExpression::from(LiteralValue::from("test")),
+        ];
+        for (expected_res, actual) in actual.iter().zip(expected.iter()) {
+            let (_, expected) = expected_res.as_ref().unwrap();
+            let actual_expr: Expression = actual.clone().into();
+            assert_eq!(*expected, actual_expr);
+        }
     }
 }

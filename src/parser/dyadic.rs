@@ -3,16 +3,14 @@
 //! - comparison
 //! - map (in relation to path operators)
 
-use std::num::ParseIntError;
-
 use nom::{
     branch::alt,
     bytes::complete::tag,
     combinator::map,
-    error::{FromExternalError, ParseError},
     sequence::{separated_pair, tuple},
     IResult,
 };
+// use nom_recursive::recursive_parser;
 
 use crate::ast::{
     dyadic::{CompareExpression, CompareOpType},
@@ -20,7 +18,7 @@ use crate::ast::{
     path::MapExpression,
 };
 
-use super::{expr_parser, ident::variable_ident, trim};
+use super::{expr_parser, ident::variable_ident, trim, Span};
 
 /// Map expression
 ///
@@ -36,10 +34,7 @@ use super::{expr_parser, ident::variable_ident, trim};
 ///
 /// This operator is left associative meaning that the expression a.b.c.d
 /// is evaluated like ((a.b).c).d; i.e. left to right
-pub(super) fn map_expr<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
-where
-    E: ParseError<&'a str> + FromExternalError<&'a str, ParseIntError>,
-{
+pub(super) fn map_expr(span: Span) -> IResult<Span, Expression> {
     map(
         separated_pair(trim(expr_parser), tag("."), trim(expr_parser)),
         |(lhs, rhs)| {
@@ -49,7 +44,7 @@ where
             }
             .into()
         },
-    )(input)
+    )(span)
 }
 
 /// Compare expression
@@ -64,10 +59,7 @@ where
 ///
 /// The CompareExpression is constructed with the LHS, RHS, and which comparison
 /// operator is used between them.
-pub(super) fn comparison_expr<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
-where
-    E: ParseError<&'a str> + FromExternalError<&'a str, ParseIntError>,
-{
+pub(super) fn comparison_expr(span: Span) -> IResult<Span, Expression> {
     map(
         tuple((trim(expr_parser), comparison_operator, trim(expr_parser))),
         |(lhs, compare_type, rhs)| {
@@ -78,16 +70,22 @@ where
             }
             .into()
         },
-    )(input)
+    )(span)
 }
+
+// #[recursive_parser]
+// pub(super) fn comparison_expr_test(span: Span) -> IResult<Span, String> {
+//     let (span, x) = expr_test(span)?;
+//     let (span, y) = tag("+")(span)?;
+//     let (span, z) = expr_test(span)?;
+//     let ret = format!("{}{}{}", x, y, z);
+//     Ok((span, ret))
+// }
 
 /// Parses looking for a comparison operator
 ///
 /// The valid operators are defined in the CompareType enum
-fn comparison_operator<'a, E>(input: &'a str) -> IResult<&'a str, CompareOpType, E>
-where
-    E: ParseError<&'a str>,
-{
+fn comparison_operator(span: Span) -> IResult<Span, CompareOpType> {
     map(
         alt((
             tag(">="),
@@ -97,16 +95,8 @@ where
             tag("<"),
             tag("="),
         )),
-        |s| match s {
-            ">=" => CompareOpType::GreaterEquals,
-            "<=" => CompareOpType::LessEquals,
-            "!=" => CompareOpType::NotEquals,
-            ">" => CompareOpType::Greater,
-            "<" => CompareOpType::Less,
-            "=" => CompareOpType::Equals,
-            _ => unreachable!(),
-        },
-    )(input)
+        |s: Span| CompareOpType::from(*s.fragment()),
+    )(span)
 }
 
 /// Variable binding expressions bind a value to a variable
@@ -116,58 +106,31 @@ where
 /// $my_var := "hello, world"  // also returns "hello, world"
 /// ```
 ///
-pub(super) fn variable_binding_expr<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
-where
-    E: ParseError<&'a str> + FromExternalError<&'a str, std::num::ParseIntError>,
-{
-    let parser = separated_pair(variable_ident, trim(tag(":=")), expr_parser);
-    map(parser, |(s, val)| {
-        VariableBindingExpression {
-            var_name: s.to_string(),
-            bound_expression: Box::new(val),
-        }
-        .into()
-    })(input)
+pub(super) fn variable_binding_expr(span: Span) -> IResult<Span, Expression> {
+    map(
+        separated_pair(trim(variable_ident), tag(":="), trim(expr_parser)),
+        |(s, val)| {
+            VariableBindingExpression {
+                var_name: s.to_string(),
+                bound_expression: Box::new(val),
+            }
+            .into()
+        },
+    )(span)
 }
 
 #[cfg(test)]
 mod tests {
-    use nom::error::ErrorKind;
-
-    use crate::ast::{literal::LiteralExpression, path::PathExpression};
+    use crate::{ast::literal::LiteralExpression, parser::make_span};
 
     use super::*;
 
     #[test]
-    fn map_expr_simple() {
-        let input = "address.city";
-        let actual = map_expr::<(&str, ErrorKind)>(input).unwrap().1;
-
-        let expected = MapExpression {
-            lhs: Box::new(
-                PathExpression {
-                    ident: "address".to_string(),
-                }
-                .into(),
-            ),
-            rhs: Box::new(
-                PathExpression {
-                    ident: "city".to_string(),
-                }
-                .into(),
-            ),
-        }
-        .into();
-
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn variable_binding_parser<'a>() {
+    fn variable_binding_parser() {
         let input = "$myvar := true";
-        let res = variable_binding_expr::<(&str, ErrorKind)>(input);
+        let (_, actual) = variable_binding_expr(make_span(input)).unwrap();
         assert_eq!(
-            res.unwrap().1,
+            actual,
             VariableBindingExpression {
                 var_name: "myvar".to_string(),
                 bound_expression: Box::new(LiteralExpression::from(true).into())

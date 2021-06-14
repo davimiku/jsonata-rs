@@ -5,9 +5,6 @@ mod string;
 #[cfg(test)]
 mod tests;
 
-use std::boxed::Box;
-use std::error::Error;
-
 use nom::combinator::map;
 use nom::multi::separated_list0;
 use nom::{
@@ -15,26 +12,32 @@ use nom::{
     bytes::complete::{is_not, tag, take_until},
     character::complete::space0,
     combinator::value,
-    error::{ErrorKind, FromExternalError, ParseError},
+    error::ParseError,
     sequence::{delimited, tuple},
-    AsChar, Err as NomErr, IResult, InputIter, InputLength, InputTake, InputTakeAtPosition, Parser,
+    AsChar, IResult, InputIter, InputLength, InputTake, InputTakeAtPosition, Parser,
 };
 use nom_locate::LocatedSpan;
+use nom_recursive::RecursiveInfo;
 
 use crate::ast::expr::Expression;
 use crate::ast::expr::MultiExpression;
 
 use self::dyadic::comparison_expr;
+use self::dyadic::map_expr;
 use self::dyadic::variable_binding_expr;
-use self::{
-    dyadic::map_expr,
-    monadic::{literal_expr, path_expr},
-};
+use self::monadic::{literal_expr, path_expr};
 
-type Span<'a> = LocatedSpan<&'a str>;
+/// Type alias for the internal output of parser functions. The nom-locate and nom-recursive
+/// crates are used to provide location information of the parsed input and to allow
+/// for left-recursion.
+type Span<'a> = LocatedSpan<&'a str, RecursiveInfo>;
 
-/// Type-erased errors
-pub type BoxError = Box<dyn Error + Send + Sync>;
+pub type ParseResult<'a> = Result<Expression, nom::Err<nom::error::Error<Span<'a>>>>;
+// Result<Expression, nom::Err<nom::error::Error<LocatedSpan<&'a str, RecursiveInfo>>>>;
+
+fn make_span(s: &str) -> Span {
+    LocatedSpan::new_extra(s, RecursiveInfo::new())
+}
 
 /// Parses the provided parser, ignoring spaces before
 /// and after the matching input.
@@ -51,8 +54,12 @@ where
 /// Parses a C-Style comment
 ///
 /// Comments begin with the `/*` characters and close with the `*/` characters.
-fn comment<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, (), E> {
-    value((), tuple((tag("/*"), take_until("*/"), tag("*/"))))(input)
+/// TODO: Decide if we want to retain comments in the AST
+fn comment(span: Span) -> IResult<Span, ()> {
+    map(
+        value((), tuple((tag("/*"), take_until("*/"), tag("*/")))),
+        |()| (),
+    )(span)
 }
 
 fn not_whitespace(i: &str) -> IResult<&str, &str> {
@@ -89,24 +96,22 @@ fn transform_escaped(i: &str) -> IResult<&str, std::string::String> {
 /// and PathExpression(Address).
 ///
 /// The final semi-colon is optional.
-fn multiexpression_parser<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
-where
-    E: ParseError<&'a str> + FromExternalError<&'a str, std::num::ParseIntError>,
-{
+fn multiexpression_parser(input: Span) -> IResult<Span, Expression> {
     map(
         delimited(tag("("), separated_list0(tag(";"), expr_parser), tag(")")),
         |expressions| MultiExpression { expressions }.into(),
     )(input)
 }
 
+// fn expr_test(span: Span) -> IResult<Span, String> {
+//     alt((comparison_expr_test, term))(span)
+// }
+
 /// Main function for expression parsing
 ///
 /// Calls each of the other parsers in order until a parser
 /// yields success, or returns a ParseError
-fn expr_parser<'a, E>(input: &'a str) -> IResult<&'a str, Expression, E>
-where
-    E: ParseError<&'a str> + FromExternalError<&'a str, std::num::ParseIntError>,
-{
+fn expr_parser(span: Span) -> IResult<Span, Expression> {
     alt((
         multiexpression_parser,
         literal_expr,
@@ -114,7 +119,7 @@ where
         map_expr,
         comparison_expr,
         variable_binding_expr,
-    ))(input)
+    ))(span)
 }
 
 /// Parses the given input to produce an AST of expressions
@@ -133,8 +138,11 @@ where
 /// The above JSONata program evaluates to a single top-level expression,
 /// in this case, a MultiExpression which has a Vec<Expression> and evaluates
 /// each in order and uses the final value as its return value.
-pub(super) fn parse(input: &str) -> Result<Expression, NomErr<(&str, ErrorKind)>> {
-    expr_parser(input).map(|(_, ex)| ex)
+pub(super) fn parse(input: &str) -> ParseResult {
+    expr_parser(make_span(input)).map(|(span, expr)| {
+        if !span.is_empty() {
+            panic!("Unparsed input, remaining: '{}'", span.fragment())
+        }
+        expr
+    })
 }
-
-// type Res<T, U> = IResult<T, U, VerboseError<T>>;

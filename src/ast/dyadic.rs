@@ -21,6 +21,20 @@ pub enum CompareOpType {
     LessEquals,
 }
 
+impl From<&str> for CompareOpType {
+    fn from(s: &str) -> Self {
+        match s {
+            "=" => CompareOpType::Equals,
+            "!=" => CompareOpType::NotEquals,
+            ">" => CompareOpType::Greater,
+            ">=" => CompareOpType::GreaterEquals,
+            "<" => CompareOpType::Less,
+            "<=" => CompareOpType::LessEquals,
+            _ => unreachable!(),
+        }
+    }
+}
+
 impl Display for CompareOpType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
