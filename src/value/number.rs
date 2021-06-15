@@ -5,6 +5,7 @@ use std::{
 
 use serde_json::{Number, Value};
 
+#[derive(Debug, Clone)]
 pub(crate) struct JSONataNumber(Number);
 
 #[derive(Debug, Clone, Copy)]
@@ -275,8 +276,32 @@ impl Div for JSONataNumber {
 impl Rem for JSONataNumber {
     type Output = JSONataNumber;
 
+    /// Returns the output of the `remainder` operator between two numbers
+    ///
+    /// Note that the JSONata documentation currently calls this the `modulo`
+    /// operation although it's implemented as the `remainder` operation (due
+    /// to how Javascript implements `%`).
+    ///
+    /// The `%` operator is also implemented as remainder in Rust, so for
+    /// consistency we implement the same. This could be changed to use
+    /// `i64::rem_euclid` if necessary for Euclidian division.
     fn rem(self, rhs: Self) -> Self::Output {
-        todo!()
+        let self_type: NType = (&self.0).into();
+        let rhs_type: NType = (&rhs.0).into();
+
+        match (self_type, rhs_type) {
+            (NType::NegInt(a), NType::NegInt(b)) => (a % b).into(),
+            (NType::PosInt(a), NType::PosInt(b)) => (a % b).into(),
+            (NType::Float(a), NType::Float(b)) => (a % b).into(),
+
+            (NType::NegInt(i), NType::PosInt(u)) => (i % (u as i64)).into(),
+            (NType::PosInt(u), NType::NegInt(i)) => ((u as i64) % i).into(),
+
+            (NType::NegInt(i), NType::Float(f)) => ((i as f64) % f).into(),
+            (NType::PosInt(u), NType::Float(f)) => ((u as f64) % f).into(),
+            (NType::Float(f), NType::NegInt(i)) => (f % (i as f64)).into(),
+            (NType::Float(f), NType::PosInt(u)) => (f % (u as f64)).into(),
+        }
     }
 }
 
@@ -312,6 +337,17 @@ mod tests {
         ];
         for (a, b) in cases {
             assert!(a != b);
+        }
+    }
+
+    #[test]
+    fn rem() {
+        let cases: Vec<(JSONataNumber, JSONataNumber, JSONataNumber)> = vec![
+            (7_u64.into(), 3_u64.into(), 1_u64.into()),
+            ((-10_i64).into(), 6_u64.into(), (-4_i64).into()),
+        ];
+        for (lhs, rhs, expected) in cases {
+            assert_eq!(lhs % rhs, expected)
         }
     }
 }
