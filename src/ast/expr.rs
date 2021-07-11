@@ -1,6 +1,7 @@
-use serde_json::Value;
-
-use crate::evaluate::{Context, EvaluationResult};
+use crate::{
+    evaluate::{Context, EvaluationResult},
+    value::JSONataValue,
+};
 
 use super::{
     dyadic::{CompareExpression, ConcatExpression, InclusionExpression},
@@ -131,7 +132,7 @@ pub struct MultiExpression {
 impl MultiExpression {
     /// Evaluate each expression, returning the final value.
     fn evaluate(&self, context: &mut Context) -> EvaluationResult {
-        let mut value: Option<Value> = None;
+        let mut value: Option<JSONataValue> = None;
         for expr in &self.expressions {
             value = expr.evaluate(context)?;
         }

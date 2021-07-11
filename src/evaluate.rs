@@ -4,9 +4,9 @@ use std::{collections::HashMap, fmt::Display};
 
 use serde_json::Value;
 
-use crate::ast::dyadic::DyadicOpType;
+use crate::{ast::dyadic::DyadicOpType, value::JSONataValue};
 
-pub type EvaluationResult = Result<Option<Value>, EvaluationError>;
+pub type EvaluationResult = Result<Option<JSONataValue>, EvaluationError>;
 
 #[derive(PartialEq, Debug)]
 pub enum EvaluationError {
@@ -24,10 +24,22 @@ pub enum EvaluationError {
 
     /// Function '{}': requires '{}' arguments, '{}' were provided
     FunctionIncorrectNumArguments(String, usize, usize),
+
+    /// JSONata Functions cannot be converted to other value types
+    FunctionCannotConvertToValue(String),
+}
+
+impl EvaluationError {
+    pub fn function_incorrect_num_arguments<T>(name: T, expected: usize, actual: usize) -> Self
+    where
+        T: Into<String>,
+    {
+        EvaluationError::FunctionIncorrectNumArguments(name.into(), expected, actual)
+    }
 }
 
 impl Display for EvaluationError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             EvaluationError::DyadicInconsistentDataType(val1, val2, op) => {
                 f.write_fmt(format_args!("The values '{}' and '{}' on either side of operator '{}' must be of the same data type", val1, val2, op))
@@ -44,6 +56,8 @@ impl Display for EvaluationError {
             EvaluationError::FunctionIncorrectNumArguments(func_name, num_expected, num_actual) => {
                 f.write_fmt(format_args!("Function '{}': requires '{}' arguments, '{}' were provided", func_name, num_expected, num_actual))
             }
+            EvaluationError::FunctionCannotConvertToValue(func_name) => f.write_fmt(format_args!("Function '{}' cannot be converted to a JSON value", func_name))
+
         }
     }
 }
@@ -52,7 +66,7 @@ impl Display for EvaluationError {
 pub struct Context<'a> {
     data: &'a Value,
 
-    variables: HashMap<String, Option<Value>>,
+    variables: HashMap<String, Option<JSONataValue>>,
 }
 
 impl Default for Context<'_> {
@@ -76,7 +90,7 @@ impl<'a> Context<'a> {
         &self.data
     }
 
-    pub fn set_var(&mut self, var_name: String, value: Option<Value>) {
+    pub fn set_var(&mut self, var_name: String, value: Option<JSONataValue>) {
         self.variables.insert(var_name, value);
     }
 

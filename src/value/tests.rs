@@ -18,7 +18,7 @@ fn eq() {
         ),
     ];
     for (a, b) in cases {
-        assert!(JSONataValue(a) == JSONataValue(b));
+        assert!(JSONataValue::Value(a) == JSONataValue::Value(b));
     }
 }
 
@@ -33,7 +33,10 @@ fn add() {
         (json!(100), json!(-250), json!(-150)),
     ];
     for (lhs, rhs, expected) in ok_cases {
-        assert_eq!(JSONataValue(lhs).try_add(JSONataValue(rhs)), Ok(expected))
+        assert_eq!(
+            JSONataValue::Value(lhs).try_add(JSONataValue::Value(rhs)),
+            Ok(expected)
+        )
     }
 
     // (lhs, rhs)
@@ -44,7 +47,7 @@ fn add() {
     ];
     for (lhs, rhs) in err_cases {
         assert_eq!(
-            JSONataValue(lhs).try_add(JSONataValue(rhs)),
+            JSONataValue::Value(lhs).try_add(JSONataValue::Value(rhs)),
             Err(EvaluationError::DyadicMustBeNumber(
                 NumericOpType::Add.into()
             ))

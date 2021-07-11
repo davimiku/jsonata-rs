@@ -125,19 +125,17 @@ impl CompareExpression {
     ///
     /// Otherwise, deep (recursive) equality is tested. Object variants need
     /// not have the same ordering of keys to be considered equal.
-    fn equals(lhs: Option<Value>, rhs: Option<Value>) -> EvaluationResult {
+    fn equals(lhs: Option<JSONataValue>, rhs: Option<JSONataValue>) -> EvaluationResult {
         Ok(Some(CompareExpression::equals_raw(lhs, rhs).into()))
     }
 
     /// Checks for equality and returns the result as a raw bool
-    fn equals_raw(lhs: Option<Value>, rhs: Option<Value>) -> bool {
+    fn equals_raw(lhs: Option<JSONataValue>, rhs: Option<JSONataValue>) -> bool {
         match (lhs, rhs) {
             (None, None) => false,
             (None, Some(_)) => false,
             (Some(_), None) => false,
-            (Some(lhs_val), Some(rhs_val)) => {
-                JSONataValue::from(lhs_val) == JSONataValue::from(rhs_val)
-            }
+            (Some(lhs), Some(rhs)) => lhs == rhs,
         }
     }
 
@@ -149,9 +147,10 @@ impl CompareExpression {
     /// FIXME: Decide if this is the behavior we want to implement, it's not documented in the JSONata docs.
     /// Intuitively, one would expect that equals is the opposite of not_equals, as
     /// currently implemented below.
+    /// Potentially this is "documented" in a test case?
     ///
     /// If both sides are Some, deep non-equality is tested.
-    fn not_equals(lhs: Option<Value>, rhs: Option<Value>) -> EvaluationResult {
+    fn not_equals(lhs: Option<JSONataValue>, rhs: Option<JSONataValue>) -> EvaluationResult {
         Ok(Some((!CompareExpression::equals_raw(lhs, rhs)).into()))
     }
 
@@ -162,22 +161,14 @@ impl CompareExpression {
     ///
     /// The lhs and rhs must both be numbers or both be strings, otherwise a runtime error
     /// is thrown.
-    fn greater(lhs: Option<Value>, rhs: Option<Value>) -> EvaluationResult {
-        match (lhs, rhs) {
-            (None, None) => Ok(None),
-            (None, Some(_)) => Ok(None),
-            (Some(_), None) => Ok(None),
-            (Some(l), Some(r)) => match (l, r) {
-                (Value::Number(a), Value::Number(b)) => {
-                    let j_num_lhs: JSONataNumber = a.into();
-                    let j_num_rhs: JSONataNumber = b.into();
-                    Ok(Some((j_num_lhs > j_num_rhs).into()))
-                }
-                (Value::String(a), Value::String(b)) => Ok(Some((a > b).into())),
-                (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(
-                    CompareOpType::Greater.into(),
-                )),
+    fn greater(lhs: Option<JSONataValue>, rhs: Option<JSONataValue>) -> EvaluationResult {
+        match CompareExpression::unwrap_for_compare(lhs, rhs, CompareOpType::LessEquals)? {
+            Some((left_val, right_val)) => match (left_val, right_val) {
+                (NumberOrString::Number(a), NumberOrString::Number(b)) => Ok(Some((a > b).into())),
+                (NumberOrString::String(a), NumberOrString::String(b)) => Ok(Some((a > b).into())),
+                (_, _) => unreachable!(),
             },
+            None => Ok(None),
         }
     }
 
@@ -188,75 +179,106 @@ impl CompareExpression {
     ///
     /// The lhs and rhs must both be numbers or both be strings, otherwise a runtime error
     /// is thrown.
-    fn greater_equals(lhs: Option<Value>, rhs: Option<Value>) -> EvaluationResult {
-        match (lhs, rhs) {
-            (None, None) => Ok(None),
-            (None, Some(_)) => Ok(None),
-            (Some(_), None) => Ok(None),
-            (Some(l), Some(r)) => match (l, r) {
-                (Value::Number(a), Value::Number(b)) => {
-                    let j_num_lhs: JSONataNumber = a.into();
-                    let j_num_rhs: JSONataNumber = b.into();
-                    Ok(Some((j_num_lhs >= j_num_rhs).into()))
-                }
-                (Value::String(a), Value::String(b)) => Ok(Some((a >= b).into())),
-                (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(
-                    CompareOpType::GreaterEquals.into(),
-                )),
+    fn greater_equals(lhs: Option<JSONataValue>, rhs: Option<JSONataValue>) -> EvaluationResult {
+        match CompareExpression::unwrap_for_compare(lhs, rhs, CompareOpType::LessEquals)? {
+            Some((left_val, right_val)) => match (left_val, right_val) {
+                (NumberOrString::Number(a), NumberOrString::Number(b)) => Ok(Some((a >= b).into())),
+                (NumberOrString::String(a), NumberOrString::String(b)) => Ok(Some((a >= b).into())),
+                (_, _) => unreachable!(),
             },
+            None => Ok(None),
         }
     }
 
     /// Tests if the left-hand side is lesser than the right-hand side.
     ///
     /// If either value is None, the return value is None.
-    /// TODO: Would we rather have an error here?
+    /// TODO: This is the behavior in the JSONata Exerciser, but it's not documented.
+    /// Would we rather have an error here?
     ///
     /// The lhs and rhs must both be numbers or both be strings, otherwise a runtime error
     /// is thrown.
-    fn less(lhs: Option<Value>, rhs: Option<Value>) -> EvaluationResult {
-        match (lhs, rhs) {
-            (None, None) => Ok(None),
-            (None, Some(_)) => Ok(None),
-            (Some(_), None) => Ok(None),
-            (Some(l), Some(r)) => match (l, r) {
-                (Value::Number(a), Value::Number(b)) => {
-                    let j_num_lhs: JSONataNumber = a.into();
-                    let j_num_rhs: JSONataNumber = b.into();
-                    Ok(Some((j_num_lhs < j_num_rhs).into()))
-                }
-                (Value::String(a), Value::String(b)) => Ok(Some((a < b).into())),
-                (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(
-                    CompareOpType::Less.into(),
-                )),
+    fn less(lhs: Option<JSONataValue>, rhs: Option<JSONataValue>) -> EvaluationResult {
+        match CompareExpression::unwrap_for_compare(lhs, rhs, CompareOpType::LessEquals)? {
+            Some((left_val, right_val)) => match (left_val, right_val) {
+                (NumberOrString::Number(a), NumberOrString::Number(b)) => Ok(Some((a < b).into())),
+                (NumberOrString::String(a), NumberOrString::String(b)) => Ok(Some((a < b).into())),
+                (_, _) => unreachable!(),
             },
+            None => Ok(None),
         }
     }
 
     /// Tests if the left-hand side is lesser than or equal to right-hand side.
     ///
     /// If either value is None, the return value is None.
-    /// TODO: Would we rather have an error here?
+    /// TODO: This is the behavior in the JSONata Exerciser, but it's not documented.
+    /// Would we rather have an error here?
     ///
     /// The lhs and rhs must both be numbers or both be strings, otherwise a runtime error
     /// is thrown.
-    fn less_equals(lhs: Option<Value>, rhs: Option<Value>) -> EvaluationResult {
+    fn less_equals(lhs: Option<JSONataValue>, rhs: Option<JSONataValue>) -> EvaluationResult {
+        match CompareExpression::unwrap_for_compare(lhs, rhs, CompareOpType::LessEquals)? {
+            Some((left_val, right_val)) => match (left_val, right_val) {
+                (NumberOrString::Number(a), NumberOrString::Number(b)) => Ok(Some((a <= b).into())),
+                (NumberOrString::String(a), NumberOrString::String(b)) => Ok(Some((a <= b).into())),
+                (_, _) => unreachable!(),
+            },
+            None => Ok(None),
+        }
+    }
+
+    /// Performs unwrapping values that will be passed into comparison functions
+    ///
+    /// Unwraps complex values to return Ok if the unwrapped values can be
+    /// compared, and Err if the unwrapped values cannot be compared.
+    fn unwrap_for_compare(
+        lhs: Option<JSONataValue>,
+        rhs: Option<JSONataValue>,
+        opType: CompareOpType,
+    ) -> Result<Option<(NumberOrString, NumberOrString)>, EvaluationError> {
         match (lhs, rhs) {
             (None, None) => Ok(None),
-            (None, Some(_)) => Ok(None),
-            (Some(_), None) => Ok(None),
-            (Some(l), Some(r)) => match (l, r) {
-                (Value::Number(a), Value::Number(b)) => {
-                    let j_num_lhs: JSONataNumber = a.into();
-                    let j_num_rhs: JSONataNumber = b.into();
-                    Ok(Some((j_num_lhs <= j_num_rhs).into()))
+            (None, Some(val)) => match val {
+                JSONataValue::Value(_) => Ok(None),
+                JSONataValue::Function(_) => {
+                    Err(EvaluationError::DyadicMustBeNumberOrString(opType.into()))
                 }
-                (Value::String(a), Value::String(b)) => Ok(Some((a <= b).into())),
-                (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(
-                    CompareOpType::LessEquals.into(),
-                )),
+            },
+            (Some(val), None) => match val {
+                JSONataValue::Value(_) => Ok(None),
+                JSONataValue::Function(_) => {
+                    Err(EvaluationError::DyadicMustBeNumberOrString(opType.into()))
+                }
+            },
+            (Some(l), Some(r)) => match (l, r) {
+                (JSONataValue::Value(left_val), JSONataValue::Value(right_val)) => {
+                    match (left_val, right_val) {
+                        (Value::Number(l), Value::Number(r)) => Ok(Some((l.into(), r.into()))),
+                        (Value::String(l), Value::String(r)) => Ok(Some((l.into(), r.into()))),
+                        (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(opType.into())),
+                    }
+                }
+                (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(opType.into())),
             },
         }
+    }
+}
+
+enum NumberOrString {
+    Number(JSONataNumber),
+    String(String),
+}
+
+impl From<serde_json::Number> for NumberOrString {
+    fn from(n: serde_json::Number) -> Self {
+        NumberOrString::Number(n.into())
+    }
+}
+
+impl From<String> for NumberOrString {
+    fn from(s: String) -> Self {
+        NumberOrString::String(s)
     }
 }
 
@@ -276,21 +298,31 @@ impl InclusionExpression {
         Ok(Some(res))
     }
 
-    fn is_included(lhs: Option<Value>, rhs: Option<Value>) -> Value {
+    fn is_included(lhs: Option<JSONataValue>, rhs: Option<JSONataValue>) -> JSONataValue {
         match (lhs, rhs) {
-            (Some(l), Some(r)) => {
-                Value::from(match l {
-                    Value::Null => InclusionExpression::value_contains(l, r),
-                    Value::Bool(_) => InclusionExpression::value_contains(l, r),
-                    Value::Number(_) => InclusionExpression::value_contains(l, r),
-                    Value::String(_) => InclusionExpression::value_contains(l, r),
+            (Some(lhs), Some(rhs)) => {
+                match (lhs, rhs) {
+                    (JSONataValue::Value(_), JSONataValue::Value(_)) => todo!(),
+                    (JSONataValue::Value(_), JSONataValue::Function(_)) => false.into(),
+                    (JSONataValue::Function(_), JSONataValue::Value(_)) => todo!(),
+                    (JSONataValue::Function(a), JSONataValue::Function(b)) => {
+                        // ex. `$max in $max` is true because the rhs is coerced to array
+                        // we can skip the array coercion and check equality directly
+                        (a == b).into()
+                    }
+                }
+                // Value::from(match l {
+                //     Value::Null => InclusionExpression::value_contains(l, r),
+                //     Value::Bool(_) => InclusionExpression::value_contains(l, r),
+                //     Value::Number(_) => InclusionExpression::value_contains(l, r),
+                //     Value::String(_) => InclusionExpression::value_contains(l, r),
 
-                    // undocumented, but JSONata exerciser returns false for these
-                    Value::Array(_) => false,
-                    Value::Object(_) => false,
-                })
+                //     // undocumented, but JSONata exerciser returns false for these
+                //     Value::Array(_) => false,
+                //     Value::Object(_) => false,
+                // })
             }
-            (_, _) => Value::from(false),
+            (_, _) => false.into(),
         }
     }
 
@@ -316,12 +348,15 @@ impl ConcatExpression {
     pub(super) fn evaluate(&self, context: &mut Context) -> EvaluationResult {
         let left = self.lhs.evaluate(context)?;
         let right = self.rhs.evaluate(context)?;
-        Ok(Some(Value::String(match (left, right) {
-            (None, None) => "".into(),
-            (None, Some(b)) => b.to_string(),
-            (Some(a), None) => a.to_string(),
-            (Some(a), Some(b)) => a.to_string() + &b.to_string(),
-        })))
+        Ok(Some(
+            match (left, right) {
+                (None, None) => "".into(),
+                (Some(a), None) => format!("{}", a),
+                (None, Some(b)) => format!("{}", b),
+                (Some(a), Some(b)) => format!("{}{}", a, b),
+            }
+            .into(),
+        ))
     }
 }
 
@@ -330,74 +365,76 @@ mod tests {
 
     use serde_json::json;
 
+    use crate::tests::make_val;
+
     use super::*;
 
     #[test]
     fn equals() {
         assert_eq!(
             Ok(Some(true.into())),
-            CompareExpression::equals(Some(json!("test")), Some(json!("test"))),
+            CompareExpression::equals(Some(make_val("test")), Some(json!("test").into())),
         );
         assert_eq!(
             Ok(Some(true.into())),
-            CompareExpression::equals(Some(json!(1)), Some(json!(1))),
+            CompareExpression::equals(Some(make_val(1)), Some(make_val(1))),
         );
         assert_eq!(
             Ok(Some(true.into())),
-            CompareExpression::equals(Some(json!(1.0)), Some(json!(1))),
+            CompareExpression::equals(Some(make_val(1.0)), Some(make_val(1))),
         );
         assert_eq!(
             Ok(Some(true.into())),
-            CompareExpression::equals(Some(json!(-2)), Some(json!(-2))),
+            CompareExpression::equals(Some(make_val(-2)), Some(make_val(-2))),
         );
     }
 
     #[test]
     fn array_equals() {
-        let lhs = Some(json!([1, 2, 3]));
-        let rhs = Some(json!([1, 2, 3]));
+        let lhs = Some(json!([1, 2, 3]).into());
+        let rhs = Some(json!([1, 2, 3]).into());
         assert_eq!(Ok(Some(true.into())), CompareExpression::equals(lhs, rhs));
     }
 
     #[test]
     fn object_equals() {
-        let lhs = Some(json!({ "key": "value", "key2": "value2"}));
-        let rhs = Some(json!({ "key2": "value2", "key": "value"}));
+        let lhs = Some(json!({ "key": "value", "key2": "value2"}).into());
+        let rhs = Some(json!({ "key2": "value2", "key": "value"}).into());
         assert_eq!(Ok(Some(true.into())), CompareExpression::equals(lhs, rhs));
     }
 
     #[test]
     fn none_does_not_equal() {
-        let lhs: Option<Value> = None;
-        let rhs: Option<Value> = None;
+        let lhs = JSONataValue::from_opt_value(None);
+        let rhs = JSONataValue::from_opt_value(None);
         assert_eq!(Ok(Some(false.into())), CompareExpression::equals(lhs, rhs));
     }
 
     #[test]
     fn greater_num() {
         assert_eq!(
-            Ok(Some(json!(true))),
-            CompareExpression::greater(Some(json!(4)), Some(json!(3))),
+            Ok(Some(make_val(true))),
+            CompareExpression::greater(Some(make_val(4)), Some(make_val(3))),
         );
         assert_eq!(
-            Ok(Some(json!(true))),
-            CompareExpression::greater(Some(json!(4)), Some(json!(-3))),
+            Ok(Some(make_val(true))),
+            CompareExpression::greater(Some(make_val(4)), Some(make_val(-3))),
         );
         assert_eq!(
-            Ok(Some(json!(true))),
-            CompareExpression::greater(Some(json!(4.2)), Some(json!(4.1))),
+            Ok(Some(make_val(true))),
+            CompareExpression::greater(Some(make_val(4.2)), Some(make_val(4.1))),
         );
         assert_eq!(
-            Ok(Some(json!(false))),
-            CompareExpression::greater(Some(json!(3)), Some(json!(4))),
+            Ok(Some(make_val(false))),
+            CompareExpression::greater(Some(make_val(3)), Some(make_val(4))),
         );
         assert_eq!(
-            Ok(Some(json!(false))),
-            CompareExpression::greater(Some(json!(-3)), Some(json!(4))),
+            Ok(Some(make_val(false))),
+            CompareExpression::greater(Some(make_val(-3)), Some(make_val(4))),
         );
         assert_eq!(
-            Ok(Some(json!(false))),
-            CompareExpression::greater(Some(json!(4.1)), Some(json!(4.2))),
+            Ok(Some(make_val(false))),
+            CompareExpression::greater(Some(make_val(4.1)), Some(make_val(4.2))),
         );
     }
 

@@ -1,6 +1,11 @@
+use std::convert::TryInto;
+
 use serde_json::Value;
 
-use crate::evaluate::{Context, EvaluationResult};
+use crate::{
+    evaluate::{Context, EvaluationResult},
+    value::JSONataValue,
+};
 
 use super::expr::Expression;
 
@@ -70,7 +75,8 @@ impl MapExpression {
             // TODO: Check if data is an Array, if so, then the RHS would
             // be evaluated for each item in the array.
             // `users.id` where users is an Array
-            self.rhs.evaluate(&mut Context::from_data(&data))
+            let data_val: Value = data.try_into()?;
+            self.rhs.evaluate(&mut Context::from_data(&data_val))
         } else {
             Ok(None)
         }
@@ -119,13 +125,17 @@ impl FilterExpression {
         let lhs = self.lhs.evaluate(context)?;
         if let Some(data) = lhs {
             // lhs evaluation becomes the context for evaluation of the predicate
-            let mut new_context = Context::from_data(&data);
-            let pred = self.pred.evaluate(&mut new_context)?;
-            if let Some(pred_val) = pred {
-                // If value is int, then return item at that index of the array
-                // or if it's not an array, then return the item itself only if
-                // the index is zero  (i.e. treating as a singleton sequence)
-                todo!()
+            if let Some(value) = data.as_value() {
+                let mut new_context = Context::from_data(value);
+                let pred = self.pred.evaluate(&mut new_context)?;
+                if let Some(pred_val) = pred {
+                    // If value is int, then return item at that index of the array
+                    // or if it's not an array, then return the item itself only if
+                    // the index is zero  (i.e. treating as a singleton sequence)
+                    todo!()
+                } else {
+                    Ok(None)
+                }
             } else {
                 Ok(None)
             }
@@ -264,7 +274,7 @@ impl PathExpression {
 
     /// Evaluate a Path expression
     pub fn evaluate(&self, context: &mut Context) -> EvaluationResult {
-        Ok(self.get_value(context.data()))
+        Ok(JSONataValue::from_opt_value(self.get_value(context.data())))
     }
 }
 
@@ -365,7 +375,7 @@ mod tests {
 
         let actual = map.evaluate(&mut context);
 
-        assert_eq!(actual, Ok(Some(json!("Main St."))));
+        assert_eq!(actual, Ok(Some(json!("Main St.").into())));
     }
 
     #[test]
@@ -376,6 +386,6 @@ mod tests {
 
         let actual = map.evaluate(&mut context);
 
-        assert_eq!(actual, Ok(Some(json!([1, 2]))));
+        assert_eq!(actual, Ok(Some(json!([1, 2]).into())));
     }
 }

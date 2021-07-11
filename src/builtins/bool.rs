@@ -1,5 +1,10 @@
 use serde_json::Value;
 
+use crate::{
+    evaluate::{EvaluationError, EvaluationResult},
+    value::JSONataValue,
+};
+
 use super::BuiltIns;
 
 impl BuiltIns {
@@ -18,9 +23,17 @@ impl BuiltIns {
     /// object: empty               --> false
     /// object: non-empty           --> true
     /// function                    --> false
-    /// FIXME: implement functions
-    pub fn boolean(val: Value) -> Value {
-        Value::Bool(BuiltIns::boolean_inner(&val))
+    pub fn boolean(args: &[JSONataValue]) -> EvaluationResult {
+        let arg = args
+            .get(0)
+            .ok_or(EvaluationError::function_incorrect_num_arguments(
+                "boolean", 1, 0,
+            ))?;
+        if let JSONataValue::Value(val) = arg {
+            Ok(Some(JSONataValue::from(BuiltIns::boolean_inner(val))))
+        } else {
+            Ok(Some(JSONataValue::from(false)))
+        }
     }
 
     fn boolean_inner(val: &Value) -> bool {
@@ -41,9 +54,10 @@ impl BuiltIns {
             Value::String(s) => s.is_empty(),
             Value::Array(v) => {
                 if v.is_empty() {
-                    return false;
+                    false
+                } else {
+                    v.iter().all(|val| BuiltIns::boolean_inner(val))
                 }
-                return v.iter().all(|val| BuiltIns::boolean_inner(val));
             }
             Value::Object(o) => o.is_empty(),
         }

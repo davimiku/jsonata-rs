@@ -99,8 +99,14 @@ impl BuiltIns {
     /// $reverse(["Hello", "World"]) => ["World", "Hello"]
     /// [1..5] ~> $reverse() => [5, 4, 3, 2, 1]
     /// ```
-    pub(crate) fn reverse(array: Value) {
-        todo!()
+    pub(crate) fn reverse(val: Value) -> Vec<Value> {
+        match val {
+            Value::Array(mut vec) => {
+                vec.reverse();
+                vec
+            }
+            v => vec![v],
+        }
     }
 
     /// Returns an array containing all the values from the array parameter,
@@ -208,10 +214,13 @@ impl BuiltIns {
 #[cfg(test)]
 mod tests {
 
+    use serde_json::json;
+
     use super::*;
 
     #[test]
-    fn append_nones() {
+    fn test_append() {
+        // Nones
         assert!(BuiltIns::append(None, None).is_none());
         assert_eq!(
             Some(Value::Array(vec![Value::Null])),
@@ -221,10 +230,8 @@ mod tests {
             BuiltIns::append(None, Some(vec![Value::Null].into())),
             Some(Value::Array(vec![Value::Null])),
         );
-    }
 
-    #[test]
-    fn append_somes() {
+        // Somes
         assert_eq!(
             Some(Value::Array(vec![true.into(), false.into()])),
             BuiltIns::append(
@@ -232,5 +239,30 @@ mod tests {
                 Some(vec![Value::Bool(false)].into())
             ),
         );
+    }
+
+    #[test]
+    fn test_reverse() {
+        // Not arrays
+        assert_eq!(BuiltIns::reverse(Value::Null), vec![Value::Null]);
+        assert_eq!(
+            BuiltIns::reverse(Value::Bool(true)),
+            vec![Value::Bool(true)]
+        );
+        assert_eq!(
+            BuiltIns::reverse(Value::String("hello".to_string())),
+            vec![Value::String("hello".to_string())]
+        );
+        assert_eq!(BuiltIns::reverse(json!(2)), vec![json!(2)]);
+
+        // Arrays
+        assert_eq!(
+            BuiltIns::reverse(Value::Array(vec![
+                Value::Null,
+                Value::Bool(true),
+                Value::Bool(false)
+            ])),
+            vec![Value::Bool(false), Value::Bool(true), Value::Null]
+        )
     }
 }
