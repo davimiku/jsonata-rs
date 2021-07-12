@@ -6,12 +6,14 @@ mod traits;
 
 use std::convert::TryFrom;
 use std::fmt;
+use std::rc::Rc;
 
 use serde_json::Value;
 
 use crate::ast::dyadic::NumericOpType;
 use crate::ast::literal::LiteralValue;
 use crate::evaluate::EvaluationError;
+use crate::evaluate::EvaluationResult;
 
 use self::function::JSONataFunction;
 use self::number::JSONataNumber;
@@ -23,15 +25,34 @@ use self::traits::TryNumericOps;
 /// Composed of an enum for either:
 /// * `Value`
 /// * `JSONataFunction`
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum JSONataValue {
     Value(Value),
     Function(JSONataFunction),
 }
 
 impl JSONataValue {
+    /// Generates an Option<JSONataValue> from a Option<Value>
     pub fn from_opt_value(val: Option<Value>) -> Option<JSONataValue> {
         val.map(|v| JSONataValue::Value(v))
+    }
+
+    /// Generates a JSONataValue that is a function from the given function
+    /// and identifier.
+    ///
+    /// FIXME: 'static lifetime may work here for built-ins but is likely wrong
+    /// for user-defined functions.
+    pub fn from_func<'a, F: 'static, I>(func: F, ident: I) -> Self
+    where
+        F: 'a + Fn(&[JSONataValue]) -> EvaluationResult,
+        I: Into<String>,
+    {
+        JSONataFunction {
+            func: Rc::new(func),
+            ident: ident.into(),
+            signature: "".into(),
+        }
+        .into()
     }
 
     /// Returns the value as a &Value if possible
@@ -124,6 +145,12 @@ impl From<&str> for JSONataValue {
 impl From<String> for JSONataValue {
     fn from(s: String) -> Self {
         JSONataValue::Value(s.into())
+    }
+}
+
+impl From<usize> for JSONataValue {
+    fn from(u: usize) -> Self {
+        JSONataValue::Value(u.into())
     }
 }
 

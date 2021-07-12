@@ -1,17 +1,18 @@
-use std::fmt;
+use std::{fmt, rc::Rc};
+
+use crate::evaluate::EvaluationResult;
 
 use super::JSONataValue;
 
-#[derive(Clone)]
 pub struct JSONataFunction {
     /// Function which takes a slice of JSONataValue's as arguments
-    /// and returns a JSONataValue
-    func: Box<fn(&[JSONataValue]) -> JSONataValue>,
+    /// and returns a EvaluationResult
+    pub(super) func: Rc<dyn Fn(&[JSONataValue]) -> EvaluationResult>,
 
     /// Identifier for the function without the preceding `$` symbol. For example,
     /// the built-in function $max has an ident of "max". Two functions may not have
     /// the same ident.
-    ident: String,
+    pub(super) ident: String,
 
     /// A function signature is a string of the form <params:return>. params is a sequence of type symbols, each one representing an input argument's type. return is a single type symbol representing the return value type.
     ///
@@ -58,11 +59,11 @@ pub struct JSONataFunction {
     ///         E.g. $join has signature <a<s>s?:s>; it accepts an array of strings and an optional joiner string which defaults to the empty string. It returns a string.
     /// * - : if this argument is missing, use the context value ("focus").
     ///         E.g. $length has signature <s-:n>; it can be called as $length(OrderID) (one argument) but equivalently as OrderID.$length().
-    signature: String,
+    pub(super) signature: String,
 }
 
 impl JSONataFunction {
-    fn test(&self) -> JSONataValue {
+    fn test(&self) -> EvaluationResult {
         (self.func)(&[])
     }
 

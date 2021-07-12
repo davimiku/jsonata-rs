@@ -4,7 +4,7 @@ use std::{collections::HashMap, fmt::Display};
 
 use serde_json::Value;
 
-use crate::{ast::dyadic::DyadicOpType, value::JSONataValue};
+use crate::{ast::dyadic::DyadicOpType, builtins::BuiltIns, value::JSONataValue};
 
 pub type EvaluationResult = Result<Option<JSONataValue>, EvaluationError>;
 
@@ -62,11 +62,13 @@ impl Display for EvaluationError {
     }
 }
 
+pub(crate) type JSONataVariables = HashMap<String, Box<Option<JSONataValue>>>;
+
 #[derive(Debug)]
 pub struct Context<'a> {
     data: &'a Value,
 
-    variables: HashMap<String, Option<JSONataValue>>,
+    variables: JSONataVariables,
 }
 
 impl Default for Context<'_> {
@@ -86,12 +88,20 @@ impl<'a> Context<'a> {
         }
     }
 
+    fn load_builtins(&mut self) {
+        BuiltIns::populate_context(&mut self.variables)
+    }
+
     pub fn data(&self) -> &Value {
         &self.data
     }
 
-    pub fn set_var(&mut self, var_name: String, value: Option<JSONataValue>) {
-        self.variables.insert(var_name, value);
+    pub fn set_var<T, V>(&mut self, var_name: T, value: V)
+    where
+        T: Into<String>,
+        V: Into<Box<Option<JSONataValue>>>,
+    {
+        self.variables.insert(var_name.into(), value.into());
     }
 
     pub fn set_data(&mut self, data: &'a Value) {

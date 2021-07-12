@@ -1,6 +1,6 @@
 use serde_json::Value;
 
-use crate::evaluate::EvaluationResult;
+use crate::{evaluate::EvaluationResult, value::JSONataValue};
 
 use super::BuiltIns;
 
@@ -27,20 +27,26 @@ impl BuiltIns {
     /// value of another JSON type, then the parameter is
     /// treated as a singleton array containing that value,
     /// and this function returns 1.
-    pub(crate) fn count(array: Option<Value>) -> Value {
+    pub(crate) fn count(args: &[JSONataValue]) -> EvaluationResult {
+        let array = args.get(0);
         if let Some(val) = array {
-            match val {
-                Value::Null => 1,
-                Value::Bool(_) => 1,
-                Value::Number(_) => 1,
-                Value::String(_) => 1,
-                Value::Array(v) => v.len(),
-                Value::Object(_) => 1,
-            }
+            Ok(Some(
+                match val {
+                    JSONataValue::Value(val) => match val {
+                        Value::Null => 1,
+                        Value::Bool(_) => 1,
+                        Value::Number(_) => 1,
+                        Value::String(_) => 1,
+                        Value::Array(v) => v.len(),
+                        Value::Object(_) => 1,
+                    },
+                    JSONataValue::Function(_) => 1,
+                }
+                .into(),
+            ))
         } else {
-            0
+            Ok(Some(0.into()))
         }
-        .into()
     }
 
     /// Returns an array containing the values in array1

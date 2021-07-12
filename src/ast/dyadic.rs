@@ -235,20 +235,20 @@ impl CompareExpression {
     fn unwrap_for_compare(
         lhs: Option<JSONataValue>,
         rhs: Option<JSONataValue>,
-        opType: CompareOpType,
+        op_type: CompareOpType,
     ) -> Result<Option<(NumberOrString, NumberOrString)>, EvaluationError> {
         match (lhs, rhs) {
             (None, None) => Ok(None),
             (None, Some(val)) => match val {
                 JSONataValue::Value(_) => Ok(None),
                 JSONataValue::Function(_) => {
-                    Err(EvaluationError::DyadicMustBeNumberOrString(opType.into()))
+                    Err(EvaluationError::DyadicMustBeNumberOrString(op_type.into()))
                 }
             },
             (Some(val), None) => match val {
                 JSONataValue::Value(_) => Ok(None),
                 JSONataValue::Function(_) => {
-                    Err(EvaluationError::DyadicMustBeNumberOrString(opType.into()))
+                    Err(EvaluationError::DyadicMustBeNumberOrString(op_type.into()))
                 }
             },
             (Some(l), Some(r)) => match (l, r) {
@@ -256,10 +256,10 @@ impl CompareExpression {
                     match (left_val, right_val) {
                         (Value::Number(l), Value::Number(r)) => Ok(Some((l.into(), r.into()))),
                         (Value::String(l), Value::String(r)) => Ok(Some((l.into(), r.into()))),
-                        (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(opType.into())),
+                        (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(op_type.into())),
                     }
                 }
-                (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(opType.into())),
+                (_, _) => Err(EvaluationError::DyadicMustBeNumberOrString(op_type.into())),
             },
         }
     }

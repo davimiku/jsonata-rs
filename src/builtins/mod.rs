@@ -1,5 +1,10 @@
 use serde_json::Value;
 
+use crate::{
+    evaluate::{Context, EvaluationResult, JSONataVariables},
+    value::JSONataValue,
+};
+
 mod bool;
 mod date;
 mod object;
@@ -8,9 +13,24 @@ mod sequence;
 pub(crate) struct BuiltIns;
 
 impl BuiltIns {
-    // pub(crate) fn evaluate(builtin: BuiltInFunction, args: &[Value]) {
-    //     builtin.evaluate(args)
-    // }
+    pub(crate) fn populate_context(variables: &mut JSONataVariables) {
+        // TODO: Add the rest of the built-ins
+        // Add number of required arguments here?
+        BuiltIns::add_builtin(variables, "count", BuiltIns::count);
+    }
+
+    /// Adds the built-in function to a variables hashmap, which is generally available
+    /// to the currently running program.
+    ///
+    /// FIXME: 'static lifetime may be wrong here.
+    fn add_builtin<N, B: 'static>(variables: &mut JSONataVariables, ident: N, builtin: B)
+    where
+        N: Into<String> + Clone,
+        B: Fn(&[JSONataValue]) -> EvaluationResult,
+    {
+        let func = JSONataValue::from_func(builtin, ident.clone());
+        variables.insert(ident.into(), Some(func).into());
+    }
 }
 
 pub(crate) enum BuiltInFunction {

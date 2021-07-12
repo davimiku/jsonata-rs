@@ -149,7 +149,15 @@ pub struct VariableBindingExpression {
 impl VariableBindingExpression {
     fn evaluate(&self, context: &mut Context) -> EvaluationResult {
         let value = self.bound_expression.evaluate(context)?;
-        context.set_var(self.var_name.clone(), value.clone());
-        Ok(value)
+        context.set_var(self.var_name.clone(), value);
+
+        // FIXME: Implement Clone for JSONataFunction so values can be cloned
+        // For now this returns None but it should also return the value of the expression that
+        // was just assigned to the variable.
+        //
+        // context.set_var(self.var_name.clone(), value.clone());
+        // Ok(value)
+
+        Ok(None)
     }
 }
