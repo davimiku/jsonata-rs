@@ -7,6 +7,7 @@ use crate::{
 
 mod bool;
 mod date;
+mod numeric;
 mod object;
 mod sequence;
 mod string;
