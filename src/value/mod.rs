@@ -172,6 +172,12 @@ impl From<LiteralValue> for JSONataValue {
     }
 }
 
+impl From<JSONataNumber> for JSONataValue {
+    fn from(num: JSONataNumber) -> Self {
+        JSONataValue::Value(num.into())
+    }
+}
+
 impl TryFrom<JSONataValue> for Value {
     type Error = EvaluationError;
 

@@ -30,11 +30,18 @@ pub enum EvaluationError {
 }
 
 impl EvaluationError {
-    pub fn function_incorrect_num_arguments<T>(name: T, expected: usize, actual: usize) -> Self
+    pub fn function_incorrect_num_arguments<S>(name: S, expected: usize, actual: usize) -> Self
     where
-        T: Into<String>,
+        S: Into<String>,
     {
         EvaluationError::FunctionIncorrectNumArguments(name.into(), expected, actual)
+    }
+
+    pub fn function_invalid_argument<S>(name: S, arg_num: usize, expected_type: S) -> Self
+    where
+        S: Into<String>,
+    {
+        EvaluationError::FunctionInvalidArgument(name.into(), arg_num, expected_type.into())
     }
 }
 
@@ -82,14 +89,16 @@ impl Default for Context<'_> {
 
 impl<'a> Context<'a> {
     pub fn from_data(data: &'a Value) -> Context<'a> {
-        Context {
+        let mut context = Context {
             data,
             variables: HashMap::new(),
-        }
+        };
+        context.load_builtins();
+        context
     }
 
     fn load_builtins(&mut self) {
-        BuiltIns::populate_context(&mut self.variables)
+        BuiltIns::bind_builtins(&mut self.variables)
     }
 
     pub fn data(&self) -> &Value {

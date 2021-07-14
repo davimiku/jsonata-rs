@@ -22,6 +22,23 @@ impl JSONataNumber {
 }
 
 impl JSONataNumber {
+    pub fn abs(&self) -> Self {
+        let num = &self.0;
+        if num.is_f64() {
+            num.as_f64().unwrap().abs().into()
+        } else if num.is_i64() {
+            num.as_i64().unwrap().abs().into()
+        } else if num.is_u64() {
+            // already positive
+            num.as_u64().unwrap().into()
+        } else {
+            // Not possible, serde_json Number
+            // can only be one of those 3 as enforced
+            // by its internal (private) enum
+            unreachable!()
+        }
+    }
+
     fn compare_f64_and_u64(f: f64, u: u64) -> Option<Ordering> {
         if u < (f64::MAX as u64) {
             f.partial_cmp(&(u as f64))
@@ -107,6 +124,18 @@ impl From<u64> for JSONataNumber {
 impl From<f64> for JSONataNumber {
     fn from(f: f64) -> Self {
         JSONataNumber(Number::from_f64(f).unwrap())
+    }
+}
+
+impl From<JSONataNumber> for Number {
+    fn from(num: JSONataNumber) -> Self {
+        num.0
+    }
+}
+
+impl From<JSONataNumber> for Value {
+    fn from(num: JSONataNumber) -> Self {
+        Value::Number(num.into())
     }
 }
 

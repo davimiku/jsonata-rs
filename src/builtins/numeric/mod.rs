@@ -1,6 +1,14 @@
-use crate::{evaluate::EvaluationResult, value::JSONataValue};
+use serde_json::Value;
+
+use crate::{
+    evaluate::{EvaluationError, EvaluationResult},
+    value::{number::JSONataNumber, JSONataValue},
+};
 
 use super::BuiltIns;
+
+#[cfg(test)]
+mod tests;
 
 impl BuiltIns {
     /// Casts the `arg` parameter to a number using the following casting rules
@@ -39,7 +47,25 @@ impl BuiltIns {
     /// ```
     /// **Signature**: `$abs(number)`
     pub(crate) fn abs(args: &[JSONataValue]) -> EvaluationResult {
-        todo!()
+        let number = args.get(0);
+        if let Some(number) = number {
+            match number {
+                JSONataValue::Value(val) => match val {
+                    Value::Number(n) => {
+                        let n: JSONataNumber = n.into();
+                        Ok(Some(n.abs().into()))
+                    }
+                    _ => Err(EvaluationError::function_invalid_argument(
+                        "abs", 1, "number",
+                    )),
+                },
+                JSONataValue::Function(_) => Err(EvaluationError::function_invalid_argument(
+                    "abs", 1, "number",
+                )),
+            }
+        } else {
+            Ok(None)
+        }
     }
 
     /// Returns the value of `number` rounded down to the nearest integer that is smaller or
