@@ -9,6 +9,7 @@ mod bool;
 mod date;
 mod object;
 mod sequence;
+mod string;
 
 pub(crate) struct BuiltIns;
 
