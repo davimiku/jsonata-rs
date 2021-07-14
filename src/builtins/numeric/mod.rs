@@ -84,7 +84,25 @@ impl BuiltIns {
     /// ```
     /// **Signature**: `$floor(number)`
     pub(crate) fn floor(args: &[JSONataValue]) -> EvaluationResult {
-        todo!()
+        let number = args.get(0);
+        if let Some(number) = number {
+            match number {
+                JSONataValue::Value(val) => match val {
+                    Value::Number(n) => {
+                        let n: JSONataNumber = n.into();
+                        Ok(Some(n.floor().into()))
+                    }
+                    _ => Err(EvaluationError::function_invalid_argument(
+                        "floor", 1, "number",
+                    )),
+                },
+                JSONataValue::Function(_) => Err(EvaluationError::function_invalid_argument(
+                    "floor", 1, "number",
+                )),
+            }
+        } else {
+            Ok(None)
+        }
     }
 
     /// Returns the value of `number` rounded up to the nearest integer that is greater

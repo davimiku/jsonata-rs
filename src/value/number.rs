@@ -39,6 +39,15 @@ impl JSONataNumber {
         }
     }
 
+    pub fn floor(&self) -> Self {
+        let num = &self.0;
+        if num.is_f64() {
+            num.as_f64().unwrap().floor().into()
+        } else {
+            num.clone().into()
+        }
+    }
+
     fn compare_f64_and_u64(f: f64, u: u64) -> Option<Ordering> {
         if u < (f64::MAX as u64) {
             f.partial_cmp(&(u as f64))
