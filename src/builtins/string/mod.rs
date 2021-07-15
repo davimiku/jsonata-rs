@@ -5,6 +5,9 @@ use crate::{
     value::JSONataValue,
 };
 
+#[cfg(test)]
+mod tests;
+
 use super::BuiltIns;
 
 impl BuiltIns {
