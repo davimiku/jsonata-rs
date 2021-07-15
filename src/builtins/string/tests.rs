@@ -17,5 +17,13 @@ fn string() {
 
 #[test]
 fn length() {
-    //
+    let cases = vec![
+        (make_val(json!("hello")), 5),
+        (make_val(json!("test test")), 9),
+        // TODO: test unicode
+    ];
+    for (input, expected) in cases {
+        let actual = BuiltIns::length(&[input]);
+        assert_eq!(actual, Ok(Some(expected.into())));
+    }
 }
