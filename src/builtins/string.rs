@@ -1,19 +1,21 @@
+use serde_json::Value;
+
 use crate::{evaluate::EvaluationResult, value::JSONataValue};
 
 use super::BuiltIns;
 
 impl BuiltIns {
-    /// Casts the arg parameter to a string using the following casting rules
+    /// Casts the `arg` parameter to a string using the following casting rules
     ///
     /// * Strings are unchanged
     /// * Functions are converted to an empty string
     /// * Numeric infinity and NaN throw an error because they cannot be represented as a JSON number
     /// * All other values are converted to a JSON string using the JSON.stringify function
     ///
-    /// If arg is not specified (i.e. this function is invoked with no arguments), then the context
-    /// value is used as the value of arg.
+    /// If `arg` is not specified (i.e. this function is invoked with no arguments), then the context
+    /// value is used as the value of `arg`.
     ///
-    /// If prettify is true, then "prettified" JSON is produced. i.e One line per field and lines
+    /// If `prettify` is true, then "prettified" JSON is produced. i.e One line per field and lines
     /// will be indented based on the field depth.
     ///
     /// ## Examples
@@ -22,8 +24,17 @@ impl BuiltIns {
     /// $string(5) => "5"
     /// [1..5].$string() => ["1", "2", "3", "4", "5"]
     /// ```
+    /// `Signature: $string(arg, prettify)`
     pub(crate) fn string(args: &[JSONataValue]) -> EvaluationResult {
-        todo!()
+        let arg = args.get(0);
+        if let Some(arg) = arg {
+            Ok(Some(match arg {
+                JSONataValue::Value(val) => val.to_string().into(),
+                JSONataValue::Function(_) => "".into(),
+            }))
+        } else {
+            Ok(None)
+        }
     }
 
     /// Returns the number of characters in the string str. If str is not specified
