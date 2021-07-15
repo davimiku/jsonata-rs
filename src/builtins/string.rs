@@ -1,6 +1,9 @@
 use serde_json::Value;
 
-use crate::{evaluate::EvaluationResult, value::JSONataValue};
+use crate::{
+    evaluate::{EvaluationError, EvaluationResult},
+    value::JSONataValue,
+};
 
 use super::BuiltIns;
 
@@ -47,7 +50,24 @@ impl BuiltIns {
     /// $length("Hello World") => 11
     /// ```
     pub(crate) fn length(args: &[JSONataValue]) -> EvaluationResult {
-        todo!()
+        let arg = args.get(0);
+        if let Some(arg) = arg {
+            if let JSONataValue::Value(val) = arg {
+                if let Value::String(s) = val {
+                    Ok(Some(s.len().into()))
+                } else {
+                    Err(EvaluationError::function_invalid_argument(
+                        "length", 1, "string",
+                    ))
+                }
+            } else {
+                Err(EvaluationError::function_invalid_argument(
+                    "length", 1, "string",
+                ))
+            }
+        } else {
+            Ok(None)
+        }
     }
 
     /// Returns a string containing the characters in the first parameter str starting at position
