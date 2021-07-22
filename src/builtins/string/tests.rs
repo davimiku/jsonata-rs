@@ -1,6 +1,6 @@
 use serde_json::json;
 
-use crate::{builtins::BuiltIns, tests::make_val, value::JSONataValue};
+use crate::{builtins::BuiltIns, tests::make_val};
 
 #[test]
 fn string() {
@@ -10,7 +10,7 @@ fn string() {
         (make_val(json!(false)), "false"),
     ];
     for (input, expected) in cases {
-        let actual = BuiltIns::string(&[input]);
+        let actual = BuiltIns::string(&[Some(input)]);
         assert_eq!(actual, Ok(Some(expected.into())));
     }
 }
@@ -23,7 +23,7 @@ fn length() {
         // TODO: test unicode
     ];
     for (input, expected) in cases {
-        let actual = BuiltIns::length(&[input]);
+        let actual = BuiltIns::length(&[Some(input)]);
         assert_eq!(actual, Ok(Some(expected.into())));
     }
 }

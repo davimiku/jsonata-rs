@@ -7,7 +7,7 @@ use super::JSONataValue;
 pub struct JSONataFunction {
     /// Function which takes a slice of JSONataValue's as arguments
     /// and returns a EvaluationResult
-    pub(super) func: Rc<dyn Fn(&[JSONataValue]) -> EvaluationResult>,
+    pub(super) func: Rc<dyn Fn(&[Option<JSONataValue>]) -> EvaluationResult>,
 
     /// Identifier for the function without the preceding `$` symbol. For example,
     /// the built-in function $max has an ident of "max". Two functions may not have

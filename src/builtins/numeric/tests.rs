@@ -7,7 +7,7 @@ fn number() {}
 
 #[test]
 fn abs() {
-    let args = &[JSONataValue::Value(json!(-5))];
+    let args = &[Some(JSONataValue::Value(json!(-5)))];
     let res = BuiltIns::abs(args);
     assert_eq!(res, Ok(Some(JSONataValue::Value(json!(5)))));
 }
