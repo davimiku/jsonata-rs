@@ -98,7 +98,7 @@ impl<'a> Context<'a> {
     }
 
     fn load_builtins(&mut self) {
-        BuiltIns::bind_builtins(&mut self.variables)
+        BuiltIns::populate_context(&mut self.variables)
     }
 
     pub fn data(&self) -> &Value {
