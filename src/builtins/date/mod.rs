@@ -57,7 +57,7 @@ impl BuiltIns {
     /// $fromMillis(1510067557121, '[M01]/[D01]/[Y0001] [h#1]:[m01][P]') => "11/07/2017 3:12pm"
     /// $fromMillis(1510067557121, '[H01]:[m01]:[s01] [z]', '-0500') => "10:12:37 GMT-05:00"
     /// ```
-    pub(crate) fn fromMillis() {
+    pub(crate) fn from_millis() {
         todo!()
     }
 
@@ -76,7 +76,7 @@ impl BuiltIns {
     /// ```
     /// $toMillis("2017-11-07T15:07:54.972Z") => 1510067274972
     /// ```
-    pub(crate) fn toMillis() {
+    pub(crate) fn to_millis() {
         todo!()
     }
 }
