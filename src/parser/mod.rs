@@ -115,10 +115,10 @@ fn expr_parser(span: Span) -> IResult<Span, Expression> {
     alt((
         multiexpression_parser,
         literal_expr,
+        variable_binding_expr,
         path_expr,
         map_expr,
         comparison_expr,
-        variable_binding_expr,
     ))(span)
 }
 

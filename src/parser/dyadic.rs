@@ -10,7 +10,7 @@ use nom::{
     sequence::{separated_pair, tuple},
     IResult,
 };
-// use nom_recursive::recursive_parser;
+use nom_recursive::recursive_parser;
 
 use crate::ast::{
     dyadic::{CompareExpression, CompareOpType},
@@ -34,7 +34,8 @@ use super::{expr_parser, ident::variable_ident, trim, Span};
 ///
 /// This operator is left associative meaning that the expression a.b.c.d
 /// is evaluated like ((a.b).c).d; i.e. left to right
-pub(super) fn map_expr(span: Span) -> IResult<Span, Expression> {
+#[recursive_parser]
+pub(super) fn map_expr(s: Span) -> IResult<Span, Expression> {
     map(
         separated_pair(trim(expr_parser), tag("."), trim(expr_parser)),
         |(lhs, rhs)| {
@@ -44,7 +45,7 @@ pub(super) fn map_expr(span: Span) -> IResult<Span, Expression> {
             }
             .into()
         },
-    )(span)
+    )(s)
 }
 
 /// Compare expression
@@ -59,7 +60,8 @@ pub(super) fn map_expr(span: Span) -> IResult<Span, Expression> {
 ///
 /// The CompareExpression is constructed with the LHS, RHS, and which comparison
 /// operator is used between them.
-pub(super) fn comparison_expr(span: Span) -> IResult<Span, Expression> {
+#[recursive_parser]
+pub(super) fn comparison_expr(s: Span) -> IResult<Span, Expression> {
     map(
         tuple((trim(expr_parser), comparison_operator, trim(expr_parser))),
         |(lhs, compare_type, rhs)| {
@@ -70,17 +72,8 @@ pub(super) fn comparison_expr(span: Span) -> IResult<Span, Expression> {
             }
             .into()
         },
-    )(span)
+    )(s)
 }
-
-// #[recursive_parser]
-// pub(super) fn comparison_expr_test(span: Span) -> IResult<Span, String> {
-//     let (span, x) = expr_test(span)?;
-//     let (span, y) = tag("+")(span)?;
-//     let (span, z) = expr_test(span)?;
-//     let ret = format!("{}{}{}", x, y, z);
-//     Ok((span, ret))
-// }
 
 /// Parses looking for a comparison operator
 ///
@@ -106,7 +99,8 @@ fn comparison_operator(span: Span) -> IResult<Span, CompareOpType> {
 /// $my_var := "hello, world"  // also returns "hello, world"
 /// ```
 ///
-pub(super) fn variable_binding_expr(span: Span) -> IResult<Span, Expression> {
+#[recursive_parser]
+pub(super) fn variable_binding_expr(s: Span) -> IResult<Span, Expression> {
     map(
         separated_pair(trim(variable_ident), tag(":="), trim(expr_parser)),
         |(s, val)| {
@@ -116,7 +110,7 @@ pub(super) fn variable_binding_expr(span: Span) -> IResult<Span, Expression> {
             }
             .into()
         },
-    )(span)
+    )(s)
 }
 
 #[cfg(test)]

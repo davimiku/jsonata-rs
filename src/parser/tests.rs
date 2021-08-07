@@ -2,7 +2,6 @@ use crate::ast::{expr::VariableBindingExpression, literal::LiteralExpression};
 
 use super::*;
 
-#[ignore]
 #[test]
 fn parse_test() {
     let input = "$myvar := false";
@@ -17,7 +16,6 @@ fn parse_test() {
     )
 }
 
-#[ignore]
 #[test]
 fn expr_parser_test() {
     let input = "$myvar := null";
