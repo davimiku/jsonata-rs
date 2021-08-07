@@ -1,19 +1,27 @@
-use crate::{evaluate::EvaluationResult, value::JSONataValue};
+use serde_json::Value;
+
+use crate::{
+    evaluate::{EvaluationError, EvaluationResult},
+    value::JSONataValue,
+};
+
+#[cfg(test)]
+mod tests;
 
 use super::BuiltIns;
 
 impl BuiltIns {
-    /// Casts the arg parameter to a string using the following casting rules
+    /// Casts the `arg` parameter to a string using the following casting rules
     ///
     /// * Strings are unchanged
     /// * Functions are converted to an empty string
     /// * Numeric infinity and NaN throw an error because they cannot be represented as a JSON number
     /// * All other values are converted to a JSON string using the JSON.stringify function
     ///
-    /// If arg is not specified (i.e. this function is invoked with no arguments), then the context
-    /// value is used as the value of arg.
+    /// If `arg` is not specified (i.e. this function is invoked with no arguments), then the context
+    /// value is used as the value of `arg`.
     ///
-    /// If prettify is true, then "prettified" JSON is produced. i.e One line per field and lines
+    /// If `prettify` is true, then "prettified" JSON is produced. i.e One line per field and lines
     /// will be indented based on the field depth.
     ///
     /// ## Examples
@@ -22,8 +30,17 @@ impl BuiltIns {
     /// $string(5) => "5"
     /// [1..5].$string() => ["1", "2", "3", "4", "5"]
     /// ```
-    pub(crate) fn string(args: &[JSONataValue]) -> EvaluationResult {
-        todo!()
+    /// `Signature: $string(arg, prettify)`
+    pub(crate) fn string(args: &[Option<JSONataValue>]) -> EvaluationResult {
+        let arg = args.get(0).unwrap(); // arg will exist
+        if let Some(arg) = arg {
+            Ok(Some(match arg {
+                JSONataValue::Value(val) => val.to_string().into(),
+                JSONataValue::Function(_) => "".into(),
+            }))
+        } else {
+            Ok(None)
+        }
     }
 
     /// Returns the number of characters in the string str. If str is not specified
@@ -35,8 +52,25 @@ impl BuiltIns {
     /// ```
     /// $length("Hello World") => 11
     /// ```
-    pub(crate) fn length(args: &[JSONataValue]) -> EvaluationResult {
-        todo!()
+    pub(crate) fn length(args: &[Option<JSONataValue>]) -> EvaluationResult {
+        let arg = args.get(0).unwrap(); // arg will exist
+        if let Some(arg) = arg {
+            if let JSONataValue::Value(val) = arg {
+                if let Value::String(s) = val {
+                    Ok(Some(s.len().into()))
+                } else {
+                    Err(EvaluationError::function_invalid_argument(
+                        "length", 1, "string",
+                    ))
+                }
+            } else {
+                Err(EvaluationError::function_invalid_argument(
+                    "length", 1, "string",
+                ))
+            }
+        } else {
+            Ok(None)
+        }
     }
 
     /// Returns a string containing the characters in the first parameter str starting at position
@@ -57,7 +91,7 @@ impl BuiltIns {
     /// $substring("Hello World", -4) => "orld"
     /// $substring("Hello World", -4, 2) => "or"
     /// ```
-    pub(crate) fn substring(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn substring(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -71,7 +105,7 @@ impl BuiltIns {
     /// ```
     /// $substringBefore("Hello World", " ") => "Hello"
     /// ```
-    pub(crate) fn substring_before(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn substring_before(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -85,7 +119,7 @@ impl BuiltIns {
     /// ```
     /// $substringAfter("Hello World", " ") => "World"
     /// ```
-    pub(crate) fn substring_after(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn substring_after(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -98,7 +132,7 @@ impl BuiltIns {
     /// ```
     /// $uppercase("Hello World") => "HELLO WORLD"
     /// ```
-    pub(crate) fn uppercase(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn uppercase(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -111,7 +145,7 @@ impl BuiltIns {
     /// ```
     /// $lowercase("Hello World") => "hello world"
     /// ```
-    pub(crate) fn lowercase(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn lowercase(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -129,7 +163,7 @@ impl BuiltIns {
     /// ```
     /// $trim(" Hello \n World ") => "Hello World"
     /// ```
-    pub(crate) fn trim(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn trim(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -147,7 +181,7 @@ impl BuiltIns {
     /// $pad("foo", -5, "#") => "##foo"
     /// $formatBase(35, 2) ~> $pad(-8, '0') => "00100011"
     /// ```
-    pub(crate) fn pad(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn pad(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -169,7 +203,7 @@ impl BuiltIns {
     /// $contains("Hello World", /wo/) => false
     /// $contains("Hello World", /wo/i) => true
     /// Phone[$contains(number, /^077/)] => { "type": "mobile", "number": "077 7700 1234" }
-    pub(crate) fn contains(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn contains(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -193,7 +227,7 @@ impl BuiltIns {
     /// $split("so many words", " ", 2) => [ "so", "many" ]
     /// $split("too much, punctuation. hard; to read", /[ ,.;]+/) => ["too", "much", "punctuation", "hard", "to", "read"]
     ///
-    pub(crate) fn split(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn split(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -211,7 +245,7 @@ impl BuiltIns {
     /// $join(['a','b','c']) => "abc"
     /// $split("too much, punctuation. hard; to read", /[ ,.;]+/, 3) ~> $join(', ') => "too, much, punctuation"
     ///
-    pub(crate) fn join(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn join(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -252,7 +286,7 @@ impl BuiltIns {
     ///   }
     /// ]
     /// ```
-    pub(crate) fn r#match(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn r#match(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -284,7 +318,7 @@ impl BuiltIns {
     /// The optional limit parameter, is a number that specifies the maximum number of
     /// replacements to make before stopping. The remainder of the input beyond this limit
     /// will be copied to the output unchanged.
-    pub(crate) fn replace(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn replace(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -298,7 +332,7 @@ impl BuiltIns {
     /// ```
     ///
     /// Optionally override the context by specifying the second parameter
-    pub(crate) fn eval(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn eval(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -312,7 +346,7 @@ impl BuiltIns {
     /// ```
     /// $base64encode("myuser:mypass") => "bXl1c2VyOm15cGFzcw=="
     /// ```
-    pub(crate) fn base64_encode(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn base64_encode(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -323,7 +357,7 @@ impl BuiltIns {
     /// ```
     /// $base64decode("bXl1c2VyOm15cGFzcw==") => "myuser:mypass"
     /// ```
-    pub(crate) fn base64_decode(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn base64_decode(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -337,7 +371,7 @@ impl BuiltIns {
     /// $encodeUrlComponent("?x=test") => "%3Fx%3Dtest"
     /// ```
 
-    pub(crate) fn encode_url_component(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn encode_url_component(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -350,7 +384,7 @@ impl BuiltIns {
     /// ```
     /// $encodeUrl("https://mozilla.org/?x=шеллы") => "https://mozilla.org/?x=%D1%88%D0%B5%D0%BB%D0%BB%D1%8B"
     /// ```
-    pub(crate) fn encode_url(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn encode_url(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -361,7 +395,7 @@ impl BuiltIns {
     /// ```
     /// $decodeUrlComponent("%3Fx%3Dtest") => "?x=test"
     /// ```
-    pub(crate) fn decode_url_component(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn decode_url_component(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -371,7 +405,7 @@ impl BuiltIns {
     /// ```
     /// $decodeUrl("https://mozilla.org/?x=%D1%88%D0%B5%D0%BB%D0%BB%D1%8B") => "https://mozilla.org/?x=шеллы"
     /// ```
-    pub(crate) fn decode_url(args: &[JSONataValue]) -> EvaluationResult {
+    pub(crate) fn decode_url(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 }

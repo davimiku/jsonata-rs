@@ -9,24 +9,21 @@ fn number() {}
 fn abs() {
     let cases = vec![
         (
-            vec![JSONataValue::Value(json!(-5))],
+            JSONataValue::Value(json!(-5)),
             JSONataValue::Value(json!(5)),
         ),
+        (JSONataValue::Value(json!(5)), JSONataValue::Value(json!(5))),
         (
-            vec![JSONataValue::Value(json!(5))],
-            JSONataValue::Value(json!(5)),
-        ),
-        (
-            vec![JSONataValue::Value(json!(-5.3))],
+            JSONataValue::Value(json!(-5.3)),
             JSONataValue::Value(json!(5.3)),
         ),
         (
-            vec![JSONataValue::Value(json!(5.3))],
+            JSONataValue::Value(json!(5.3)),
             JSONataValue::Value(json!(5.3)),
         ),
     ];
     for case in cases {
-        assert_eq!(BuiltIns::abs(&case.0), Ok(Some(case.1)));
+        assert_eq!(BuiltIns::abs(&[Some(case.0)]), Ok(Some(case.1)));
     }
 }
 

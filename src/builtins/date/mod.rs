@@ -1,5 +1,8 @@
 use super::BuiltIns;
 
+#[cfg(test)]
+mod tests;
+
 impl BuiltIns {
     /// Generates a UTC timestamp in ISO 8601 compatible format and returns it as a string.
     /// All invocations of $now() within an evaluation of an expression will all return the

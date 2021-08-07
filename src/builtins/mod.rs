@@ -5,7 +5,7 @@ use crate::{
     value::JSONataValue,
 };
 
-mod bool;
+mod boolean;
 mod date;
 mod numeric;
 mod object;
@@ -28,7 +28,7 @@ impl BuiltIns {
     fn add_builtin<N, B: 'static>(variables: &mut JSONataVariables, ident: N, builtin: B)
     where
         N: Into<String> + Clone,
-        B: Fn(&[JSONataValue]) -> EvaluationResult,
+        B: Fn(&[Option<JSONataValue>]) -> EvaluationResult,
     {
         let func = JSONataValue::from_func(builtin, ident.clone());
         variables.insert(ident.into(), Some(func).into());

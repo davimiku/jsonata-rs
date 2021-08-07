@@ -7,6 +7,9 @@ use crate::{
 
 use super::BuiltIns;
 
+#[cfg(test)]
+mod tests;
+
 impl BuiltIns {
     /// Casts the argument to a Boolean using the following rules:
     ///
@@ -23,13 +26,9 @@ impl BuiltIns {
     /// object: empty               --> false
     /// object: non-empty           --> true
     /// function                    --> false
-    pub fn boolean(args: &[JSONataValue]) -> EvaluationResult {
-        let arg = args
-            .get(0)
-            .ok_or(EvaluationError::function_incorrect_num_arguments(
-                "boolean", 1, 0,
-            ))?;
-        if let JSONataValue::Value(val) = arg {
+    pub fn boolean(args: &[Option<JSONataValue>]) -> EvaluationResult {
+        let arg = args.get(0).unwrap();
+        if let Some(JSONataValue::Value(val)) = arg {
             Ok(Some(JSONataValue::from(BuiltIns::boolean_inner(val))))
         } else {
             Ok(Some(JSONataValue::from(false)))

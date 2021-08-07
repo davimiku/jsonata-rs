@@ -1,34 +1,36 @@
 use serde_json::Value;
 
+use rand::seq::SliceRandom;
+use rand::thread_rng;
+
 use crate::{evaluate::EvaluationResult, value::JSONataValue};
+
+#[cfg(test)]
+mod tests;
 
 use super::BuiltIns;
 
 impl BuiltIns {
     /// Ensures that the provided value is turned
     /// into a vec if it is not a Value::Array
-    fn vecify(input: Option<Value>) -> Vec<Value> {
-        if let Some(val) = input {
-            match val {
-                Value::Null => vec![Value::Null],
-                Value::Bool(b) => vec![Value::Bool(b)],
-                Value::Number(n) => vec![Value::Number(n)],
-                Value::String(s) => vec![Value::String(s)],
-                Value::Array(v) => v,
-                Value::Object(o) => vec![Value::Object(o)],
-            }
-        } else {
-            Vec::new()
-        }
-    }
+    // fn vecify(input: JSONataValue) -> Vec<JSONataValue> {
+    //     match input {
+    //         JSONataValue::Value(val) => match val {
+    //             Value::Array(_) => input,
+    //             a => vec![a],
+    //         }
+    //         .into(),
+    //         JSONataValue::Function(func) => vec![func.to_string().into()],
+    //     }
+    // }
 
     /// Returns the number of items in the array parameter.
     /// If the array parameter is not an array, but rather a
     /// value of another JSON type, then the parameter is
     /// treated as a singleton array containing that value,
     /// and this function returns 1.
-    pub(crate) fn count(args: &[JSONataValue]) -> EvaluationResult {
-        let array = args.get(0);
+    pub(crate) fn count(args: &[Option<JSONataValue>]) -> EvaluationResult {
+        let array = args.get(0).unwrap(); // arg will exist
         if let Some(val) = array {
             Ok(Some(
                 match val {
@@ -54,17 +56,25 @@ impl BuiltIns {
     /// is not an array, then it is treated as a singleton
     /// array containing that value.
     ///
-    /// If one of the arguments is None, it is treated as an
-    /// empty array and
+    /// TODO: The following are implementation notes from try.jsonata.org
+    /// but are not documented as behaviors
     ///
-    /// If both arguments are None, the return value is None.
-    pub(crate) fn append(array1: Option<Value>, array2: Option<Value>) -> Option<Value> {
-        if array1.is_none() && array2.is_none() {
-            return None;
-        }
-        let mut v = BuiltIns::vecify(array1);
-        v.append(&mut BuiltIns::vecify(array2));
-        Some(v.into())
+    /// - If one argument is None are the other argument is Some, the other
+    ///    argument is returned as-is (even for non-array args)
+    /// - If both arguments are None, the return value is None.
+    pub(crate) fn append(args: &[Option<JSONataValue>]) -> EvaluationResult {
+        todo!();
+        // let array1 = args.get(0).unwrap(); // arg will exist
+        // let array2 = args.get(1);
+        // match (array1, array2) {
+
+        // }
+        // if array1.is_none() && array2.is_none() {
+        //     return None;
+        // }
+        // let mut v = BuiltIns::vecify(array1);
+        // v.append(&mut BuiltIns::vecify(array2));
+        // Some(v.into())
     }
 
     /// Returns an array containing all the values in the `array` parameter,
@@ -93,7 +103,7 @@ impl BuiltIns {
     /// The sorting algorithm is stable which means that values within the original array which are
     /// the same according to the comparator function will remain in the original order in the sorted array.
     /// FIXME: Come back to this when functions are implemented
-    pub(crate) fn sort(array: Vec<Value>, func: Option<()>) -> Vec<Value> {
+    pub(crate) fn sort(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -105,19 +115,36 @@ impl BuiltIns {
     /// $reverse(["Hello", "World"]) => ["World", "Hello"]
     /// [1..5] ~> $reverse() => [5, 4, 3, 2, 1]
     /// ```
-    pub(crate) fn reverse(val: Value) -> Vec<Value> {
-        match val {
-            Value::Array(mut vec) => {
-                vec.reverse();
-                vec
+    /// TODO: How does this work for non array values?
+    pub(crate) fn reverse(args: &[Option<JSONataValue>]) -> EvaluationResult {
+        let val = args.get(0).unwrap(); // arg will exist
+        if let Some(val) = val {
+            match val {
+                JSONataValue::Value(_) => todo!(),
+                JSONataValue::Function(_) => todo!(),
+                // Value::Array(mut vec) => {
+                //     vec.reverse();
+                //     vec
+                // }
+                // v => vec![v],
             }
-            v => vec![v],
+        } else {
+            Ok(None)
         }
     }
 
     /// Returns an array containing all the values from the array parameter,
     /// but shuffled into random order.
-    pub(crate) fn shuffle(array: Value) {
+    pub(crate) fn shuffle(args: &[Option<JSONataValue>]) -> EvaluationResult {
+        let arr = args.get(0).unwrap(); // arg will exist
+        if let Some(arr) = arr {
+            match arr {
+                JSONataValue::Value(_) => todo!(),
+                JSONataValue::Function(f) => todo!(),
+            }
+        }
+        let mut vec: Vec<u32> = (0..10).collect();
+        vec.shuffle(&mut thread_rng());
         todo!()
     }
 
@@ -214,61 +241,5 @@ impl BuiltIns {
     /// ```
     pub(crate) fn average(array: Value) {
         todo!()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-
-    use serde_json::json;
-
-    use super::*;
-
-    #[test]
-    fn test_append() {
-        // Nones
-        assert!(BuiltIns::append(None, None).is_none());
-        assert_eq!(
-            Some(Value::Array(vec![Value::Null])),
-            BuiltIns::append(None, Some(vec![Value::Null].into())),
-        );
-        assert_eq!(
-            BuiltIns::append(None, Some(vec![Value::Null].into())),
-            Some(Value::Array(vec![Value::Null])),
-        );
-
-        // Somes
-        assert_eq!(
-            Some(Value::Array(vec![true.into(), false.into()])),
-            BuiltIns::append(
-                Some(vec![Value::Bool(true)].into()),
-                Some(vec![Value::Bool(false)].into())
-            ),
-        );
-    }
-
-    #[test]
-    fn test_reverse() {
-        // Not arrays
-        assert_eq!(BuiltIns::reverse(Value::Null), vec![Value::Null]);
-        assert_eq!(
-            BuiltIns::reverse(Value::Bool(true)),
-            vec![Value::Bool(true)]
-        );
-        assert_eq!(
-            BuiltIns::reverse(Value::String("hello".to_string())),
-            vec![Value::String("hello".to_string())]
-        );
-        assert_eq!(BuiltIns::reverse(json!(2)), vec![json!(2)]);
-
-        // Arrays
-        assert_eq!(
-            BuiltIns::reverse(Value::Array(vec![
-                Value::Null,
-                Value::Bool(true),
-                Value::Bool(false)
-            ])),
-            vec![Value::Bool(false), Value::Bool(true), Value::Null]
-        )
     }
 }

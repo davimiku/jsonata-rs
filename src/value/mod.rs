@@ -42,9 +42,9 @@ impl JSONataValue {
     ///
     /// FIXME: 'static lifetime may work here for built-ins but is likely wrong
     /// for user-defined functions.
-    pub fn from_func<'a, F: 'static, I>(func: F, ident: I) -> Self
+    pub fn from_func<F, I>(func: F, ident: I) -> Self
     where
-        F: 'a + Fn(&[JSONataValue]) -> EvaluationResult,
+        F: 'static + Fn(&[Option<JSONataValue>]) -> EvaluationResult,
         I: Into<String>,
     {
         JSONataFunction {
@@ -127,6 +127,12 @@ impl From<&Value> for JSONataValue {
 impl From<&mut Value> for JSONataValue {
     fn from(val: &mut Value) -> Self {
         JSONataValue::Value(val.take())
+    }
+}
+
+impl From<Vec<Value>> for JSONataValue {
+    fn from(val: Vec<Value>) -> Self {
+        JSONataValue::Value(val.into())
     }
 }
 

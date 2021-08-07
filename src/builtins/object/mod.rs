@@ -1,19 +1,24 @@
 use serde_json::Value;
 
+use crate::{evaluate::EvaluationResult, value::JSONataValue};
+
 use super::BuiltIns;
+
+#[cfg(test)]
+mod tests;
 
 impl BuiltIns {
     /// Returns an array containing the keys in the object. If the argument
     /// is an array of objects, then the array returned contains a
     /// de-duplicated list of all the keys in all of the objects.
-    pub(crate) fn keys(val: Option<Value>) -> Option<Value> {
+    pub(crate) fn keys(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
     /// Returns the value associated with `key` in `object`. If the first argument is
     /// an array of objects, then all of the objects in the array are searched,
     /// and the values associated with all occurrences of `key` are returned.
-    pub(crate) fn lookup(object: Option<Value>, key: String) -> Option<Value> {
+    pub(crate) fn lookup(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -21,7 +26,7 @@ impl BuiltIns {
     /// each of which has a single key/value pair from the input `object`.
     /// If the parameter is an array of objects, then the resultant array contains
     /// an object for every key/value pair in every object in the supplied array.
-    pub(crate) fn spread(object: Option<Value>) -> Option<Value> {
+    pub(crate) fn spread(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -31,7 +36,7 @@ impl BuiltIns {
     /// the array. It is an error if the input array contains an item that is not an object.
     ///
     /// TODO: This applies to arrays, should probably go under the sequence builtins instead?
-    pub(crate) fn merge(object: Option<Value>) -> Option<Value> {
+    pub(crate) fn merge(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -58,28 +63,23 @@ impl BuiltIns {
     ///   "Postcode: SO21 2JN"
     /// ]
     /// ```
-    pub(crate) fn each(object: Option<Value>, function: ()) -> Option<Value> {
+    pub(crate) fn each(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
     /// Deliberately throws an error with an optional `message`
     ///
-    /// TODO: How to handle this best? This probably should be handled a layer
-    /// above this module
-    pub(crate) fn error(message: Option<String>) {
+    pub(crate) fn error(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
     /// If condition is true, the function returns undefined. If the condition
     /// is false, an exception is thrown with the message as the message of the exception.
     ///
-    /// TODO: Again, decide how to handle this error-wise, this layer of the module
-    /// assumes no errors. Seems like it's basically calling the $boolean built-in to evaluate
-    ///
     /// TODO: Is message optional? In JSONata exerciser, not passing message results in error
     /// "$assert() statement failed"
     /// which seems like a caught exception, I think we'd rather check the arguments up-front
-    pub(crate) fn assert(condition: (), message: String) {
+    pub(crate) fn assert(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -93,22 +93,26 @@ impl BuiltIns {
     /// - "object"
     /// - "function"
     /// - None if input value is None
-    /// FIXME: Add functions
-    pub(crate) fn r#type(val: Option<Value>) -> Option<Value> {
-        if let Some(val) = val {
-            Some(Value::String(
+    pub(crate) fn r#type(args: &[Option<JSONataValue>]) -> EvaluationResult {
+        let arg = args.get(0).unwrap();
+        if let Some(val) = arg {
+            Ok(Some(
                 match val {
-                    Value::Null => "null",
-                    Value::Bool(_) => "boolean",
-                    Value::Number(_) => "number",
-                    Value::String(_) => "string",
-                    Value::Array(_) => "array",
-                    Value::Object(_) => "object",
+                    JSONataValue::Value(val) => match val {
+                        Value::Null => "null",
+                        Value::Bool(_) => "boolean",
+                        Value::Number(_) => "number",
+                        Value::String(_) => "string",
+                        Value::Array(_) => "array",
+                        Value::Object(_) => "object",
+                    },
+
+                    JSONataValue::Function(_) => "function",
                 }
-                .to_string(),
+                .into(),
             ))
         } else {
-            None
+            Ok(None)
         }
     }
 }
