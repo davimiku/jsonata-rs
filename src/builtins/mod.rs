@@ -1,7 +1,7 @@
 use serde_json::Value;
 
 use crate::{
-    evaluate::{Context, EvaluationResult, JSONataVariables},
+    evaluate::{EvaluationResult, JSONataVariables},
     value::JSONataValue,
 };
 
@@ -19,6 +19,11 @@ impl BuiltIns {
         // TODO: Add the rest of the built-ins
         // Add number of required arguments here?
         BuiltIns::add_builtin(variables, "count", BuiltIns::count);
+
+        // boolean
+        BuiltIns::add_builtin(variables, "boolean", BuiltIns::boolean);
+        BuiltIns::add_builtin(variables, "not", BuiltIns::not);
+        BuiltIns::add_builtin(variables, "exists", BuiltIns::exists);
     }
 
     /// Adds the built-in function to a variables hashmap, which is generally available
