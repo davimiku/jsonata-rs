@@ -1,4 +1,4 @@
-use serde_json::Value;
+use serde_json::{Number, Value};
 
 use crate::evaluate::{Context, EvaluationResult};
 
@@ -52,7 +52,7 @@ impl From<()> for LiteralExpression {
 #[derive(Debug, PartialEq, Clone)]
 pub enum LiteralValue {
     Integer(i64),
-    // Float(f64),
+    Float(f64),
     String(String),
     Bool(bool),
     Null,
@@ -63,7 +63,7 @@ impl From<LiteralValue> for Value {
     fn from(val: LiteralValue) -> Self {
         match val {
             LiteralValue::Integer(i) => Value::Number(i.into()),
-            // LiteralValue::Float(f64)
+            LiteralValue::Float(f) => Value::Number(Number::from_f64(f).unwrap()),
             LiteralValue::String(s) => Value::String(s),
             LiteralValue::Bool(b) => Value::Bool(b),
             LiteralValue::Null => Value::Null,
@@ -89,6 +89,18 @@ impl From<i64> for LiteralValue {
     /// Convert from an i64 to a LiteralValue
     fn from(i: i64) -> Self {
         LiteralValue::Integer(i)
+    }
+}
+
+impl From<f64> for LiteralValue {
+    /// Convert from a f64 to a LiteralValue
+    fn from(f: f64) -> Self {
+        // See if the f64 can be represented as an integer
+        if f == (f as i64) as f64 {
+            LiteralValue::Integer(f as i64)
+        } else {
+            LiteralValue::Float(f)
+        }
     }
 }
 

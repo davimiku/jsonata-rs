@@ -2,6 +2,7 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     combinator::{map, value},
+    number::complete::double,
     IResult,
 };
 
@@ -50,10 +51,21 @@ fn literal_null(span: Span) -> IResult<Span, LiteralValue> {
     value(LiteralValue::Null, tag("null"))(span)
 }
 
+/// Parses a floating point value (f64)
+fn num_parse(span: Span) -> IResult<Span, f64> {
+    double(span)
+}
+
+/// Parses a literal number value
+fn literal_number(span: Span) -> IResult<Span, LiteralValue> {
+    map(num_parse, |f| LiteralValue::from(f))(span)
+}
+
 pub(super) fn literal_expr(span: Span) -> IResult<Span, Expression> {
-    map(alt((literal_bool, literal_null, literal_string)), |val| {
-        LiteralExpression::from(val).into()
-    })(span)
+    map(
+        alt((literal_bool, literal_null, literal_number, literal_string)),
+        |val| LiteralExpression::from(val).into(),
+    )(span)
 }
 
 #[cfg(test)]
@@ -91,7 +103,7 @@ mod tests {
     fn bool_parser_true() {
         let input = "true";
         let (_, actual) = literal_bool(make_span(input)).unwrap();
-        assert_eq!(actual, LiteralValue::Bool(true))
+        assert_eq!(actual, LiteralValue::Bool(true));
     }
 
     #[test]
@@ -105,7 +117,21 @@ mod tests {
     fn null_parser() {
         let input = "null";
         let (_, actual) = literal_null(make_span(input)).unwrap();
-        assert_eq!(actual, LiteralValue::Null)
+        assert_eq!(actual, LiteralValue::Null);
+    }
+
+    #[test]
+    fn integer_parser() {
+        let input = "5";
+        let (_, actual) = literal_number(make_span(input)).unwrap();
+        assert_eq!(actual, LiteralValue::Integer(5));
+    }
+
+    #[test]
+    fn float_parser() {
+        let input = "5.1";
+        let (_, actual) = literal_number(make_span(input)).unwrap();
+        assert_eq!(actual, LiteralValue::Float(5.1));
     }
 
     #[test]
