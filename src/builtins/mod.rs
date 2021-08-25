@@ -1,7 +1,5 @@
-use serde_json::Value;
-
 use crate::{
-    evaluate::{EvaluationResult, JSONataVariables},
+    evaluate::{EvaluationError, EvaluationResult, JSONataVariables},
     value::JSONataValue,
 };
 
@@ -12,6 +10,75 @@ mod object;
 mod sequence;
 mod string;
 
+/// Curries a built-in function to parse the input slice into
+/// a single `JSONataValue` argument.
+///
+/// Invalid number of arguments causes an error to be returned.
+/// If the expected number of argument are passed but the argument
+/// is `None`, it skips the built-in processing and returns an
+/// `Ok(None)` as almost all of the JSONata built-ins just propagate
+/// the `None` value.
+#[inline]
+fn one_arg<F>(
+    func: F,
+    func_name: &'static str,
+) -> impl Fn(&[Option<JSONataValue>]) -> EvaluationResult
+where
+    F: Fn(&JSONataValue) -> EvaluationResult,
+{
+    move |args: &[Option<JSONataValue>]| match args.len() {
+        1 => match args.get(0).unwrap() {
+            Some(arg) => func(arg),
+            None => Ok(None),
+        },
+        len => Err(EvaluationError::function_incorrect_num_arguments(
+            func_name, 1, len,
+        )),
+    }
+}
+
+/// TODO: finish documenting
+///
+/// produces a new function...
+/// similar to one_arg but does not propagate the None, and is used for functions
+/// that specifically need to know if the arg is None or not
+/// FIXME: How can we get the function name in here without being annoying?
+#[inline]
+fn one_arg_no_propagate_none<F>(func: F) -> impl Fn(&[Option<JSONataValue>]) -> EvaluationResult
+where
+    F: Fn(&Option<JSONataValue>) -> EvaluationResult,
+{
+    move |args: &[Option<JSONataValue>]| match args.get(0) {
+        Some(arg) => func(arg),
+        None => Err(EvaluationError::function_incorrect_num_arguments(
+            "FIXME", 1, 0,
+        )),
+    }
+}
+
+/// TODO: Provide a helper function to ensure a value is always a Vec?
+/// could be helpful for sequence built-ins
+// #[inline]
+// fn vecify<F>(func: F) -> impl Fn(&JSONataValue) -> EvaluationResult
+// where
+//     F: Fn(Vec<JSONataValue>) -> EvaluationResult,
+// {
+//     // move |arg: &JSONataValue| {
+//     //     let vecified: Vec<JSONataValue> = match arg {
+//     //         JSONataValue::Value(val) => match val {
+//     //             Value::Array(arr) => arr.iter().map(|val| JSONataValue::from(val)).collect(),
+//     //             v => todo!(), // vec![v],
+//     //         },
+//     //         JSONataValue::Function(f) => {
+//     //             let g = f.clone();
+//     //             vec![JSONataValue::Function(g)]
+//     //         }
+//     //     };
+//     //     func(vecified);
+//     //     todo!()
+//     // }
+// }
+
 pub(crate) struct BuiltIns;
 
 impl BuiltIns {
@@ -21,9 +88,20 @@ impl BuiltIns {
         BuiltIns::add_builtin(variables, "count", BuiltIns::count);
 
         // boolean
-        BuiltIns::add_builtin(variables, "boolean", BuiltIns::boolean);
-        BuiltIns::add_builtin(variables, "not", BuiltIns::not);
-        BuiltIns::add_builtin(variables, "exists", BuiltIns::exists);
+        BuiltIns::add_builtin(variables, "boolean", one_arg(BuiltIns::boolean, "boolean"));
+        BuiltIns::add_builtin(variables, "not", one_arg(BuiltIns::not, "not"));
+        BuiltIns::add_builtin(
+            variables,
+            "exists",
+            one_arg_no_propagate_none(BuiltIns::exists),
+        );
+
+        // sequence
+        BuiltIns::add_builtin(
+            variables,
+            "distinct",
+            one_arg(BuiltIns::distinct, "distinct"),
+        );
     }
 
     /// Adds the built-in function to a variables hashmap, which is generally available
@@ -39,182 +117,3 @@ impl BuiltIns {
         variables.insert(ident.into(), Some(func).into());
     }
 }
-
-pub(crate) enum BuiltInFunction {
-    // String builtins
-    String,
-    Length,
-    Substring,
-    SubstringBefore,
-    SubstringAfter,
-    Uppercase,
-    Lowercase,
-    Trim,
-    Pad,
-    Contains,
-    Split,
-    Join,
-    Match,
-    Replace,
-    Eval,
-    Base64Encode,
-    Base64Decode,
-    EncodeUrlComponent,
-    EncodeUrl,
-    DecodeUrlComponent,
-    DecodeUrl,
-
-    // Numeric builtins
-    Number,
-    Abs,
-    Floor,
-    Ceil,
-    Round,
-    Power,
-    Sqrt,
-    Random,
-    FormatNumber,
-    FormatBase,
-    FormatInteger,
-    ParseInteger,
-
-    // Boolean builtins
-    Boolean,
-    Not,
-    Exists,
-
-    // Sequence / Array builtins
-    Sum,
-    Max,
-    Min,
-    Average,
-    Count,
-    Append,
-    Sort,
-    Reverse,
-    Shuffle,
-    Distinct,
-    Zip,
-
-    // Object builtins
-    Keys,
-    Lookup,
-    Spread,
-    Merge,
-    Each,
-    Error,
-    Assert,
-    Type,
-
-    // Date / Time builtins
-    Now,
-    Millis,
-    FromMillis,
-    ToMillis,
-
-    // Higher order
-    Map,
-    Filter,
-    Single,
-    Reduce,
-    Sift,
-}
-
-trait EvaluateBuiltIn {
-    fn evaluate(&self, args: &[Value]);
-}
-
-enum TestEnum {
-    // (number[]) -> number
-    Max,
-
-    // (string) -> string
-    Trim,
-
-    // (array, function(val) -> bool) -> array
-    Filter,
-}
-
-// impl EvaluateBuiltIn for BuiltInFunction {
-//     fn evaluate(&self, args: &[Value]) {
-//         match self {
-//             // String
-//             BuiltInFunction::String => todo!(),
-//             BuiltInFunction::Length => todo!(),
-//             BuiltInFunction::Substring => todo!(),
-//             BuiltInFunction::SubstringBefore => todo!(),
-//             BuiltInFunction::SubstringAfter => todo!(),
-//             BuiltInFunction::Uppercase => todo!(),
-//             BuiltInFunction::Lowercase => todo!(),
-//             BuiltInFunction::Trim => todo!(),
-//             BuiltInFunction::Pad => todo!(),
-//             BuiltInFunction::Contains => todo!(),
-//             BuiltInFunction::Split => todo!(),
-//             BuiltInFunction::Join => todo!(),
-//             BuiltInFunction::Match => todo!(),
-//             BuiltInFunction::Replace => todo!(),
-//             BuiltInFunction::Eval => todo!(),
-//             BuiltInFunction::Base64Encode => todo!(),
-//             BuiltInFunction::Base64Decode => todo!(),
-//             BuiltInFunction::EncodeUrlComponent => todo!(),
-//             BuiltInFunction::EncodeUrl => todo!(),
-//             BuiltInFunction::DecodeUrlComponent => todo!(),
-//             BuiltInFunction::DecodeUrl => todo!(),
-
-//             // Numeric
-//             BuiltInFunction::Number => todo!(),
-//             BuiltInFunction::Abs => todo!(),
-//             BuiltInFunction::Floor => todo!(),
-//             BuiltInFunction::Ceil => todo!(),
-//             BuiltInFunction::Round => todo!(),
-//             BuiltInFunction::Power => todo!(),
-//             BuiltInFunction::Sqrt => todo!(),
-//             BuiltInFunction::Random => todo!(),
-//             BuiltInFunction::FormatNumber => todo!(),
-//             BuiltInFunction::FormatBase => todo!(),
-//             BuiltInFunction::FormatInteger => todo!(),
-//             BuiltInFunction::ParseInteger => todo!(),
-
-//             // Boolean
-//             BuiltInFunction::Boolean => todo!(),
-//             BuiltInFunction::Not => todo!(),
-//             BuiltInFunction::Exists => todo!(),
-
-//             // Sequence
-//             BuiltInFunction::Sum => todo!(),
-//             BuiltInFunction::Max => todo!(),
-//             BuiltInFunction::Min => todo!(),
-//             BuiltInFunction::Average => todo!(),
-//             BuiltInFunction::Count => todo!(),
-//             BuiltInFunction::Append => todo!(),
-//             BuiltInFunction::Sort => todo!(),
-//             BuiltInFunction::Reverse => BuiltIns::reverse(args),
-//             BuiltInFunction::Shuffle => todo!(),
-//             BuiltInFunction::Distinct => todo!(),
-//             BuiltInFunction::Zip => todo!(),
-
-//             // Object
-//             BuiltInFunction::Keys => todo!(),
-//             BuiltInFunction::Lookup => todo!(),
-//             BuiltInFunction::Spread => todo!(),
-//             BuiltInFunction::Merge => todo!(),
-//             BuiltInFunction::Each => todo!(),
-//             BuiltInFunction::Error => todo!(),
-//             BuiltInFunction::Assert => todo!(),
-//             BuiltInFunction::Type => todo!(),
-
-//             // Date / Time
-//             BuiltInFunction::Now => todo!(),
-//             BuiltInFunction::Millis => todo!(),
-//             BuiltInFunction::FromMillis => todo!(),
-//             BuiltInFunction::ToMillis => todo!(),
-
-//             // Higher Order
-//             BuiltInFunction::Map => todo!(),
-//             BuiltInFunction::Filter => todo!(),
-//             BuiltInFunction::Single => todo!(),
-//             BuiltInFunction::Reduce => todo!(),
-//             BuiltInFunction::Sift => todo!(),
-//         }
-//     }
-// }
