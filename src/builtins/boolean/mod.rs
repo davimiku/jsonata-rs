@@ -25,13 +25,11 @@ impl BuiltIns {
     /// function                    --> false
     ///
     /// **Signature**: `$boolean(arg)`
-    pub fn boolean(args: &[Option<JSONataValue>]) -> EvaluationResult {
-        let arg = args.get(0).unwrap();
-        Ok(if let Some(JSONataValue::Value(val)) = arg {
-            Some(BuiltIns::boolean_coerce(val).into())
-        } else {
-            None
-        })
+    pub fn boolean(arg: &JSONataValue) -> EvaluationResult {
+        Ok(Some(match arg {
+            JSONataValue::Value(val) => BuiltIns::boolean_coerce(val).into(),
+            JSONataValue::Function(_) => false.into(),
+        }))
     }
 
     fn boolean_coerce(val: &Value) -> bool {
@@ -64,13 +62,11 @@ impl BuiltIns {
     /// Returns Boolean NOT on the argument. arg is first cast to a boolean
     ///
     /// **Signature**: `$not(arg)`
-    pub fn not(args: &[Option<JSONataValue>]) -> EvaluationResult {
-        let arg = args.get(0).unwrap();
-        Ok(if let Some(JSONataValue::Value(val)) = arg {
-            Some((!BuiltIns::boolean_coerce(val)).into())
-        } else {
-            None
-        })
+    pub fn not(arg: &JSONataValue) -> EvaluationResult {
+        Ok(Some(match arg {
+            JSONataValue::Value(val) => (!BuiltIns::boolean_coerce(val)).into(),
+            JSONataValue::Function(_) => true.into(),
+        }))
     }
 
     /// Returns Boolean true if the arg expression evaluates to a value,
@@ -78,8 +74,7 @@ impl BuiltIns {
     /// (e.g. a path to a non-existent field reference).
     ///
     /// **Signature**: `$exists(arg)`
-    pub fn exists(args: &[Option<JSONataValue>]) -> EvaluationResult {
-        let arg = args.get(0).unwrap();
+    pub fn exists(arg: &Option<JSONataValue>) -> EvaluationResult {
         Ok(Some(match arg {
             Some(_) => true.into(),
             None => false.into(),
