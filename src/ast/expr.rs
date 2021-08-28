@@ -5,7 +5,7 @@ use crate::{
 
 use super::{
     dyadic::{
-        arithmetic::ArithmeticExpression, compare::CompareExpression, ConcatExpression,
+        arithmetic::ArithmeticExpression, compare::CompareExpression, concat::ConcatExpression,
         InclusionExpression,
     },
     literal::LiteralExpression,
@@ -136,6 +136,13 @@ impl From<ConcatExpression> for Expression {
     }
 }
 
+/// A MultiExpression contains one or more expressions
+///
+/// Evaluation creates a new closure and the return
+/// value of the final inner expression is the return
+/// value of the MultiExpression.
+///
+///
 #[derive(Debug, PartialEq)]
 pub(crate) struct MultiExpression {
     pub expressions: Vec<Expression>,

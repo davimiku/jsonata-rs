@@ -3,6 +3,7 @@
 
 pub(crate) mod arithmetic;
 pub(crate) mod compare;
+pub(crate) mod concat;
 
 use std::fmt::Display;
 
@@ -102,27 +103,5 @@ impl InclusionExpression {
             Value::Array(arr) => arr.contains(&needle),
             Value::Object(_) => false,
         }
-    }
-}
-
-#[derive(Debug, PartialEq)]
-pub(crate) struct ConcatExpression {
-    pub lhs: Box<Expression>,
-    pub rhs: Box<Expression>,
-}
-
-impl ConcatExpression {
-    pub(super) fn evaluate(&self, context: &mut Context) -> EvaluationResult {
-        let left = self.lhs.evaluate(context)?;
-        let right = self.rhs.evaluate(context)?;
-        Ok(Some(
-            match (left, right) {
-                (None, None) => "".into(),
-                (Some(a), None) => format!("{}", a),
-                (None, Some(b)) => format!("{}", b),
-                (Some(a), Some(b)) => format!("{}{}", a, b),
-            }
-            .into(),
-        ))
     }
 }
