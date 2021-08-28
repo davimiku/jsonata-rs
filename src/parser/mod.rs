@@ -31,9 +31,9 @@ use self::monadic::{literal_expr, path_expr};
 /// Type alias for the internal output of parser functions. The nom-locate and nom-recursive
 /// crates are used to provide location information of the parsed input and to allow
 /// for left-recursion.
-type Span<'a> = LocatedSpan<&'a str, RecursiveInfo>;
+pub(crate) type Span<'a> = LocatedSpan<&'a str, RecursiveInfo>;
 
-pub type ParseResult<'a> = Result<Expression, nom::Err<nom::error::Error<Span<'a>>>>;
+pub(crate) type ParseResult<'a> = Result<Expression, nom::Err<nom::error::Error<Span<'a>>>>;
 // Result<Expression, nom::Err<nom::error::Error<LocatedSpan<&'a str, RecursiveInfo>>>>;
 
 fn make_span(s: &str) -> Span {

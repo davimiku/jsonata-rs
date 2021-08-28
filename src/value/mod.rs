@@ -10,7 +10,7 @@ use std::rc::Rc;
 
 use serde_json::Value;
 
-use crate::ast::dyadic::ArithmeticOpType;
+use crate::ast::dyadic::arithmetic::ArithmeticOpType;
 use crate::ast::literal::LiteralValue;
 use crate::evaluate::EvaluationError;
 use crate::evaluate::EvaluationResult;

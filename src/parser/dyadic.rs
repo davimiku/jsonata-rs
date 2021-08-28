@@ -14,7 +14,10 @@ use nom::{
 use nom_recursive::recursive_parser;
 
 use crate::ast::{
-    dyadic::{ArithmeticExpression, ArithmeticOpType, CompareExpression, CompareOpType},
+    dyadic::{
+        arithmetic::{ArithmeticExpression, ArithmeticOpType},
+        compare::{CompareExpression, CompareOpType},
+    },
     expr::{Expression, VariableBindingExpression},
     path::MapExpression,
 };

@@ -14,13 +14,13 @@ pub struct Program<'a> {
     /// This tracks declared variables and functions, and
     /// TODO the current location for reporting of runtime errors
     ///
-    pub context: Context<'a>,
+    pub(crate) context: Context<'a>,
 
     /// Top-level expression of the JSONata program
     ///
     /// Expressions can (and usually do) have child
     /// expressions.
-    pub expression: Expression,
+    pub(crate) expression: Expression,
 }
 
 impl<'a> Program<'a> {
@@ -29,7 +29,7 @@ impl<'a> Program<'a> {
     ///
     /// Creates a default Context and a program that
     /// is ready to be evaluated.
-    pub fn new(expression: Expression) -> Self {
+    pub(crate) fn new(expression: Expression) -> Self {
         Program {
             context: Context::default(),
             expression,

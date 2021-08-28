@@ -54,7 +54,7 @@ Account.Order.Product.(Price * Quantity) => [ 68.9, 21.67, 137.8, 107.99 ]
 /// `PathExpression(Account) --map--> PathExpression(Name)` would yield
 /// the value "Mike Wazowski".
 #[derive(PartialEq, Debug)]
-pub struct MapExpression {
+pub(crate) struct MapExpression {
     pub lhs: Box<Expression>,
     pub rhs: Box<Expression>,
 }
@@ -114,7 +114,7 @@ impl MapExpression {
 /// Phone[[0..2]]  /* Sequence of the index-0, index-1, index-2 Phone */
 /// ```
 #[derive(PartialEq, Debug)]
-pub struct FilterExpression {
+pub(crate) struct FilterExpression {
     pub lhs: Box<Expression>,
     pub pred: Box<Expression>,
 }
@@ -187,7 +187,7 @@ impl FilterExpression {
 /// student[type='fulltime']^(DoB).name /* The names of all full time students sorted by date of birth (the DoB value is an ISO 8601 date format) */
 /// ```
 #[derive(PartialEq, Debug)]
-pub struct OrderByExpression {
+pub(crate) struct OrderByExpression {
     pub lhs: Box<Expression>,
     pub order_by: (), /* potentially introduce OrderByPredicateExpression to be able to parse preceding `>` or `<` */
 }
@@ -230,7 +230,7 @@ impl OrderByExpression {
 /// }
 /// ```
 #[derive(PartialEq, Debug)]
-pub struct ReduceExpression {
+pub(crate) struct ReduceExpression {
     pub lhs: Box<Expression>,
 }
 

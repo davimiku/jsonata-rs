@@ -4,7 +4,10 @@ use crate::{
 };
 
 use super::{
-    dyadic::{ArithmeticExpression, CompareExpression, ConcatExpression, InclusionExpression},
+    dyadic::{
+        arithmetic::ArithmeticExpression, compare::CompareExpression, ConcatExpression,
+        InclusionExpression,
+    },
     literal::LiteralExpression,
     path::{FilterExpression, MapExpression, PathExpression, ReduceExpression},
 };
@@ -41,7 +44,7 @@ use super::{
 // }
 
 #[derive(Debug, PartialEq)]
-pub enum Expression {
+pub(crate) enum Expression {
     Multi(MultiExpression),
 
     Literal(LiteralExpression),
@@ -54,6 +57,7 @@ pub enum Expression {
     Filter(FilterExpression),
     Reduce(ReduceExpression),
 
+    // Dyadic expressions
     Compare(CompareExpression),
     Arithmetic(ArithmeticExpression),
     Concat(ConcatExpression),
@@ -133,7 +137,7 @@ impl From<ConcatExpression> for Expression {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct MultiExpression {
+pub(crate) struct MultiExpression {
     pub expressions: Vec<Expression>,
 }
 
@@ -149,7 +153,7 @@ impl MultiExpression {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct VariableBindingExpression {
+pub(crate) struct VariableBindingExpression {
     pub var_name: String,
     pub bound_expression: Box<Expression>,
 }

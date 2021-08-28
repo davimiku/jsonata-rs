@@ -1,120 +1,14 @@
-//! Dyadic expression AST representation
-//!
-
-use std::{
-    convert::TryInto,
-    fmt::{Display, Write},
-};
+use std::fmt::{Display, Write};
 
 use serde_json::Value;
 
 use crate::{
+    ast::expr::Expression,
     evaluate::{Context, EvaluationError, EvaluationResult},
-    value::{number::JSONataNumber, JSONataValue},
+    value::JSONataValue,
 };
 
-use super::expr::Expression;
-
-#[derive(PartialEq, Debug)]
-pub enum DyadicOpType {
-    Compare(CompareOpType),
-    Arithmetic(ArithmeticOpType),
-}
-
-impl Display for DyadicOpType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            DyadicOpType::Compare(c) => f.write_fmt(format_args!("{}", c)),
-            DyadicOpType::Arithmetic(n) => f.write_fmt(format_args!("{}", n)),
-        }
-    }
-}
-
-impl From<CompareOpType> for DyadicOpType {
-    fn from(c: CompareOpType) -> Self {
-        DyadicOpType::Compare(c)
-    }
-}
-
-impl From<ArithmeticOpType> for DyadicOpType {
-    fn from(n: ArithmeticOpType) -> Self {
-        DyadicOpType::Arithmetic(n)
-    }
-}
-
-#[derive(PartialEq, Debug)]
-pub enum ArithmeticOpType {
-    Add,
-    Sub,
-    Mul,
-    Div,
-    Rem,
-}
-
-impl From<&str> for ArithmeticOpType {
-    fn from(s: &str) -> Self {
-        match s {
-            "+" => ArithmeticOpType::Add,
-            "-" => ArithmeticOpType::Sub,
-            "*" => ArithmeticOpType::Mul,
-            "/" => ArithmeticOpType::Div,
-            "%" => ArithmeticOpType::Rem,
-            _ => unreachable!(),
-        }
-    }
-}
-
-impl Display for ArithmeticOpType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ArithmeticOpType::Add => f.write_char('+'),
-            ArithmeticOpType::Sub => f.write_char('-'),
-            ArithmeticOpType::Mul => f.write_char('*'),
-            ArithmeticOpType::Div => f.write_char('/'),
-            ArithmeticOpType::Rem => f.write_char('%'),
-        }
-    }
-}
-
-#[derive(PartialEq, Debug)]
-pub struct ArithmeticExpression {
-    pub lhs: Box<Expression>,
-    pub rhs: Box<Expression>,
-    pub arithmetic_type: ArithmeticOpType,
-}
-
-impl ArithmeticExpression {
-    /// Evaluate a arithmetic expression
-    pub(super) fn evaluate(&self, context: &mut Context) -> EvaluationResult {
-        let lhs = self.lhs.evaluate(context)?;
-        let rhs = self.rhs.evaluate(context)?;
-        match (lhs, rhs) {
-            (Some(lhs), Some(rhs)) => ArithmeticExpression::jsonata_value_arithmetic(
-                lhs.try_into()?,
-                rhs.try_into()?,
-                &self.arithmetic_type,
-            ),
-            (_, _) => Ok(None),
-        }
-    }
-
-    fn jsonata_value_arithmetic(
-        lhs: JSONataNumber,
-        rhs: JSONataNumber,
-        op: &ArithmeticOpType,
-    ) -> EvaluationResult {
-        Ok(Some(
-            match op {
-                ArithmeticOpType::Add => lhs + rhs,
-                ArithmeticOpType::Sub => lhs - rhs,
-                ArithmeticOpType::Mul => lhs * rhs,
-                ArithmeticOpType::Div => lhs / rhs,
-                ArithmeticOpType::Rem => lhs % rhs,
-            }
-            .into(),
-        ))
-    }
-}
+use super::{DyadicOpType, NumberOrString};
 
 #[derive(PartialEq, Debug)]
 pub enum CompareOpType {
@@ -153,8 +47,14 @@ impl Display for CompareOpType {
     }
 }
 
+impl From<CompareOpType> for DyadicOpType {
+    fn from(c: CompareOpType) -> Self {
+        DyadicOpType::Compare(c)
+    }
+}
+
 #[derive(PartialEq, Debug)]
-pub struct CompareExpression {
+pub(crate) struct CompareExpression {
     pub lhs: Box<Expression>,
     pub rhs: Box<Expression>,
     pub compare_type: CompareOpType,
@@ -162,7 +62,7 @@ pub struct CompareExpression {
 
 impl CompareExpression {
     /// Evaluate a comparison expression
-    pub(super) fn evaluate(&self, context: &mut Context) -> EvaluationResult {
+    pub(crate) fn evaluate(&self, context: &mut Context) -> EvaluationResult {
         let lhs = self.lhs.evaluate(context)?;
         let rhs = self.rhs.evaluate(context)?;
         match self.compare_type {
@@ -322,107 +222,12 @@ impl CompareExpression {
     }
 }
 
-enum NumberOrString {
-    Number(JSONataNumber),
-    String(String),
-}
-
-impl From<serde_json::Number> for NumberOrString {
-    fn from(n: serde_json::Number) -> Self {
-        NumberOrString::Number(n.into())
-    }
-}
-
-impl From<String> for NumberOrString {
-    fn from(s: String) -> Self {
-        NumberOrString::String(s)
-    }
-}
-
-#[derive(PartialEq, Debug)]
-pub struct InclusionExpression {
-    pub lhs: Box<Expression>,
-    pub rhs: Box<Expression>,
-}
-
-impl InclusionExpression {
-    /// Evaluate whether the lhs value is included in the rhs value
-    pub(super) fn evaluate(&self, context: &mut Context) -> EvaluationResult {
-        let res = InclusionExpression::is_included(
-            self.lhs.evaluate(context)?,
-            self.rhs.evaluate(context)?,
-        );
-        Ok(Some(res))
-    }
-
-    fn is_included(lhs: Option<JSONataValue>, rhs: Option<JSONataValue>) -> JSONataValue {
-        match (lhs, rhs) {
-            (Some(lhs), Some(rhs)) => {
-                match (lhs, rhs) {
-                    (JSONataValue::Value(_), JSONataValue::Value(_)) => todo!(),
-                    (JSONataValue::Value(_), JSONataValue::Function(_)) => false.into(),
-                    (JSONataValue::Function(_), JSONataValue::Value(_)) => todo!(),
-                    (JSONataValue::Function(a), JSONataValue::Function(b)) => {
-                        // ex. `$max in $max` is true because the rhs is coerced to array
-                        // we can skip the array coercion and check equality directly
-                        (a == b).into()
-                    }
-                }
-                // Value::from(match l {
-                //     Value::Null => InclusionExpression::value_contains(l, r),
-                //     Value::Bool(_) => InclusionExpression::value_contains(l, r),
-                //     Value::Number(_) => InclusionExpression::value_contains(l, r),
-                //     Value::String(_) => InclusionExpression::value_contains(l, r),
-
-                //     // undocumented, but JSONata exerciser returns false for these
-                //     Value::Array(_) => false,
-                //     Value::Object(_) => false,
-                // })
-            }
-            (_, _) => false.into(),
-        }
-    }
-
-    fn value_contains(needle: Value, haystack: Value) -> bool {
-        match haystack {
-            Value::Null => needle.is_null(),
-            Value::Bool(_) => needle == haystack,
-            Value::Number(_) => needle == haystack,
-            Value::String(_) => needle == haystack,
-            Value::Array(arr) => arr.contains(&needle),
-            Value::Object(_) => false,
-        }
-    }
-}
-
-#[derive(Debug, PartialEq)]
-pub struct ConcatExpression {
-    pub lhs: Box<Expression>,
-    pub rhs: Box<Expression>,
-}
-
-impl ConcatExpression {
-    pub(super) fn evaluate(&self, context: &mut Context) -> EvaluationResult {
-        let left = self.lhs.evaluate(context)?;
-        let right = self.rhs.evaluate(context)?;
-        Ok(Some(
-            match (left, right) {
-                (None, None) => "".into(),
-                (Some(a), None) => format!("{}", a),
-                (None, Some(b)) => format!("{}", b),
-                (Some(a), Some(b)) => format!("{}{}", a, b),
-            }
-            .into(),
-        ))
-    }
-}
-
 #[cfg(test)]
 mod tests {
 
     use serde_json::json;
 
-    use crate::tests::make_val;
+    use crate::{tests::make_val, value::JSONataValue};
 
     use super::*;
 
