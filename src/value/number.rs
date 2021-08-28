@@ -336,13 +336,13 @@ impl Div for JSONataNumber {
             (NType::PosInt(a), NType::PosInt(b)) => ((a / b) as f64).into(),
             (NType::Float(a), NType::Float(b)) => ((a / b) as f64).into(),
 
-            (NType::NegInt(i), NType::PosInt(u)) => ((i / u as i64) as f64).into(),
-            (NType::PosInt(u), NType::NegInt(i)) => ((i / u as i64) as f64).into(),
+            (NType::NegInt(a), NType::PosInt(b)) => ((a / b as i64) as f64).into(),
+            (NType::PosInt(a), NType::NegInt(b)) => ((a as i64 / b) as f64).into(),
 
-            (NType::NegInt(i), NType::Float(f)) => (f / i as f64).into(),
-            (NType::PosInt(u), NType::Float(f)) => (f / u as f64).into(),
-            (NType::Float(f), NType::NegInt(i)) => (f / i as f64).into(),
-            (NType::Float(f), NType::PosInt(u)) => (f / u as f64).into(),
+            (NType::NegInt(a), NType::Float(b)) => (a as f64 / b).into(),
+            (NType::PosInt(a), NType::Float(b)) => (a as f64 / b).into(),
+            (NType::Float(a), NType::NegInt(b)) => (a / b as f64).into(),
+            (NType::Float(a), NType::PosInt(b)) => (a / b as f64).into(),
         }
     }
 }
