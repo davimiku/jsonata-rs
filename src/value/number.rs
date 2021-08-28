@@ -129,6 +129,12 @@ impl From<i64> for JSONataNumber {
     }
 }
 
+impl From<i32> for JSONataNumber {
+    fn from(i: i32) -> Self {
+        JSONataNumber(i.into())
+    }
+}
+
 impl From<u64> for JSONataNumber {
     fn from(u: u64) -> Self {
         JSONataNumber(u.into())

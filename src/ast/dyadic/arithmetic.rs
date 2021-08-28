@@ -90,3 +90,32 @@ impl ArithmeticExpression {
         ))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::value::JSONataValue;
+
+    use super::*;
+
+    use ArithmeticOpType::*;
+
+    #[test]
+    fn arithmetic() {
+        let cases: Vec<(JSONataNumber, JSONataNumber, ArithmeticOpType, JSONataValue)> = vec![
+            (5.into(), 6.into(), Add, 11.into()),
+            (5.into(), (-6).into(), Add, (-1).into()),
+            (5.into(), (-7).into(), Sub, 12.into()),
+            (5.into(), 7.into(), Sub, (-2).into()),
+            (5.into(), 8.into(), Mul, 40.into()),
+            (5.into(), (-8).into(), Mul, (-40).into()),
+            (45.into(), 5.into(), Div, 9.into()),
+            (45.into(), (-5).into(), Div, (-9).into()),
+        ];
+        for (lhs, rhs, op, expected) in cases {
+            let actual = ArithmeticExpression::jsonata_value_arithmetic(lhs, rhs, &op)
+                .unwrap()
+                .unwrap();
+            assert_eq!(actual, expected);
+        }
+    }
+}
