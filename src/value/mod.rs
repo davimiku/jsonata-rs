@@ -10,7 +10,7 @@ use std::rc::Rc;
 
 use serde_json::Value;
 
-use crate::ast::dyadic::NumericOpType;
+use crate::ast::dyadic::ArithmeticOpType;
 use crate::ast::literal::LiteralValue;
 use crate::evaluate::EvaluationError;
 use crate::evaluate::EvaluationResult;
@@ -247,12 +247,12 @@ impl TryNumericOps for JSONataValue {
                     Ok((JSONataNumber::from(left) + JSONataNumber::from(right)).to_value())
                 }
                 (_, _) => Err(EvaluationError::DyadicMustBeNumber(
-                    NumericOpType::Add.into(),
+                    ArithmeticOpType::Add.into(),
                 )),
             }
         } else {
             Err(EvaluationError::DyadicMustBeNumber(
-                NumericOpType::Add.into(),
+                ArithmeticOpType::Add.into(),
             ))
         }
     }
@@ -264,12 +264,12 @@ impl TryNumericOps for JSONataValue {
                     Ok((JSONataNumber::from(left) - JSONataNumber::from(right)).to_value())
                 }
                 (_, _) => Err(EvaluationError::DyadicMustBeNumber(
-                    NumericOpType::Sub.into(),
+                    ArithmeticOpType::Sub.into(),
                 )),
             }
         } else {
             Err(EvaluationError::DyadicMustBeNumber(
-                NumericOpType::Sub.into(),
+                ArithmeticOpType::Sub.into(),
             ))
         }
     }
@@ -281,12 +281,12 @@ impl TryNumericOps for JSONataValue {
                     Ok((JSONataNumber::from(left) * JSONataNumber::from(right)).to_value())
                 }
                 (_, _) => Err(EvaluationError::DyadicMustBeNumber(
-                    NumericOpType::Mul.into(),
+                    ArithmeticOpType::Mul.into(),
                 )),
             }
         } else {
             Err(EvaluationError::DyadicMustBeNumber(
-                NumericOpType::Mul.into(),
+                ArithmeticOpType::Mul.into(),
             ))
         }
     }
@@ -298,12 +298,12 @@ impl TryNumericOps for JSONataValue {
                     Ok((JSONataNumber::from(left) / JSONataNumber::from(right)).to_value())
                 }
                 (_, _) => Err(EvaluationError::DyadicMustBeNumber(
-                    NumericOpType::Div.into(),
+                    ArithmeticOpType::Div.into(),
                 )),
             }
         } else {
             Err(EvaluationError::DyadicMustBeNumber(
-                NumericOpType::Div.into(),
+                ArithmeticOpType::Div.into(),
             ))
         }
     }
@@ -315,12 +315,12 @@ impl TryNumericOps for JSONataValue {
                     Ok((JSONataNumber::from(left) % JSONataNumber::from(right)).to_value())
                 }
                 (_, _) => Err(EvaluationError::DyadicMustBeNumber(
-                    NumericOpType::Div.into(),
+                    ArithmeticOpType::Div.into(),
                 )),
             }
         } else {
             Err(EvaluationError::DyadicMustBeNumber(
-                NumericOpType::Div.into(),
+                ArithmeticOpType::Div.into(),
             ))
         }
     }

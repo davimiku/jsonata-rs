@@ -5,12 +5,12 @@ mod string;
 #[cfg(test)]
 mod tests;
 
+use nom::character::complete::multispace0;
 use nom::combinator::map;
 use nom::multi::separated_list0;
 use nom::{
     branch::alt,
     bytes::complete::{is_not, tag, take_until},
-    character::complete::space0,
     combinator::value,
     error::ParseError,
     sequence::{delimited, tuple},
@@ -21,6 +21,7 @@ use nom_recursive::RecursiveInfo;
 
 use crate::ast::expr::Expression;
 use crate::ast::expr::MultiExpression;
+use crate::parser::dyadic::arithmetic_expr;
 
 use self::dyadic::comparison_expr;
 use self::dyadic::map_expr;
@@ -48,7 +49,7 @@ where
     <I as InputIter>::Item: AsChar + Clone,
     <I as InputTakeAtPosition>::Item: AsChar + Clone,
 {
-    delimited(space0, parser, space0)
+    delimited(multispace0, parser, multispace0)
 }
 
 /// Parses a C-Style comment
@@ -112,6 +113,7 @@ fn multiexpression_parser(input: Span) -> IResult<Span, Expression> {
 /// Calls each of the other parsers in order until a parser
 /// yields success, or returns a ParseError
 fn expr_parser(span: Span) -> IResult<Span, Expression> {
+    dbg!("expr_parser");
     alt((
         multiexpression_parser,
         literal_expr,
@@ -119,6 +121,7 @@ fn expr_parser(span: Span) -> IResult<Span, Expression> {
         path_expr,
         map_expr,
         comparison_expr,
+        arithmetic_expr,
     ))(span)
 }
 

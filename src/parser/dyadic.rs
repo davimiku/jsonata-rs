@@ -1,7 +1,8 @@
 //! Parsers for dyadic expressions
 //!
-//! - comparison
 //! - map (in relation to path operators)
+//! - comparison
+//! - variable assignment
 
 use nom::{
     branch::alt,
@@ -13,7 +14,7 @@ use nom::{
 use nom_recursive::recursive_parser;
 
 use crate::ast::{
-    dyadic::{CompareExpression, CompareOpType},
+    dyadic::{ArithmeticExpression, ArithmeticOpType, CompareExpression, CompareOpType},
     expr::{Expression, VariableBindingExpression},
     path::MapExpression,
 };
@@ -92,6 +93,37 @@ fn comparison_operator(span: Span) -> IResult<Span, CompareOpType> {
     )(span)
 }
 
+/// Parses looking for an arithmetic expression
+///
+/// ## Example
+///
+/// ```
+/// foo + bar
+/// ```
+/// The ArithmeticExpression is constructed with the LHS, RHS, and which
+/// operator is used between them.
+#[recursive_parser]
+pub(super) fn arithmetic_expr(s: Span) -> IResult<Span, Expression> {
+    map(
+        tuple((trim(expr_parser), arithmetic_operator, trim(expr_parser))),
+        |(lhs, arithmetic_type, rhs)| {
+            ArithmeticExpression {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+                arithmetic_type,
+            }
+            .into()
+        },
+    )(s)
+}
+
+fn arithmetic_operator(span: Span) -> IResult<Span, ArithmeticOpType> {
+    map(
+        alt((tag("+"), tag("-"), tag("*"), tag("/"), tag("%"))),
+        |s: Span| ArithmeticOpType::from(*s.fragment()),
+    )(span)
+}
+
 /// Variable binding expressions bind a value to a variable
 /// and also return that value.
 ///
@@ -118,6 +150,81 @@ mod tests {
     use crate::{ast::literal::LiteralExpression, parser::make_span};
 
     use super::*;
+
+    #[test]
+    fn compare_parser() {
+        let input = "5 < 6";
+        let (_, actual) = comparison_expr(make_span(input)).unwrap();
+        assert_eq!(
+            actual,
+            CompareExpression {
+                lhs: Box::new(LiteralExpression::from(5).into()),
+                rhs: Box::new(LiteralExpression::from(6).into()),
+                compare_type: CompareOpType::Less
+            }
+            .into()
+        )
+    }
+
+    #[test]
+    fn arithmetic_parser_add() {
+        let input = "5 + 6";
+        let (_, actual) = arithmetic_expr(make_span(input)).unwrap();
+        assert_eq!(
+            actual,
+            ArithmeticExpression {
+                lhs: Box::new(LiteralExpression::from(5).into()),
+                rhs: Box::new(LiteralExpression::from(6).into()),
+                arithmetic_type: ArithmeticOpType::Add
+            }
+            .into()
+        )
+    }
+
+    #[test]
+    fn arithmetic_parser_sub() {
+        let input = "5 - 6";
+        let (_, actual) = arithmetic_expr(make_span(input)).unwrap();
+        assert_eq!(
+            actual,
+            ArithmeticExpression {
+                lhs: Box::new(LiteralExpression::from(5).into()),
+                rhs: Box::new(LiteralExpression::from(6).into()),
+                arithmetic_type: ArithmeticOpType::Sub
+            }
+            .into()
+        )
+    }
+
+    #[test]
+    fn arithmetic_parser_mul() {
+        let input = "5 * 6";
+        let (_, actual) = arithmetic_expr(make_span(input)).unwrap();
+        assert_eq!(
+            actual,
+            ArithmeticExpression {
+                lhs: Box::new(LiteralExpression::from(5).into()),
+                rhs: Box::new(LiteralExpression::from(6).into()),
+                arithmetic_type: ArithmeticOpType::Mul
+            }
+            .into()
+        )
+    }
+
+    #[test]
+    fn arithmetic_parser_div() {
+        let input = "5 / 6";
+        let (_, actual) = arithmetic_expr(make_span(input)).unwrap();
+        assert_eq!(
+            actual,
+            ArithmeticExpression {
+                lhs: Box::new(LiteralExpression::from(5).into()),
+                rhs: Box::new(LiteralExpression::from(6).into()),
+                arithmetic_type: ArithmeticOpType::Div
+            }
+            .into()
+        )
+    }
 
     #[test]
     fn variable_binding_parser() {

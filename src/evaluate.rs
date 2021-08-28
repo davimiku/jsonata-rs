@@ -27,6 +27,12 @@ pub enum EvaluationError {
 
     /// JSONata Functions cannot be converted to other value types
     FunctionCannotConvertToValue(String),
+
+    /// A number was divided by zero
+    DivideByZero,
+
+    /// Could not convert value to number
+    CannotConvertToNumber,
 }
 
 impl EvaluationError {
@@ -63,8 +69,11 @@ impl Display for EvaluationError {
             EvaluationError::FunctionIncorrectNumArguments(func_name, num_expected, num_actual) => {
                 f.write_fmt(format_args!("Function '{}': requires '{}' arguments, '{}' were provided", func_name, num_expected, num_actual))
             }
-            EvaluationError::FunctionCannotConvertToValue(func_name) => f.write_fmt(format_args!("Function '{}' cannot be converted to a JSON value", func_name))
+            EvaluationError::FunctionCannotConvertToValue(func_name) => f.write_fmt(format_args!("Function '{}' cannot be converted to a JSON value", func_name)),
 
+            &EvaluationError::DivideByZero => f.write_str("A number was divided by zero"),
+            
+            EvaluationError::CannotConvertToNumber => f.write_str("One of the operands could not be converted to a number"),
         }
     }
 }

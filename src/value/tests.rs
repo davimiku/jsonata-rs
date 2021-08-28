@@ -49,7 +49,7 @@ fn add() {
         assert_eq!(
             JSONataValue::Value(lhs).try_add(JSONataValue::Value(rhs)),
             Err(EvaluationError::DyadicMustBeNumber(
-                NumericOpType::Add.into()
+                ArithmeticOpType::Add.into()
             ))
         )
     }

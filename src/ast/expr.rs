@@ -4,7 +4,7 @@ use crate::{
 };
 
 use super::{
-    dyadic::{CompareExpression, ConcatExpression, InclusionExpression},
+    dyadic::{ArithmeticExpression, CompareExpression, ConcatExpression, InclusionExpression},
     literal::LiteralExpression,
     path::{FilterExpression, MapExpression, PathExpression, ReduceExpression},
 };
@@ -55,6 +55,7 @@ pub enum Expression {
     Reduce(ReduceExpression),
 
     Compare(CompareExpression),
+    Arithmetic(ArithmeticExpression),
     Concat(ConcatExpression),
     Includes(InclusionExpression),
 }
@@ -70,6 +71,7 @@ impl Expression {
             Expression::Filter(expr) => expr.evaluate(context),
             Expression::Reduce(expr) => expr.evaluate(context),
             Expression::Compare(expr) => expr.evaluate(context),
+            Expression::Arithmetic(expr) => expr.evaluate(context),
             Expression::Concat(expr) => expr.evaluate(context),
             Expression::Includes(expr) => expr.evaluate(context),
         }
@@ -109,6 +111,12 @@ impl From<PathExpression> for Expression {
 impl From<CompareExpression> for Expression {
     fn from(expr: CompareExpression) -> Self {
         Expression::Compare(expr)
+    }
+}
+
+impl From<ArithmeticExpression> for Expression {
+    fn from(expr: ArithmeticExpression) -> Self {
+        Expression::Arithmetic(expr)
     }
 }
 

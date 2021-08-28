@@ -142,11 +142,11 @@ mod tests {
             literal_expr(make_span("null")),
             literal_expr(make_span(r#""test""#)),
         ];
-        let expected = vec![
-            LiteralExpression::from(true),
-            LiteralExpression::from(false),
-            LiteralExpression::from(LiteralValue::Null),
-            LiteralExpression::from(LiteralValue::from("test")),
+        let expected: Vec<LiteralExpression> = vec![
+            true.into(),
+            false.into(),
+            LiteralValue::Null.into(),
+            "test".into(),
         ];
         for (expected_res, actual) in actual.iter().zip(expected.iter()) {
             let (_, expected) = expected_res.as_ref().unwrap();
