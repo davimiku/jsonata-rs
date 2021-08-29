@@ -127,21 +127,18 @@ impl FilterExpression {
             // lhs evaluation becomes the context for evaluation of the predicate
             if let Some(value) = data.as_value() {
                 let mut new_context = Context::from_data(value);
-                let pred = self.pred.evaluate(&mut new_context)?;
-                if let Some(pred_val) = pred {
+                if let Some(pred_val) = self.pred.evaluate(&mut new_context)? {
                     // If value is int, then return item at that index of the array
                     // or if it's not an array, then return the item itself only if
                     // the index is zero  (i.e. treating as a singleton sequence)
-                    todo!()
-                } else {
-                    Ok(None)
+                    match pred_val {
+                        JSONataValue::Value(_) => todo!(),
+                        JSONataValue::Function(_) => todo!(),
+                    }
                 }
-            } else {
-                Ok(None)
             }
-        } else {
-            Ok(None)
         }
+        Ok(None)
     }
 }
 
@@ -280,18 +277,16 @@ impl PathExpression {
 
 impl PathExpression {
     fn get_value(&self, data: &Value) -> Option<Value> {
-        if data.is_object() {
-            let value = data.get(self.ident.clone())?;
-            Some(value.clone())
-        } else if let Some(arr) = data.as_array() {
-            let values: Vec<Value> = arr.iter().filter_map(|val| self.get_value(val)).collect();
-            if values.len() > 0 {
-                Some(Value::Array(values))
-            } else {
-                None
+        match data {
+            Value::Object(obj) => obj.get(&self.ident).map(|val| val.clone()),
+            Value::Array(arr) => {
+                let values: Vec<Value> = arr.iter().filter_map(|val| self.get_value(val)).collect();
+                match values.len() > 0 {
+                    true => Some(Value::Array(values)),
+                    false => None,
+                }
             }
-        } else {
-            None
+            _ => None,
         }
     }
 }

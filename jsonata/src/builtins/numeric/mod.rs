@@ -29,7 +29,8 @@ impl BuiltIns {
     /// ["1", "2", "3", "4", "5"].$number() => [1, 2, 3, 4, 5]
     /// ```
     /// **Signature**: `$number(arg)`
-    pub(crate) fn number(args: &[Option<JSONataValue>]) -> EvaluationResult {
+    pub(super) fn number(args: &[Option<JSONataValue>]) -> EvaluationResult {
+        let arg = args.get(0).unwrap();
         todo!()
     }
 
@@ -46,7 +47,7 @@ impl BuiltIns {
     /// $abs(-5) => -5
     /// ```
     /// **Signature**: `$abs(number)`
-    pub(crate) fn abs(args: &[Option<JSONataValue>]) -> EvaluationResult {
+    pub(super) fn abs(args: &[Option<JSONataValue>]) -> EvaluationResult {
         let number = args.get(0).unwrap(); // arg will exist
         if let Some(number) = number {
             match number {
@@ -83,7 +84,7 @@ impl BuiltIns {
     /// $floor(-5.3) => -6
     /// ```
     /// **Signature**: `$floor(number)`
-    pub(crate) fn floor(args: &[JSONataValue]) -> EvaluationResult {
+    pub(super) fn floor(args: &[JSONataValue]) -> EvaluationResult {
         let number = args.get(0);
         if let Some(number) = number {
             match number {
@@ -120,7 +121,7 @@ impl BuiltIns {
     /// $ceil(-5.3) => -5
     /// ```
     /// **Signature**: `$ceil(number)`
-    pub(crate) fn ceil(args: &[Option<JSONataValue>]) -> EvaluationResult {
+    pub(super) fn ceil(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -150,7 +151,7 @@ impl BuiltIns {
     /// $round(125, -1) => 120
     /// ```
     /// **Signature**: `$round(number [, precision])`
-    pub(crate) fn round(args: &[Option<JSONataValue>]) -> EvaluationResult {
+    pub(super) fn round(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -168,7 +169,7 @@ impl BuiltIns {
     /// $power(2, -2) => 0.25
     /// ```
     /// **Signature**: `$power(base, exponent)`
-    pub(crate) fn power(args: &[Option<JSONataValue>]) -> EvaluationResult {
+    pub(super) fn power(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -186,7 +187,7 @@ impl BuiltIns {
     /// $sqrt(2) => 1.414213562373
     /// ```
     /// **Signature**: `$sqrt(number)`
-    pub(crate) fn sqrt(args: &[Option<JSONataValue>]) -> EvaluationResult {
+    pub(super) fn sqrt(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -199,7 +200,7 @@ impl BuiltIns {
     /// $random() => 0.6558078550072
     /// ```
     /// **Signature**: `$random()`
-    pub(crate) fn random(args: &[Option<JSONataValue>]) -> EvaluationResult {
+    pub(super) fn random(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -231,7 +232,7 @@ impl BuiltIns {
     /// $formatNumber(1234.5678, "①①.①①①e①", {"zero-digit": "\u245f"}) => "①②.③④⑥e②"
     /// ```
     /// **Signature**: `$formatNumber(number, picture [, options])`
-    pub(crate) fn format_number(args: &[Option<JSONataValue>]) -> EvaluationResult {
+    pub(super) fn format_number(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -246,7 +247,7 @@ impl BuiltIns {
     /// $formatBase(2555, 16) => "9fb"
     /// ```
     /// **Signature**: `$formatBase(number [, radix])`
-    pub(crate) fn format_base(args: &[Option<JSONataValue>]) -> EvaluationResult {
+    pub(super) fn format_base(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -265,7 +266,7 @@ impl BuiltIns {
     /// $formatInteger(1999, 'I') => "MCMXCIX"
     /// ```
     /// **Signature**: `$formatInteger(number, picture)`
-    pub(crate) fn format_integer(args: &[Option<JSONataValue>]) -> EvaluationResult {
+    pub(super) fn format_integer(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 
@@ -282,7 +283,7 @@ impl BuiltIns {
     /// $parseInteger('12,345,678', '#,##0') => 12345678
     /// ```
     /// **Signature**: `$parseInteger(string, picture)`
-    pub(crate) fn parse_integer(args: &[Option<JSONataValue>]) -> EvaluationResult {
+    pub(super) fn parse_integer(args: &[Option<JSONataValue>]) -> EvaluationResult {
         todo!()
     }
 }

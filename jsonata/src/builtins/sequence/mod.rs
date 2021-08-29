@@ -24,11 +24,23 @@ impl BuiltIns {
     //     }
     // }
 
-    /// Returns the number of items in the array parameter.
-    /// If the array parameter is not an array, but rather a
+    /// Returns the number of items in the `array` parameter.
+    /// If the array parameter is not an `array`, but rather a
     /// value of another JSON type, then the parameter is
     /// treated as a singleton array containing that value,
-    /// and this function returns 1.
+    /// and this function returns `1`.
+    ///
+    /// If `array` is not specified, then the context value is used as the value of `array`.
+    ///
+    /// ### Examples
+    ///
+    /// ```
+    /// $count([1,2,3,1]) => 4
+    /// $count("hello") => 1
+    /// ```
+    ///
+    /// **Signature**: `$count(array)`
+    /// TODO: $count(i_dont_exist) returns 0 in try.jsonata.org ... do we want that?
     pub(crate) fn count(args: &[Option<JSONataValue>]) -> EvaluationResult {
         let array = args.get(0).unwrap(); // arg will exist
         if let Some(val) = array {
@@ -158,7 +170,7 @@ impl BuiltIns {
     /// $distinct([1,2,3,3,4,3,5]) => [1, 2, 3, 4, 5]
     /// $distinct(Account.Order.Product.Description.Colour) => [ "Purple", "Orange", "Black" ]
     /// ```
-    pub(crate) fn distinct(array: Value) {
+    pub(super) fn distinct(array: &JSONataValue) -> EvaluationResult {
         todo!()
     }
 
