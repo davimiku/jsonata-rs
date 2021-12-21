@@ -1,5 +1,9 @@
-use crate::{jsonata, value::JSONataValue};
 use serde_json::{json, Value};
+
+#[test]
+fn it_works() {
+    assert_eq!(2 + 2, 4)
+}
 
 pub(crate) fn object_data() -> Value {
     json!({
@@ -43,19 +47,4 @@ pub(crate) fn object_data() -> Value {
             }
         ]
     })
-}
-
-pub(crate) fn make_val<T>(input: T) -> JSONataValue
-where
-    T: Into<JSONataValue>,
-{
-    input.into()
-}
-
-#[test]
-fn literal() {
-    let input = "true";
-    let mut program = jsonata(input).unwrap();
-    let result = program.evaluate(&object_data()).unwrap();
-    assert_eq!(result, Some(true.into()));
 }

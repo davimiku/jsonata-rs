@@ -1,151 +1,176 @@
-mod dyadic;
-mod ident;
-mod monadic;
-mod string;
-#[cfg(test)]
-mod tests;
+mod expr;
 
-use nom::character::complete::multispace0;
-use nom::combinator::map;
-use nom::multi::separated_list0;
-use nom::{
-    branch::alt,
-    bytes::complete::{is_not, tag, take_until},
-    combinator::value,
-    error::ParseError,
-    sequence::{delimited, tuple},
-    AsChar, IResult, InputIter, InputLength, InputTake, InputTakeAtPosition, Parser,
-};
-use nom_locate::LocatedSpan;
-use nom_recursive::RecursiveInfo;
+use crate::lexer::{Lexer, SyntaxKind};
+use crate::syntax::{JsonataLanguage, SyntaxNode};
+use expr::expr;
+use rowan::{Checkpoint, GreenNode, GreenNodeBuilder, Language};
+use std::iter::Peekable;
 
-use crate::ast::expr::Expression;
-use crate::ast::expr::MultiExpression;
-use crate::parser::dyadic::arithmetic_expr;
-
-use self::dyadic::comparison_expr;
-use self::dyadic::map_expr;
-use self::dyadic::variable_binding_expr;
-use self::monadic::{literal_expr, path_expr};
-
-/// Type alias for the internal output of parser functions. The nom-locate and nom-recursive
-/// crates are used to provide location information of the parsed input and to allow
-/// for left-recursion.
-pub(crate) type Span<'a> = LocatedSpan<&'a str, RecursiveInfo>;
-
-pub(crate) type ParseResult<'a> = Result<Expression, nom::Err<nom::error::Error<Span<'a>>>>;
-// Result<Expression, nom::Err<nom::error::Error<LocatedSpan<&'a str, RecursiveInfo>>>>;
-
-fn make_span(s: &str) -> Span {
-    LocatedSpan::new_extra(s, RecursiveInfo::new())
+pub struct Parser<'a> {
+    lexer: Peekable<Lexer<'a>>,
+    builder: GreenNodeBuilder<'static>,
 }
 
-/// Parses the provided parser, ignoring spaces before
-/// and after the matching input.
-fn trim<'a, F, I, O, E: ParseError<I>>(parser: F) -> impl FnMut(I) -> IResult<I, O, E>
-where
-    F: Parser<I, O, E>,
-    I: InputLength + InputIter + InputTakeAtPosition + InputTake + Clone,
-    <I as InputIter>::Item: AsChar + Clone,
-    <I as InputTakeAtPosition>::Item: AsChar + Clone,
-{
-    delimited(multispace0, parser, multispace0)
-}
-
-/// Parses a C-Style comment
-///
-/// Comments begin with the `/*` characters and close with the `*/` characters.
-/// TODO: Decide if we want to retain comments in the AST
-fn comment(span: Span) -> IResult<Span, ()> {
-    map(
-        value((), tuple((tag("/*"), take_until("*/"), tag("*/")))),
-        |()| (),
-    )(span)
-}
-
-fn not_whitespace(i: &str) -> IResult<&str, &str> {
-    is_not(" \t")(i)
-}
-
-fn escaped_tab(i: &str) -> IResult<&str, &str> {
-    nom::combinator::recognize(nom::character::complete::char('\t'))(i)
-}
-
-fn escaped_backslash(i: &str) -> IResult<&str, &str> {
-    nom::combinator::recognize(nom::character::complete::char('\\'))(i)
-}
-
-fn transform_escaped(i: &str) -> IResult<&str, std::string::String> {
-    nom::bytes::complete::escaped_transform(
-        nom::bytes::complete::is_not("\\"),
-        '\\',
-        nom::branch::alt((escaped_backslash, escaped_tab)),
-    )(i)
-}
-
-/// Parses a block delimited by parentheses into a vector of expressions
-///
-/// ```
-/// (
-///    Account;
-///    true;
-///    Address
-/// )
-/// ```
-/// The above JSONata program is parsed into a MultiExpression where the
-/// internal Vec<Expression> contains PathExpression(Account), LiteralExpression(true),
-/// and PathExpression(Address).
-///
-/// The final semi-colon is optional.
-fn multiexpression_parser(input: Span) -> IResult<Span, Expression> {
-    map(
-        delimited(tag("("), separated_list0(tag(";"), expr_parser), tag(")")),
-        |expressions| MultiExpression { expressions }.into(),
-    )(input)
-}
-
-// fn expr_test(span: Span) -> IResult<Span, String> {
-//     alt((comparison_expr_test, term))(span)
-// }
-
-/// Main function for expression parsing
-///
-/// Calls each of the other parsers in order until a parser
-/// yields success, or returns a ParseError
-fn expr_parser(span: Span) -> IResult<Span, Expression> {
-    dbg!("expr_parser");
-    alt((
-        multiexpression_parser,
-        literal_expr,
-        variable_binding_expr,
-        path_expr,
-        map_expr,
-        comparison_expr,
-        arithmetic_expr,
-    ))(span)
-}
-
-/// Parses the given input to produce an AST of expressions
-///
-/// The result of this function is always a single Expression node,
-/// however, Expressions may have many Expressions contained within them.
-///
-/// ```
-/// (
-///    /* Get the person's name, i.e. 'John' */
-///    $name := Account.Name;
-///    /* Return how many orders, i.e. 'John: 5 orders' */
-///    $name & ": " & $count(Orders) & " orders"
-/// )
-/// ```
-/// The above JSONata program evaluates to a single top-level expression,
-/// in this case, a MultiExpression which has a Vec<Expression> and evaluates
-/// each in order and uses the final value as its return value.
-pub(super) fn parse(input: &str) -> ParseResult {
-    expr_parser(make_span(input)).map(|(span, expr)| {
-        if !span.is_empty() {
-            panic!("Unparsed input, remaining: '{}'", span.fragment())
+impl<'a> Parser<'a> {
+    pub fn new(input: &'a str) -> Self {
+        Self {
+            lexer: Lexer::new(input).peekable(),
+            builder: GreenNodeBuilder::new(),
         }
-        expr
-    })
+    }
+
+    pub fn parse(mut self) -> Parse {
+        self.start_node(SyntaxKind::Root);
+
+        expr(&mut self);
+
+        self.finish_node();
+
+        Parse {
+            green_node: self.builder.finish(),
+        }
+    }
+
+    fn peek(&mut self) -> Option<SyntaxKind> {
+        self.lexer.peek().map(|(kind, _)| *kind)
+    }
+
+    fn bump(&mut self) {
+        // unwrap: bump() must be only used if peek() is Some
+        let (kind, text) = self.lexer.next().unwrap();
+
+        self.builder
+            .token(JsonataLanguage::kind_to_raw(kind), text.into())
+    }
+
+    fn start_node(&mut self, kind: SyntaxKind) {
+        self.builder.start_node(JsonataLanguage::kind_to_raw(kind))
+    }
+
+    fn start_node_at(&mut self, checkpoint: Checkpoint, kind: SyntaxKind) {
+        self.builder
+            .start_node_at(checkpoint, JsonataLanguage::kind_to_raw(kind));
+    }
+
+    fn finish_node(&mut self) {
+        self.builder.finish_node()
+    }
+
+    fn checkpoint(&self) -> Checkpoint {
+        self.builder.checkpoint()
+    }
+}
+
+pub struct Parse {
+    green_node: GreenNode,
+}
+
+impl Parse {
+    pub fn debug_tree(&self) -> String {
+        let syntax_node = SyntaxNode::new_root(self.green_node.clone());
+        let formatted = format!("{:#?}", syntax_node);
+
+        // Remove the newline from the end
+        formatted[0..formatted.len() - 1].to_string()
+    }
+}
+
+enum InfixOp {
+    Add,
+    Sub,
+    Mul,
+    Div,
+}
+
+impl InfixOp {
+    /// Binding power tuple of (left, right)
+    fn binding_power(&self) -> (u8, u8) {
+        match self {
+            Self::Add | Self::Sub => (1, 2),
+            Self::Mul | Self::Div => (3, 4),
+        }
+    }
+}
+
+enum PrefixOp {
+    Neg,
+}
+
+impl PrefixOp {
+    fn binding_power(&self) -> ((), u8) {
+        match self {
+            Self::Neg => ((), 5),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use expect_test::{expect, Expect};
+
+    use super::*;
+
+    fn check(input: &str, expected_tree: Expect) {
+        let parse = Parser::new(input).parse();
+        expected_tree.assert_eq(&parse.debug_tree());
+    }
+
+    #[test]
+    fn parse_nothing() {
+        check("", expect![[r#"Root@0..0"#]]);
+    }
+
+    #[test]
+    fn parse_number() {
+        check(
+            "123",
+            expect![[r#"
+Root@0..3
+  Number@0..3 "123""#]],
+        );
+    }
+
+    #[test]
+    fn parse_binding_usage() {
+        check(
+            "$counter",
+            expect![[r#"
+Root@0..8
+  Ident@0..8 "$counter""#]],
+        );
+    }
+
+    #[test]
+    fn parse_negation() {
+        check(
+            "-10",
+            expect![[r#"
+Root@0..3
+  PrefixExpr@0..3
+    Minus@0..1 "-"
+    Number@1..3 "10""#]],
+        )
+    }
+
+    #[test]
+    fn parse_nested_parentheses() {
+        check(
+            "((((((10))))))",
+            expect![[r#"
+Root@0..14
+  LParen@0..1 "("
+  LParen@1..2 "("
+  LParen@2..3 "("
+  LParen@3..4 "("
+  LParen@4..5 "("
+  LParen@5..6 "("
+  Number@6..8 "10"
+  RParen@8..9 ")"
+  RParen@9..10 ")"
+  RParen@10..11 ")"
+  RParen@11..12 ")"
+  RParen@12..13 ")"
+  RParen@13..14 ")""#]],
+        );
+    }
 }
