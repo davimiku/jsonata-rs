@@ -14,17 +14,19 @@ impl<'a> Lexer<'a> {
 }
 
 impl<'a> Iterator for Lexer<'a> {
-    type Item = (SyntaxKind, &'a str);
+    type Item = Lexeme<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let kind = self.inner.next()?;
         let text = self.inner.slice();
 
-        Some((kind, text))
+        Some(Self::Item { kind, text })
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Logos, FromPrimitive, ToPrimitive)]
+#[derive(
+    Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Logos, FromPrimitive, ToPrimitive,
+)]
 pub(crate) enum SyntaxKind {
     // Keywords
     #[token("function")]
@@ -120,13 +122,19 @@ pub(crate) enum SyntaxKind {
     PrefixExpr,
 }
 
+#[derive(Debug, PartialEq)]
+pub(crate) struct Lexeme<'a> {
+    pub(crate) kind: SyntaxKind,
+    pub(crate) text: &'a str,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     fn check(input: &str, kind: SyntaxKind) {
         let mut lexer = Lexer::new(input);
-        assert_eq!(lexer.next(), Some((kind, input)));
+        assert_eq!(lexer.next(), Some(Lexeme { kind, text: input }));
     }
 
     #[test]

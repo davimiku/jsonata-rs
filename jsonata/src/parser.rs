@@ -1,63 +1,79 @@
+mod event;
 mod expr;
+mod sink;
 
-use crate::lexer::{Lexer, SyntaxKind};
-use crate::syntax::{JsonataLanguage, SyntaxNode};
+use crate::lexer::{Lexeme, Lexer, SyntaxKind};
+use crate::syntax::SyntaxNode;
 use expr::expr;
-use rowan::{Checkpoint, GreenNode, GreenNodeBuilder, Language};
-use std::iter::Peekable;
+use rowan::GreenNode;
 
-pub struct Parser<'a> {
-    lexer: Peekable<Lexer<'a>>,
-    builder: GreenNodeBuilder<'static>,
+use self::event::Event;
+use self::sink::Sink;
+
+pub fn parse(input: &str) -> Parse {
+    let lexemes: Vec<_> = Lexer::new(input).collect();
+    let parser = Parser::new(&lexemes);
+    let events = parser.parse();
+    let sink = Sink::new(&lexemes, events);
+
+    Parse {
+        green_node: sink.finish(),
+    }
 }
 
-impl<'a> Parser<'a> {
-    pub fn new(input: &'a str) -> Self {
+struct Parser<'l, 'input> {
+    lexemes: &'l [Lexeme<'input>],
+    cursor: usize,
+    events: Vec<Event>,
+}
+
+impl<'l, 'input> Parser<'l, 'input> {
+    fn new(lexemes: &'l [Lexeme<'input>]) -> Self {
         Self {
-            lexer: Lexer::new(input).peekable(),
-            builder: GreenNodeBuilder::new(),
+            lexemes,
+            cursor: 0,
+            events: Vec::new(),
         }
     }
 
-    pub fn parse(mut self) -> Parse {
+    fn parse(mut self) -> Vec<Event> {
         self.start_node(SyntaxKind::Root);
-
         expr(&mut self);
-
         self.finish_node();
 
-        Parse {
-            green_node: self.builder.finish(),
-        }
+        self.events
     }
 
-    fn peek(&mut self) -> Option<SyntaxKind> {
-        self.lexer.peek().map(|(kind, _)| *kind)
+    fn peek(&self) -> Option<SyntaxKind> {
+        self.lexemes
+            .get(self.cursor)
+            .map(|Lexeme { kind, .. }| *kind)
     }
 
     fn bump(&mut self) {
-        // unwrap: bump() must be only used if peek() is Some
-        let (kind, text) = self.lexer.next().unwrap();
+        let Lexeme { kind, text } = self.lexemes[self.cursor];
 
-        self.builder
-            .token(JsonataLanguage::kind_to_raw(kind), text.into())
+        self.cursor += 1;
+        self.events.push(Event::AddToken {
+            kind,
+            text: text.into(),
+        });
     }
 
     fn start_node(&mut self, kind: SyntaxKind) {
-        self.builder.start_node(JsonataLanguage::kind_to_raw(kind))
+        self.events.push(Event::StartNode { kind });
     }
 
-    fn start_node_at(&mut self, checkpoint: Checkpoint, kind: SyntaxKind) {
-        self.builder
-            .start_node_at(checkpoint, JsonataLanguage::kind_to_raw(kind));
+    fn start_node_at(&mut self, checkpoint: usize, kind: SyntaxKind) {
+        self.events.push(Event::StartNodeAt { kind, checkpoint });
     }
 
     fn finish_node(&mut self) {
-        self.builder.finish_node()
+        self.events.push(Event::FinishNode);
     }
 
-    fn checkpoint(&self) -> Checkpoint {
-        self.builder.checkpoint()
+    fn checkpoint(&self) -> usize {
+        self.events.len()
     }
 }
 
@@ -110,8 +126,8 @@ mod tests {
 
     use super::*;
 
-    fn check(input: &str, expected_tree: Expect) {
-        let parse = Parser::new(input).parse();
+    pub(super) fn check(input: &str, expected_tree: Expect) {
+        let parse = parse(input);
         expected_tree.assert_eq(&parse.debug_tree());
     }
 
@@ -131,7 +147,7 @@ Root@0..3
     }
 
     #[test]
-    fn parse_binding_usage() {
+    fn parse_variable_ref() {
         check(
             "$counter",
             expect![[r#"

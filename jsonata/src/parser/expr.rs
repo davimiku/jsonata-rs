@@ -59,14 +59,9 @@ fn expr_binding_power(p: &mut Parser, minimum_binding_power: u8) {
 
 #[cfg(test)]
 mod tests {
-    use expect_test::{expect, Expect};
+    use expect_test::expect;
 
-    use crate::parser::Parser;
-
-    fn check(input: &str, expected_tree: Expect) {
-        let parse = Parser::new(input).parse();
-        expected_tree.assert_eq(&parse.debug_tree());
-    }
+    use super::super::tests::check;
 
     #[test]
     fn parse_simple_binary_expression() {
@@ -87,9 +82,9 @@ Root@0..3
             "1+2+3+4",
             expect![[r#"
 Root@0..7
-  BinOp@0..7
-    BinOp@0..5
-      BinOp@0..3
+  BinaryExpr@0..7
+    BinaryExpr@0..5
+      BinaryExpr@0..3
         Number@0..1 "1"
         Plus@1..2 "+"
         Number@2..3 "2"
@@ -106,11 +101,11 @@ Root@0..7
             "1+2*3-4",
             expect![[r#"
 Root@0..7
-  BinOp@0..7
-    BinOp@0..5
+  BinaryExpr@0..7
+    BinaryExpr@0..5
       Number@0..1 "1"
       Plus@1..2 "+"
-      BinOp@2..5
+      BinaryExpr@2..5
         Number@2..3 "2"
         Star@3..4 "*"
         Number@4..5 "3"
