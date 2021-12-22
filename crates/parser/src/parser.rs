@@ -1,4 +1,3 @@
-use lexer::Token;
 use syntax::SyntaxKind;
 
 use crate::event::Event;
@@ -12,9 +11,9 @@ pub(crate) struct Parser<'t, 'input> {
 }
 
 impl<'t, 'input> Parser<'t, 'input> {
-    pub(crate) fn new(tokens: &'t [Token<'input>]) -> Self {
+    pub(crate) fn new(source: Source<'t, 'input>) -> Self {
         Self {
-            source: Source::new(tokens),
+            source,
             events: Vec::new(),
         }
     }

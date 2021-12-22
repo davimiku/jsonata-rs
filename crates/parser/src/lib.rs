@@ -8,13 +8,15 @@ mod source;
 use crate::parser::Parser;
 use lexer::Lexer;
 use rowan::GreenNode;
+use source::Source;
 use syntax::SyntaxNode;
 
 use self::sink::Sink;
 
 pub fn parse(input: &str) -> Parse {
     let tokens: Vec<_> = Lexer::new(input).collect();
-    let parser = Parser::new(&tokens);
+    let source = Source::new(&tokens);
+    let parser = Parser::new(source);
     let events = parser.parse();
     let sink = Sink::new(&tokens, events);
 
