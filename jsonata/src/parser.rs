@@ -84,14 +84,14 @@ impl Parse {
     }
 }
 
-enum InfixOp {
+enum BinaryOp {
     Add,
     Sub,
     Mul,
     Div,
 }
 
-impl InfixOp {
+impl BinaryOp {
     /// Binding power tuple of (left, right)
     fn binding_power(&self) -> (u8, u8) {
         match self {
@@ -101,11 +101,11 @@ impl InfixOp {
     }
 }
 
-enum PrefixOp {
+enum UnaryOp {
     Neg,
 }
 
-impl PrefixOp {
+impl UnaryOp {
     fn binding_power(&self) -> ((), u8) {
         match self {
             Self::Neg => ((), 5),
@@ -241,19 +241,19 @@ Root@0..3
     }
 
     #[test]
-    fn parse_binary_expression_with_whitespace() {
+    fn parse_infix_expression_with_whitespace() {
         check(
             " 1 +   2* 3 ",
             expect![[r#"
                 Root@0..12
                   Whitespace@0..1 " "
-                  BinaryExpr@1..12
+                  InfixExpr@1..12
                     Literal@1..3
                       Number@1..2 "1"
                       Whitespace@2..3 " "
                     Plus@3..4 "+"
                     Whitespace@4..7 "   "
-                    BinaryExpr@7..12
+                    InfixExpr@7..12
                       Literal@7..8
                         Number@7..8 "2"
                       Star@8..9 "*"
@@ -275,7 +275,7 @@ Root@0..12
     }
 
     #[test]
-    fn parse_binary_expression_interspersed_with_comments() {
+    fn parse_infix_expression_interspersed_with_comments() {
         check(
             "
 1
@@ -284,8 +284,8 @@ Root@0..12
             expect![[r#"
                 Root@0..43
                   Whitespace@0..1 "\n"
-                  BinaryExpr@1..43
-                    BinaryExpr@1..25
+                  InfixExpr@1..43
+                    InfixExpr@1..25
                       Literal@1..5
                         Number@1..2 "1"
                         Whitespace@2..5 "\n  "

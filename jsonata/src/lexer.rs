@@ -104,7 +104,6 @@ pub(crate) enum SyntaxKind {
     #[token(";")]
     SemiColon,
 
-    // Non-code
     #[token("/*", |lex| {
         let len = lex.remainder().find("*/")?;
         lex.bump(len + 2); // include len of `*/`
@@ -118,12 +117,12 @@ pub(crate) enum SyntaxKind {
     #[error]
     Error,
 
-    Root,
-    BinaryExpr,
     Literal,
-    ParenExpr,
-    PrefixExpr,
     VariableRef,
+    InfixExpr,
+    PrefixExpr,
+    ParenExpr,
+    Root,
 }
 
 impl SyntaxKind {
