@@ -1,5 +1,6 @@
 mod event;
 mod expr;
+mod marker;
 mod sink;
 mod source;
 
@@ -9,6 +10,7 @@ use expr::expr;
 use rowan::GreenNode;
 
 use self::event::Event;
+use self::marker::Marker;
 use self::sink::Sink;
 use self::source::Source;
 
@@ -37,11 +39,18 @@ impl<'l, 'input> Parser<'l, 'input> {
     }
 
     fn parse(mut self) -> Vec<Event> {
-        self.start_node(SyntaxKind::Root);
+        let m = self.start();
         expr(&mut self);
-        self.finish_node();
+        m.complete(&mut self, SyntaxKind::Root);
 
         self.events
+    }
+
+    fn start(&mut self) -> Marker {
+        let pos = self.events.len();
+        self.events.push(Event::Placeholder);
+
+        Marker::new(pos)
     }
 
     fn peek(&mut self) -> Option<SyntaxKind> {
@@ -58,22 +67,6 @@ impl<'l, 'input> Parser<'l, 'input> {
             kind: *kind,
             text: (*text).into(),
         });
-    }
-
-    fn start_node(&mut self, kind: SyntaxKind) {
-        self.events.push(Event::StartNode { kind });
-    }
-
-    fn start_node_at(&mut self, checkpoint: usize, kind: SyntaxKind) {
-        self.events.push(Event::StartNodeAt { kind, checkpoint });
-    }
-
-    fn finish_node(&mut self) {
-        self.events.push(Event::FinishNode);
-    }
-
-    fn checkpoint(&self) -> usize {
-        self.events.len()
     }
 }
 
@@ -141,8 +134,9 @@ mod tests {
         check(
             "123",
             expect![[r#"
-Root@0..3
-  Number@0..3 "123""#]],
+                Root@0..3
+                  Literal@0..3
+                    Number@0..3 "123""#]],
         );
     }
 
@@ -151,8 +145,9 @@ Root@0..3
         check(
             "$counter",
             expect![[r#"
-Root@0..8
-  Ident@0..8 "$counter""#]],
+                Root@0..8
+                  VariableRef@0..8
+                    Ident@0..8 "$counter""#]],
         );
     }
 
@@ -161,10 +156,11 @@ Root@0..8
         check(
             "-10",
             expect![[r#"
-Root@0..3
-  PrefixExpr@0..3
-    Minus@0..1 "-"
-    Number@1..3 "10""#]],
+                Root@0..3
+                  PrefixExpr@0..3
+                    Minus@0..1 "-"
+                    Literal@1..3
+                      Number@1..3 "10""#]],
         )
     }
 
@@ -173,20 +169,27 @@ Root@0..3
         check(
             "((((((10))))))",
             expect![[r#"
-Root@0..14
-  LParen@0..1 "("
-  LParen@1..2 "("
-  LParen@2..3 "("
-  LParen@3..4 "("
-  LParen@4..5 "("
-  LParen@5..6 "("
-  Number@6..8 "10"
-  RParen@8..9 ")"
-  RParen@9..10 ")"
-  RParen@10..11 ")"
-  RParen@11..12 ")"
-  RParen@12..13 ")"
-  RParen@13..14 ")""#]],
+                Root@0..14
+                  ParenExpr@0..14
+                    LParen@0..1 "("
+                    ParenExpr@1..13
+                      LParen@1..2 "("
+                      ParenExpr@2..12
+                        LParen@2..3 "("
+                        ParenExpr@3..11
+                          LParen@3..4 "("
+                          ParenExpr@4..10
+                            LParen@4..5 "("
+                            ParenExpr@5..9
+                              LParen@5..6 "("
+                              Literal@6..8
+                                Number@6..8 "10"
+                              RParen@8..9 ")"
+                            RParen@9..10 ")"
+                          RParen@10..11 ")"
+                        RParen@11..12 ")"
+                      RParen@12..13 ")"
+                    RParen@13..14 ")""#]],
         );
     }
 
@@ -205,9 +208,10 @@ Root@0..3
         check(
             "   9876",
             expect![[r#"
-Root@0..7
-  Whitespace@0..3 "   "
-  Number@3..7 "9876""#]],
+                Root@0..7
+                  Whitespace@0..3 "   "
+                  Literal@3..7
+                    Number@3..7 "9876""#]],
         );
     }
 
@@ -216,9 +220,10 @@ Root@0..7
         check(
             "999   ",
             expect![[r#"
-Root@0..6
-  Number@0..3 "999"
-  Whitespace@3..6 "   ""#]],
+                Root@0..6
+                  Literal@0..6
+                    Number@0..3 "999"
+                    Whitespace@3..6 "   ""#]],
         );
     }
 
@@ -227,10 +232,11 @@ Root@0..6
         check(
             " 123     ",
             expect![[r#"
-Root@0..9
-  Whitespace@0..1 " "
-  Number@1..4 "123"
-  Whitespace@4..9 "     ""#]],
+                Root@0..9
+                  Whitespace@0..1 " "
+                  Literal@1..9
+                    Number@1..4 "123"
+                    Whitespace@4..9 "     ""#]],
         );
     }
 
@@ -239,19 +245,22 @@ Root@0..9
         check(
             " 1 +   2* 3 ",
             expect![[r#"
-Root@0..12
-  Whitespace@0..1 " "
-  BinaryExpr@1..12
-    Number@1..2 "1"
-    Whitespace@2..3 " "
-    Plus@3..4 "+"
-    Whitespace@4..7 "   "
-    BinaryExpr@7..12
-      Number@7..8 "2"
-      Star@8..9 "*"
-      Whitespace@9..10 " "
-      Number@10..11 "3"
-      Whitespace@11..12 " ""#]],
+                Root@0..12
+                  Whitespace@0..1 " "
+                  BinaryExpr@1..12
+                    Literal@1..3
+                      Number@1..2 "1"
+                      Whitespace@2..3 " "
+                    Plus@3..4 "+"
+                    Whitespace@4..7 "   "
+                    BinaryExpr@7..12
+                      Literal@7..8
+                        Number@7..8 "2"
+                      Star@8..9 "*"
+                      Whitespace@9..10 " "
+                      Literal@10..12
+                        Number@10..11 "3"
+                        Whitespace@11..12 " ""#]],
         );
     }
 
@@ -272,24 +281,27 @@ Root@0..12
 1
   + 1 /* Add one */
   + 10 /* Add ten */",
-            expect![[r##"
-Root@0..43
-  Whitespace@0..1 "\n"
-  BinaryExpr@1..43
-    BinaryExpr@1..25
-      Number@1..2 "1"
-      Whitespace@2..5 "\n  "
-      Plus@5..6 "+"
-      Whitespace@6..7 " "
-      Number@7..8 "1"
-      Whitespace@8..9 " "
-      Comment@9..22 "/* Add one */"
-      Whitespace@22..25 "\n  "
-    Plus@25..26 "+"
-    Whitespace@26..27 " "
-    Number@27..29 "10"
-    Whitespace@29..30 " "
-    Comment@30..43 "/* Add ten */""##]],
+            expect![[r#"
+                Root@0..43
+                  Whitespace@0..1 "\n"
+                  BinaryExpr@1..43
+                    BinaryExpr@1..25
+                      Literal@1..5
+                        Number@1..2 "1"
+                        Whitespace@2..5 "\n  "
+                      Plus@5..6 "+"
+                      Whitespace@6..7 " "
+                      Literal@7..25
+                        Number@7..8 "1"
+                        Whitespace@8..9 " "
+                        Comment@9..22 "/* Add one */"
+                        Whitespace@22..25 "\n  "
+                    Plus@25..26 "+"
+                    Whitespace@26..27 " "
+                    Literal@27..43
+                      Number@27..29 "10"
+                      Whitespace@29..30 " "
+                      Comment@30..43 "/* Add ten */""#]],
         );
     }
 }

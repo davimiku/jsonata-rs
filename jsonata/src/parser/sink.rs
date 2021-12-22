@@ -1,3 +1,5 @@
+use std::mem;
+
 use super::event::Event;
 use crate::{
     lexer::{Lexeme, SyntaxKind},
@@ -23,26 +25,43 @@ impl<'l, 'input> Sink<'l, 'input> {
     }
 
     pub(super) fn finish(mut self) -> GreenNode {
-        // We need to simulate start_node_at by preprocessing the events vector
-        // because Rowan's Checkpoint has private members and cannot be constructed
-        // manually, so Rowan's GreenNodeBuilder::start_node_at cannot be used in this way.
-        let mut reordered_events = self.events.clone();
-        for (i, event) in self.events.iter().enumerate() {
-            if let Event::StartNodeAt { kind, checkpoint } = event {
-                reordered_events.remove(i);
-                reordered_events.insert(*checkpoint, Event::StartNode { kind: *kind });
-            }
-        }
+        for i in 0..self.events.len() {
+            match mem::replace(&mut self.events[i], Event::Placeholder) {
+                Event::StartNode {
+                    kind,
+                    forward_parent,
+                } => {
+                    let mut kinds = vec![kind];
 
-        for event in reordered_events {
-            match event {
-                Event::StartNode { kind } => {
-                    self.builder.start_node(JsonataLanguage::kind_to_raw(kind))
+                    let mut idx = i;
+                    let mut forward_parent = forward_parent;
+
+                    // Walk through the forward parent of the forward parent, and the forward parent
+                    // of that, and of that, etc. until we reach a StartNode event without a forward
+                    // parent.
+                    while let Some(fp) = forward_parent {
+                        idx += fp;
+
+                        forward_parent = if let Event::StartNode {
+                            kind,
+                            forward_parent,
+                        } =
+                            mem::replace(&mut self.events[idx], Event::Placeholder)
+                        {
+                            kinds.push(kind);
+                            forward_parent
+                        } else {
+                            unreachable!()
+                        };
+                    }
+
+                    for kind in kinds.into_iter().rev() {
+                        self.builder.start_node(JsonataLanguage::kind_to_raw(kind));
+                    }
                 }
                 Event::AddToken { kind, text } => self.token(kind, text),
                 Event::FinishNode => self.builder.finish_node(),
-                // Unreachable due to mutation above
-                Event::StartNodeAt { .. } => unreachable!(),
+                Event::Placeholder => {}
             }
 
             self.eat_trivia();
