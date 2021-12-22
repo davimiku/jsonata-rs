@@ -254,4 +254,42 @@ Root@0..12
       Whitespace@11..12 " ""#]],
         );
     }
+
+    #[test]
+    fn parse_comment() {
+        check(
+            "/* hello! */",
+            expect![[r#"
+Root@0..12
+  Comment@0..12 "/* hello! */""#]],
+        );
+    }
+
+    #[test]
+    fn parse_binary_expression_interspersed_with_comments() {
+        check(
+            "
+1
+  + 1 /* Add one */
+  + 10 /* Add ten */",
+            expect![[r##"
+Root@0..43
+  Whitespace@0..1 "\n"
+  BinaryExpr@1..43
+    BinaryExpr@1..25
+      Number@1..2 "1"
+      Whitespace@2..5 "\n  "
+      Plus@5..6 "+"
+      Whitespace@6..7 " "
+      Number@7..8 "1"
+      Whitespace@8..9 " "
+      Comment@9..22 "/* Add one */"
+      Whitespace@22..25 "\n  "
+    Plus@25..26 "+"
+    Whitespace@26..27 " "
+    Number@27..29 "10"
+    Whitespace@29..30 " "
+    Comment@30..43 "/* Add ten */""##]],
+        );
+    }
 }

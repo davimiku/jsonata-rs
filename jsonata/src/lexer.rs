@@ -105,13 +105,14 @@ pub(crate) enum SyntaxKind {
     SemiColon,
 
     // Non-code
-    #[token("/*")]
-    SlashStar,
+    #[token("/*", |lex| {
+        let len = lex.remainder().find("*/")?;
+        lex.bump(len + 2); // include len of `*/`
+        Some(())
+    })]
+    Comment,
 
-    #[token("*/")]
-    StarSlash,
-
-    #[regex(" +")]
+    #[regex("[ \n]+")]
     Whitespace,
 
     #[error]
@@ -120,6 +121,12 @@ pub(crate) enum SyntaxKind {
     Root,
     BinaryExpr,
     PrefixExpr,
+}
+
+impl SyntaxKind {
+    pub(crate) fn is_trivia(self) -> bool {
+        matches!(self, Self::Whitespace | Self::Comment)
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -273,17 +280,27 @@ mod tests {
     }
 
     #[test]
-    fn lex_slash_star() {
-        check("/*", SyntaxKind::SlashStar);
-    }
-
-    #[test]
-    fn lex_star_slash() {
-        check("*/", SyntaxKind::StarSlash);
-    }
-
-    #[test]
     fn lex_spaces() {
         check("   ", SyntaxKind::Whitespace);
+    }
+
+    #[test]
+    fn lex_comment() {
+        check("/* test */", SyntaxKind::Comment);
+    }
+
+    #[test]
+    fn lex_empty_comment() {
+        check("/**/", SyntaxKind::Comment);
+    }
+
+    #[test]
+    fn lex_star_comment() {
+        check("/***/", SyntaxKind::Comment);
+    }
+
+    #[test]
+    fn lex_spaces_and_newlines() {
+        check("  \n ", SyntaxKind::Whitespace);
     }
 }
