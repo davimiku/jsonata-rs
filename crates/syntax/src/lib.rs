@@ -1,8 +1,11 @@
-use crate::lexer::SyntaxKind;
+mod syntax_kind;
+
 use num_traits::{FromPrimitive, ToPrimitive};
 
+pub use syntax_kind::SyntaxKind;
+
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub(crate) enum JsonataLanguage {}
+pub enum JsonataLanguage {}
 
 impl rowan::Language for JsonataLanguage {
     type Kind = SyntaxKind;
@@ -16,4 +19,4 @@ impl rowan::Language for JsonataLanguage {
     }
 }
 
-pub(crate) type SyntaxNode = rowan::SyntaxNode<JsonataLanguage>;
+pub type SyntaxNode = rowan::SyntaxNode<JsonataLanguage>;

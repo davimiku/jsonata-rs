@@ -1,8 +1,10 @@
-use crate::lexer::SyntaxKind;
+use crate::parser::Parser;
+use crate::{BinaryOp, UnaryOp};
+use syntax::SyntaxKind;
 
-use super::{marker::CompletedMarker, BinaryOp, Parser, UnaryOp};
+use super::marker::CompletedMarker;
 
-pub(super) fn expr(p: &mut Parser) {
+pub(crate) fn expr(p: &mut Parser) {
     expr_binding_power(p, 0);
 }
 
@@ -98,7 +100,7 @@ fn paren_expr(p: &mut Parser) -> CompletedMarker {
 mod tests {
     use expect_test::expect;
 
-    use super::super::tests::check;
+    use crate::tests::check;
 
     #[test]
     fn parse_simple_infix_expression() {

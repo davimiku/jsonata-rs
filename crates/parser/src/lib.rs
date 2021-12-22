@@ -1,18 +1,16 @@
 mod event;
 mod expr;
 mod marker;
+mod parser;
 mod sink;
 mod source;
 
-use crate::lexer::{Lexer, SyntaxKind, Token};
-use crate::syntax::SyntaxNode;
-use expr::expr;
+use crate::parser::Parser;
+use lexer::Lexer;
 use rowan::GreenNode;
+use syntax::SyntaxNode;
 
-use self::event::Event;
-use self::marker::Marker;
 use self::sink::Sink;
-use self::source::Source;
 
 pub fn parse(input: &str) -> Parse {
     let tokens: Vec<_> = Lexer::new(input).collect();
@@ -22,51 +20,6 @@ pub fn parse(input: &str) -> Parse {
 
     Parse {
         green_node: sink.finish(),
-    }
-}
-
-struct Parser<'t, 'input> {
-    source: Source<'t, 'input>,
-    events: Vec<Event>,
-}
-
-impl<'t, 'input> Parser<'t, 'input> {
-    fn new(tokens: &'t [Token<'input>]) -> Self {
-        Self {
-            source: Source::new(tokens),
-            events: Vec::new(),
-        }
-    }
-
-    fn parse(mut self) -> Vec<Event> {
-        let m = self.start();
-        expr(&mut self);
-        m.complete(&mut self, SyntaxKind::Root);
-
-        self.events
-    }
-
-    fn start(&mut self) -> Marker {
-        let pos = self.events.len();
-        self.events.push(Event::Placeholder);
-
-        Marker::new(pos)
-    }
-
-    fn peek(&mut self) -> Option<SyntaxKind> {
-        self.source.peek_kind()
-    }
-
-    fn bump(&mut self) {
-        self.source
-            .next_token()
-            .expect("bump is only called when there is a next token");
-
-        self.events.push(Event::AddToken);
-    }
-
-    fn at(&mut self, kind: SyntaxKind) -> bool {
-        self.peek() == Some(kind)
     }
 }
 
@@ -119,7 +72,7 @@ mod tests {
 
     use super::*;
 
-    pub(super) fn check(input: &str, expected_tree: Expect) {
+    pub(crate) fn check(input: &str, expected_tree: Expect) {
         let parse = parse(input);
         expected_tree.assert_eq(&parse.debug_tree());
     }
@@ -261,16 +214,6 @@ Root@0..3
                       Literal@10..12
                         Number@10..11 "3"
                         Whitespace@11..12 " ""#]],
-        );
-    }
-
-    #[test]
-    fn parse_comment() {
-        check(
-            "/* hello! */",
-            expect![[r#"
-Root@0..12
-  Comment@0..12 "/* hello! */""#]],
         );
     }
 
