@@ -58,15 +58,11 @@ impl<'t, 'input> Parser<'t, 'input> {
     }
 
     fn bump(&mut self) {
-        let Token { kind, text } = self
-            .source
+        self.source
             .next_token()
             .expect("bump is only called when there is a next token");
 
-        self.events.push(Event::AddToken {
-            kind: *kind,
-            text: (*text).into(),
-        });
+        self.events.push(Event::AddToken);
     }
 
     fn at(&mut self, kind: SyntaxKind) -> bool {

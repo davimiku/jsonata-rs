@@ -1,10 +1,7 @@
 use std::mem;
 
 use super::event::Event;
-use crate::{
-    lexer::{SyntaxKind, Token},
-    syntax::JsonataLanguage,
-};
+use crate::{lexer::Token, syntax::JsonataLanguage};
 use rowan::{GreenNode, GreenNodeBuilder, Language};
 
 pub(super) struct Sink<'t, 'input> {
@@ -59,7 +56,7 @@ impl<'t, 'input> Sink<'t, 'input> {
                         self.builder.start_node(JsonataLanguage::kind_to_raw(kind));
                     }
                 }
-                Event::AddToken { kind, text } => self.token(kind, text),
+                Event::AddToken => self.token(),
                 Event::FinishNode => self.builder.finish_node(),
                 Event::Placeholder => {}
             }
@@ -76,11 +73,13 @@ impl<'t, 'input> Sink<'t, 'input> {
                 break;
             }
 
-            self.token(token.kind, token.text.into())
+            self.token()
         }
     }
 
-    fn token(&mut self, kind: SyntaxKind, text: String) {
+    fn token(&mut self) {
+        let Token { kind, text } = self.tokens[self.cursor];
+
         self.builder
             .token(JsonataLanguage::kind_to_raw(kind), &text);
         self.cursor += 1;
