@@ -1,6 +1,2 @@
 [workspace]
-
-members = [
-    "jsonata",
-    "jsonata-tester",
-]
+members = ["crates/*"]
