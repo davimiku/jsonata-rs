@@ -68,6 +68,10 @@ impl<'l, 'input> Parser<'l, 'input> {
             text: (*text).into(),
         });
     }
+
+    fn at(&mut self, kind: SyntaxKind) -> bool {
+        self.peek() == Some(kind)
+    }
 }
 
 pub struct Parse {
