@@ -15,6 +15,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bed554bd50246729a1ec158d08aa3235d1b69d94ad120ebe187e28894787e736"
 
 [[package]]
+name = "cli"
+version = "0.1.0"
+dependencies = [
+ "core",
+]
+
+[[package]]
+name = "core"
+version = "0.1.0"
+dependencies = [
+ "lexer",
+ "parser",
+]
+
+[[package]]
 name = "countme"
 version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -55,22 +70,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ab5ef0d4909ef3724cc8cce6ccc8572c5c817592e9285f5464f8e86f8bd3726e"
 
 [[package]]
-name = "jsonata-cli"
-version = "0.1.0"
-dependencies = [
- "parser",
-]
-
-[[package]]
 name = "jsonata-tester"
 version = "0.1.0"
-
-[[package]]
-name = "lang-core"
-version = "0.1.0"
-dependencies = [
- "lexer",
-]
 
 [[package]]
 name = "lexer"

@@ -1,8 +1,8 @@
 [package]
-name = "jsonata-cli"
+name = "cli"
 version = "0.1.0"
 edition = "2021"
-default-run = "jsonata-cli"
+default-run = "cli"
 
 [dependencies]
-parser = {path = "../parser"}
+core = {path = "../core"}
