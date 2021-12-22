@@ -1,4 +1,4 @@
-use parser::parse;
+use core::parse;
 use std::io::{self, Write};
 
 fn main() -> io::Result<()> {
@@ -12,8 +12,9 @@ fn main() -> io::Result<()> {
         stdout.flush()?;
 
         stdin.read_line(&mut input)?;
+        let trimmed_input = input.trim_end();
 
-        let parse = parse(&input);
+        let parse = parse(&trimmed_input);
         println!("{}", parse.debug_tree());
 
         input.clear();
