@@ -1,6 +1,5 @@
 mod event;
 mod expr;
-mod marker;
 mod parser;
 mod sink;
 mod source;

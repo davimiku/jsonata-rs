@@ -30,6 +30,7 @@ pub enum SyntaxKind {
     SemiColon,
     Literal,
     VariableRef,
+    VariableDef,
     InfixExpr,
     PrefixExpr,
     ParenExpr,

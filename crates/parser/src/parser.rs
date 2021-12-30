@@ -1,13 +1,22 @@
 use syntax::SyntaxKind;
 
+pub(crate) mod marker;
+mod parse_error;
+pub(crate) use parse_error::ParseError;
+
 use crate::event::Event;
 use crate::expr::expr;
-use crate::marker::Marker;
 use crate::source::Source;
 
+use self::marker::Marker;
+
+// const RECOVERY_SET: [SyntaxKind; 1] = [SyntaxKind::RParen];
+const RECOVERY_SET: [SyntaxKind; 0] = [];
+
 pub(crate) struct Parser<'t, 'input> {
-    pub(crate) source: Source<'t, 'input>,
+    source: Source<'t, 'input>,
     pub(crate) events: Vec<Event>,
+    expected_kinds: Vec<SyntaxKind>,
 }
 
 impl<'t, 'input> Parser<'t, 'input> {
@@ -15,6 +24,7 @@ impl<'t, 'input> Parser<'t, 'input> {
         Self {
             source,
             events: Vec::new(),
+            expected_kinds: Vec::new(),
         }
     }
 
@@ -26,6 +36,22 @@ impl<'t, 'input> Parser<'t, 'input> {
         self.events
     }
 
+    pub(crate) fn expect(&mut self, kind: SyntaxKind) {
+        if self.at(kind) {
+            self.bump();
+        } else {
+            self.error();
+        }
+    }
+
+    pub(crate) fn error(&mut self) {
+        if !self.at_set(&RECOVERY_SET) && !self.at_end() {
+            let m = self.start();
+            self.bump();
+            m.complete(self, SyntaxKind::Error);
+        }
+    }
+
     pub(crate) fn start(&mut self) -> Marker {
         let pos = self.events.len();
         self.events.push(Event::Placeholder);
@@ -33,11 +59,8 @@ impl<'t, 'input> Parser<'t, 'input> {
         Marker::new(pos)
     }
 
-    pub(crate) fn peek(&mut self) -> Option<SyntaxKind> {
-        self.source.peek_kind().map(|kind| kind.into())
-    }
-
     pub(crate) fn bump(&mut self) {
+        self.expected_kinds.clear();
         self.source
             .next_token()
             .expect("bump is only called when there is a next token");
@@ -46,7 +69,20 @@ impl<'t, 'input> Parser<'t, 'input> {
     }
 
     pub(crate) fn at(&mut self, kind: SyntaxKind) -> bool {
+        self.expected_kinds.push(kind);
         self.peek() == Some(kind)
+    }
+
+    pub(crate) fn at_set(&mut self, set: &[SyntaxKind]) -> bool {
+        self.peek().map_or(false, |k| set.contains(&k))
+    }
+
+    pub(crate) fn at_end(&mut self) -> bool {
+        self.peek().is_none()
+    }
+
+    fn peek(&mut self) -> Option<SyntaxKind> {
+        self.source.peek_kind().map(|kind| kind.into())
     }
 }
 
