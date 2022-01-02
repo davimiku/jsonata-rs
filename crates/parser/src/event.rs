@@ -1,6 +1,8 @@
 use syntax::SyntaxKind;
 
-#[derive(Debug, Clone, PartialEq)]
+use crate::parser::ParseError;
+
+#[derive(Debug, PartialEq)]
 pub(super) enum Event {
     StartNode {
         kind: SyntaxKind,
@@ -8,5 +10,6 @@ pub(super) enum Event {
     },
     AddToken,
     FinishNode,
+    Error(ParseError),
     Placeholder, // for Marker creation
 }

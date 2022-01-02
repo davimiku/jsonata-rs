@@ -7,6 +7,5 @@ edition = "2021"
 
 [dependencies]
 parser = {path = "../parser"}
-lexer = {path = "../lexer"}
 # rand = "0.8"
 # serde_json = "1"

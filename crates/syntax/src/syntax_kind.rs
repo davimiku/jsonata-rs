@@ -1,3 +1,5 @@
+use std::fmt;
+
 use lexer::TokenKind;
 use num_derive::{FromPrimitive, ToPrimitive};
 
@@ -30,6 +32,7 @@ pub enum SyntaxKind {
     SemiColon,
     Literal,
     VariableRef,
+    VariableDef,
     InfixExpr,
     PrefixExpr,
     ParenExpr,
@@ -81,5 +84,39 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ParenExpr => Self::ParenExpr,
             TokenKind::Root => Self::Root,
         }
+    }
+}
+
+impl fmt::Display for SyntaxKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            SyntaxKind::Whitespace => "whitespace",
+            SyntaxKind::Ident => "identifier",
+            SyntaxKind::Number => "number",
+            SyntaxKind::FunctionKeyword => "‘function’",
+            SyntaxKind::Plus => "‘+’",
+            SyntaxKind::Minus => "‘-’",
+            SyntaxKind::Star => "‘*’",
+            SyntaxKind::Slash => "‘/’",
+            SyntaxKind::Equals => "‘=’",
+            SyntaxKind::LParen => "‘(’",
+            SyntaxKind::RParen => "‘)’",
+            SyntaxKind::LBrace => "‘{’",
+            SyntaxKind::RBrace => "‘}’",
+            SyntaxKind::LBracket => "‘[’",
+            SyntaxKind::RBracket => "‘]’",
+            SyntaxKind::Comment => "comment",
+            SyntaxKind::Dollar => "‘$’",
+            SyntaxKind::LAngle => "‘<’",
+            SyntaxKind::RAngle => "‘>’",
+            SyntaxKind::ColonEquals => "‘:=’",
+            SyntaxKind::DotDot => "‘..’",
+            SyntaxKind::Dot => "‘.’",
+            SyntaxKind::TildeRAngle => "‘~>’",
+            SyntaxKind::Question => "‘?’",
+            SyntaxKind::Colon => "‘:’",
+            SyntaxKind::SemiColon => "‘;’",
+            _ => unreachable!(format!("unreachable: found {:?}", &self)),
+        })
     }
 }
