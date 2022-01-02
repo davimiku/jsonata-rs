@@ -17,6 +17,24 @@ fn main() -> io::Result<()> {
         let parse = parse(&trimmed_input);
         println!("{}", parse.debug_tree());
 
+        let root = ast::Root::cast(parse.syntax()).unwrap();
+
+        let var_defs = root
+            .exprs()
+            .filter_map(|expr| {
+                if let ast::Expr::VariableDef(var_def) = expr {
+                    Some(var_def.value())
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        dbg!(var_defs);
+
+        let hir = hir::lower(root).collect::<Vec<_>>();
+        dbg!(hir);
+
         input.clear();
     }
 }

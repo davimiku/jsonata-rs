@@ -20,3 +20,5 @@ impl rowan::Language for JsonataLanguage {
 }
 
 pub type SyntaxNode = rowan::SyntaxNode<JsonataLanguage>;
+pub type SyntaxToken = rowan::SyntaxToken<JsonataLanguage>;
+pub type SyntaxElement = rowan::SyntaxElement<JsonataLanguage>;
