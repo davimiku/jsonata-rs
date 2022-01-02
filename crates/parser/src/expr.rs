@@ -4,6 +4,9 @@ use crate::{BinaryOp, UnaryOp};
 use syntax::SyntaxKind;
 
 pub(crate) fn expr(p: &mut Parser) -> Option<CompletedMarker> {
+    if p.at_end() {
+        return None;
+    }
     expr_binding_power(p, 0)
 }
 
@@ -244,13 +247,14 @@ Root@0..9
     #[test]
     fn parse_unclosed_parentheses() {
         check(
-            "(Account",
+            "(2",
             expect![[r#"
-Root@0..8
-  ParenExpr@0..8
+Root@0..2
+  ParenExpr@0..2
     LParen@0..1 "("
-    Ident@1..8
-      Ident@1..8 "Account""#]],
+    Literal@1..2
+      Number@1..2 "2"
+error at 1..2: expected ‘+’, ‘-’, ‘*’, ‘/’ or ‘)’"#]],
         )
     }
 }

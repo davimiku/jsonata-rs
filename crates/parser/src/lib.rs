@@ -4,9 +4,8 @@ mod parser;
 mod sink;
 mod source;
 
-use crate::parser::Parser;
+use self::parser::{ParseError, Parser};
 use lexer::Lexer;
-use parser::ParseError;
 use rowan::GreenNode;
 use source::Source;
 use syntax::SyntaxNode;

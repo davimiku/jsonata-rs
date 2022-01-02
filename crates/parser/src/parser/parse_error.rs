@@ -71,7 +71,7 @@ mod tests {
             vec![SyntaxKind::Equals],
             Some(SyntaxKind::Ident),
             10..20,
-            "error at 10..20: expected '=', but found identifier",
+            "error at 10..20: expected ‘=’, but found identifier",
         )
     }
 
@@ -86,7 +86,7 @@ mod tests {
             ],
             Some(SyntaxKind::FunctionKeyword),
             100..105,
-            "error at 100..105: expected number, identifier, '-' or '(', but found 'function'",
+            "error at 100..105: expected number, identifier, ‘-’ or ‘(’, but found ‘function’",
         );
     }
 
@@ -96,7 +96,7 @@ mod tests {
             vec![SyntaxKind::Plus, SyntaxKind::Minus],
             Some(SyntaxKind::Equals),
             0..1,
-            "error at 0..1: expected '+' or '-', but found =",
+            "error at 0..1: expected ‘+’ or ‘-’, but found ‘=’",
         );
     }
 }
