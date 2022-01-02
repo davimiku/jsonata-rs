@@ -6,6 +6,7 @@ mod source;
 
 use crate::parser::Parser;
 use lexer::Lexer;
+use parser::ParseError;
 use rowan::GreenNode;
 use source::Source;
 use syntax::SyntaxNode;
@@ -19,22 +20,29 @@ pub fn parse(input: &str) -> Parse {
     let events = parser.parse();
     let sink = Sink::new(&tokens, events);
 
-    Parse {
-        green_node: sink.finish(),
-    }
+    sink.finish()
 }
 
 pub struct Parse {
     green_node: GreenNode,
+    errors: Vec<ParseError>,
 }
 
 impl Parse {
     pub fn debug_tree(&self) -> String {
+        let mut s = String::new();
+
         let syntax_node = SyntaxNode::new_root(self.green_node.clone());
-        let formatted = format!("{:#?}", syntax_node);
+        let tree = format!("{:#?}", syntax_node);
 
         // Remove the newline from the end
-        formatted[0..formatted.len() - 1].to_string()
+        s.push_str(&tree[0..tree.len() - 1]);
+
+        for error in &self.errors {
+            s.push_str(&format!("\n{}", error));
+        }
+
+        s
     }
 }
 
