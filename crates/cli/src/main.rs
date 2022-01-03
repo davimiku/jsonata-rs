@@ -14,7 +14,7 @@ fn main() -> io::Result<()> {
         stdin.read_line(&mut input)?;
         let trimmed_input = input.trim_end();
 
-        let parse = parse(&trimmed_input);
+        let parse = parse(trimmed_input);
         println!("{}", parse.debug_tree());
 
         let root = ast::Root::cast(parse.syntax()).unwrap();

@@ -90,7 +90,7 @@ impl<'t, 'input> Sink<'t, 'input> {
         let Token { kind, text, .. } = self.tokens[self.cursor];
 
         self.builder
-            .token(JsonataLanguage::kind_to_raw(kind.into()), text.into());
+            .token(JsonataLanguage::kind_to_raw(kind.into()), text);
 
         self.cursor += 1;
     }

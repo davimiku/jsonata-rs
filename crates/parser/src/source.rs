@@ -45,9 +45,7 @@ impl<'t, 'input> Source<'t, 'input> {
     }
 
     fn peek_kind_raw(&self) -> Option<TokenKind> {
-        self.tokens
-            .get(self.cursor)
-            .map(|Token { kind, .. }| (*kind).into())
+        self.tokens.get(self.cursor).map(|Token { kind, .. }| *kind)
     }
 
     fn peek_token_raw(&self) -> Option<&Token> {
