@@ -60,7 +60,7 @@ impl Database {
     fn lower_variable_def(&mut self, ast: ast::VariableDef) -> Expr {
         let expr = self.lower_expr(ast.value());
         Expr::VariableDef {
-            name: ast.name().unwrap().text().to_string(),
+            name: ast.name().unwrap().text().into(),
             value: self.exprs.alloc(expr),
         }
     }

@@ -106,7 +106,7 @@ pub struct VariableRef(SyntaxNode);
 
 impl VariableRef {
     pub fn name(&self) -> String {
-        self.0.first_token().unwrap().text().to_string()
+        self.0.first_token().unwrap().text().into()
     }
 }
 
