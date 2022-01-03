@@ -17,13 +17,7 @@ impl Database {
                 ast::Expr::ParenExpr(ast) => self.lower_expr(ast.expr()),
                 ast::Expr::UnaryExpr(ast) => self.lower_unary(ast),
                 ast::Expr::VariableRef(ast) => Expr::VariableRef { var: ast.name() },
-                ast::Expr::VariableDef(ast) => {
-                    let expr = self.lower_expr(ast.value());
-                    Expr::VariableDef {
-                        name: ast.name().unwrap().text().to_string(),
-                        value: self.exprs.alloc(expr),
-                    }
-                }
+                ast::Expr::VariableDef(ast) => self.lower_variable_def(ast),
             }
         } else {
             Expr::Missing
@@ -60,6 +54,14 @@ impl Database {
         Expr::Unary {
             op,
             expr: self.exprs.alloc(expr),
+        }
+    }
+
+    fn lower_variable_def(&mut self, ast: ast::VariableDef) -> Expr {
+        let expr = self.lower_expr(ast.value());
+        Expr::VariableDef {
+            name: ast.name().unwrap().text().to_string(),
+            value: self.exprs.alloc(expr),
         }
     }
 }
