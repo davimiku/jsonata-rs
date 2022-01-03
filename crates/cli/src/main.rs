@@ -32,7 +32,7 @@ fn main() -> io::Result<()> {
 
         dbg!(var_defs);
 
-        let hir = hir::lower(root).collect::<Vec<_>>();
+        let (_, hir) = hir::lower(root);
         dbg!(hir);
 
         input.clear();

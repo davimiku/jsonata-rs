@@ -6,5 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ast = { path = "../ast"}
-syntax = { path = "../syntax"}
+ast = { path = "../ast" }
+la-arena = "0.2.1"
+syntax = { path = "../syntax" }

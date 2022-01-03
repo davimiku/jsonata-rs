@@ -7,9 +7,9 @@ edition = "2021"
 
 [dependencies]
 drop_bomb = "0.1.5"
-lexer = {path = "../lexer"}
+lexer = { path = "../lexer" }
 rowan = "0.15.2"
-syntax = {path = "../syntax"}
+syntax = { path = "../syntax" }
 text-size = "1.1.0"
 
 [dev-dependencies]
