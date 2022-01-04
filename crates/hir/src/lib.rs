@@ -5,7 +5,7 @@ use la_arena::Idx;
 
 type ExprIdx = Idx<Expr>;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Expr {
     Missing,
     Binary {
@@ -29,7 +29,7 @@ pub enum Expr {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum BinaryOp {
     Add,
     Sub,
@@ -37,13 +37,13 @@ pub enum BinaryOp {
     Div,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum UnaryOp {
     Neg,
 }
 
-pub fn lower(ast: ast::Root) -> (Database, Vec<Expr>) {
+pub fn lower(ast: ast::Root) -> (Database, Option<Expr>) {
     let mut db = Database::default();
-    let exprs = ast.exprs().map(|expr| db.lower_expr(Some(expr))).collect();
-    (db, exprs)
+    let expr = ast.expr().map(|expr| db.lower_expr(Some(expr)));
+    (db, expr)
 }

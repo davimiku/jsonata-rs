@@ -116,6 +116,22 @@ mod tests {
     }
 
     #[test]
+    fn parse_variable_def() {
+        check(
+            "$foo := 5",
+            expect![[r#"
+            Root@0..9
+              VariableDef@0..9
+                Ident@0..4 "$foo"
+                Whitespace@4..5 " "
+                ColonEquals@5..7 ":="
+                Whitespace@7..8 " "
+                Literal@8..9
+                  Number@8..9 "5""#]],
+        );
+    }
+
+    #[test]
     fn parse_negation() {
         check(
             "-10",

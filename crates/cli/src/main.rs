@@ -19,16 +19,13 @@ fn main() -> io::Result<()> {
 
         let root = ast::Root::cast(parse.syntax()).unwrap();
 
-        let var_defs = root
-            .exprs()
-            .filter_map(|expr| {
-                if let ast::Expr::VariableDef(var_def) = expr {
-                    Some(var_def.value())
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
+        let var_defs = root.expr().map(|expr| {
+            if let ast::Expr::VariableDef(var_def) = expr {
+                Some(var_def.value())
+            } else {
+                None
+            }
+        });
 
         dbg!(var_defs);
 

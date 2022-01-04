@@ -18,6 +18,7 @@ impl Expr {
             SyntaxKind::ParenExpr => Self::ParenExpr(ParenExpr(node)),
             SyntaxKind::PrefixExpr => Self::UnaryExpr(UnaryExpr(node)),
             SyntaxKind::VariableRef => Self::VariableRef(VariableRef(node)),
+            SyntaxKind::VariableDef => Self::VariableDef(VariableDef(node)),
             _ => return None,
         };
 
@@ -37,8 +38,8 @@ impl Root {
         }
     }
 
-    pub fn exprs(&self) -> impl Iterator<Item = Expr> {
-        self.0.children().filter_map(Expr::cast)
+    pub fn expr(&self) -> Option<Expr> {
+        self.0.children().find_map(Expr::cast)
     }
 }
 

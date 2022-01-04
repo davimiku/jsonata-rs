@@ -87,14 +87,6 @@ fn variable(p: &mut Parser) -> Option<CompletedMarker> {
     }
 }
 
-fn variable_ref(p: &mut Parser) -> CompletedMarker {
-    assert!(p.at(SyntaxKind::Ident));
-
-    let m = p.start();
-    p.bump();
-    m.complete(p, SyntaxKind::VariableRef)
-}
-
 fn prefix_expr(p: &mut Parser) -> Option<CompletedMarker> {
     assert!(p.at(SyntaxKind::Minus));
 
