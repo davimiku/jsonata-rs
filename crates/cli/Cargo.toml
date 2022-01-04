@@ -8,3 +8,7 @@ default-run = "cli"
 ast = { path = "../ast" }
 core = { path = "../core" }
 hir = { path = "../hir" }
+
+[[bin]]
+name = "cli"
+path = "src/main.rs"

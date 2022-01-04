@@ -3,6 +3,13 @@
 version = 3
 
 [[package]]
+name = "ast"
+version = "0.1.0"
+dependencies = [
+ "syntax",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -18,7 +25,9 @@ checksum = "bed554bd50246729a1ec158d08aa3235d1b69d94ad120ebe187e28894787e736"
 name = "cli"
 version = "0.1.0"
 dependencies = [
+ "ast",
  "core",
+ "hir",
 ]
 
 [[package]]
@@ -69,8 +78,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ab5ef0d4909ef3724cc8cce6ccc8572c5c817592e9285f5464f8e86f8bd3726e"
 
 [[package]]
-name = "jsonata-tester"
+name = "hir"
 version = "0.1.0"
+dependencies = [
+ "ast",
+ "la-arena",
+ "parser",
+ "syntax",
+]
+
+[[package]]
+name = "la-arena"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d43db9f547ba2787bdeac81ef97ccc80784f385b3b39b4d50344270629a2bee3"
 
 [[package]]
 name = "lexer"
@@ -214,6 +235,10 @@ dependencies = [
  "num-traits",
  "rowan",
 ]
+
+[[package]]
+name = "tester"
+version = "0.1.0"
 
 [[package]]
 name = "text-size"

@@ -1,7 +1,10 @@
 [package]
-name = "jsonata-tester"
+name = "tester"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-# jsonata = { path = "../jsonata" }
+
+[[bin]]
+name = "tester"
+path = "src/main.rs"
