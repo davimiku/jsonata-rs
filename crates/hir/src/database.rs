@@ -3,7 +3,7 @@ use syntax::SyntaxKind;
 
 use crate::{BinaryOp, Expr, UnaryOp};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 pub struct Database {
     exprs: Arena<Expr>,
 }
@@ -63,5 +63,87 @@ impl Database {
             name: ast.name().unwrap().text().into(),
             value: self.exprs.alloc(expr),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn parse(input: &str) -> ast::Root {
+        ast::Root::cast(parser::parse(input).syntax()).unwrap()
+    }
+
+    fn check(input: &str, expected_hir: Expr, expected_database: Database) {
+        let root = parse(input);
+        dbg!(&root);
+        let first_expr = root.expr();
+        dbg!(&first_expr);
+        let mut database = Database::default();
+        let hir = database.lower_expr(first_expr);
+
+        assert_eq!(hir, expected_hir);
+        assert_eq!(database, expected_database);
+    }
+
+    #[test]
+    fn lower_literal() {
+        check("100", Expr::Literal { n: 100 }, Database::default());
+    }
+
+    #[test]
+    fn lower_binary_expr() {
+        let mut exprs = Arena::new();
+        let lhs = exprs.alloc(Expr::Literal { n: 2 });
+        let rhs = exprs.alloc(Expr::Literal { n: 3 });
+
+        check(
+            "2 + 3",
+            Expr::Binary {
+                op: BinaryOp::Add,
+                lhs,
+                rhs,
+            },
+            Database { exprs },
+        );
+    }
+
+    #[test]
+    fn lower_unary_expr() {
+        let mut exprs = Arena::new();
+        let twelve = exprs.alloc(Expr::Literal { n: 12 });
+
+        check(
+            "-12",
+            Expr::Unary {
+                expr: twelve,
+                op: UnaryOp::Neg,
+            },
+            Database { exprs },
+        );
+    }
+
+    #[test]
+    fn lower_variable_ref() {
+        check(
+            "$foo",
+            Expr::VariableRef { var: "$foo".into() },
+            Database::default(),
+        );
+    }
+
+    #[test]
+    fn lower_variable_def() {
+        let mut exprs = Arena::new();
+        let value = exprs.alloc(Expr::Literal { n: 5 });
+
+        check(
+            "$foo := 5",
+            Expr::VariableDef {
+                name: "$foo".into(),
+                value,
+            },
+            Database { exprs },
+        );
     }
 }
