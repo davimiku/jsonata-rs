@@ -26,8 +26,10 @@ impl fmt::Display for ParseError {
         for (idx, expected_kind) in self.expected.iter().enumerate() {
             if is_first(idx) {
                 write!(f, "{}", expected_kind)?;
-            } else if is_last(idx) {
+            } else if is_last(idx) && num_expected > 2 {
                 write!(f, ", or {}", expected_kind)?;
+            } else if is_last(idx) {
+                write!(f, " or {}", expected_kind)?;
             } else {
                 write!(f, ", {}", expected_kind)?;
             }
@@ -86,7 +88,7 @@ mod tests {
             ],
             Some(SyntaxKind::FunctionKeyword),
             100..105,
-            "error at 100..105: expected number, identifier, ‘-’ or ‘(’, but found ‘function’",
+            "error at 100..105: expected number, identifier, ‘-’, or ‘(’, but found ‘function’",
         );
     }
 
