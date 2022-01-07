@@ -27,7 +27,7 @@ impl fmt::Display for ParseError {
             if is_first(idx) {
                 write!(f, "{}", expected_kind)?;
             } else if is_last(idx) {
-                write!(f, " or {}", expected_kind)?;
+                write!(f, ", or {}", expected_kind)?;
             } else {
                 write!(f, ", {}", expected_kind)?;
             }
