@@ -69,7 +69,7 @@ mod tests {
     fn one_expected_did_find() {
         check(
             vec![SyntaxKind::Equals],
-            Some(SyntaxKind::Ident),
+            Some(SyntaxKind::VarIdent),
             10..20,
             "error at 10..20: expected ‘=’, but found identifier",
         )
@@ -80,7 +80,7 @@ mod tests {
         check(
             vec![
                 SyntaxKind::Number,
-                SyntaxKind::Ident,
+                SyntaxKind::VarIdent,
                 SyntaxKind::Minus,
                 SyntaxKind::LParen,
             ],

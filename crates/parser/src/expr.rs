@@ -48,7 +48,7 @@ fn expr_binding_power(p: &mut Parser, minimum_binding_power: u8) -> Option<Compl
 fn lhs(p: &mut Parser) -> Option<CompletedMarker> {
     if p.at(SyntaxKind::Number) {
         literal(p)
-    } else if p.at(SyntaxKind::Ident) {
+    } else if p.at(SyntaxKind::VarIdent) {
         variable(p)
     } else if p.at(SyntaxKind::Minus) {
         prefix_expr(p)
@@ -68,8 +68,11 @@ fn literal(p: &mut Parser) -> Option<CompletedMarker> {
     Some(m.complete(p, SyntaxKind::Literal))
 }
 
+/// Parses a variable definition or a variable reference
+/// VariableDef: `$foo := 5`
+/// VariableRef: `$foo`
 fn variable(p: &mut Parser) -> Option<CompletedMarker> {
-    assert!(p.at(SyntaxKind::Ident));
+    assert!(p.at(SyntaxKind::VarIdent));
 
     let m = p.start();
     p.bump();
