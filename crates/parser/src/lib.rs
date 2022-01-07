@@ -111,7 +111,7 @@ mod tests {
             expect![[r#"
                 Root@0..8
                   VariableRef@0..8
-                    Ident@0..8 "$counter""#]],
+                    VariableIdent@0..8 "$counter""#]],
         );
     }
 
@@ -122,7 +122,7 @@ mod tests {
             expect![[r#"
             Root@0..9
               VariableDef@0..9
-                Ident@0..4 "$foo"
+                VariableIdent@0..4 "$foo"
                 Whitespace@4..5 " "
                 ColonEquals@5..7 ":="
                 Whitespace@7..8 " "

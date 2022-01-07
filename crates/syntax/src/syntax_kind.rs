@@ -7,7 +7,7 @@ use num_derive::{FromPrimitive, ToPrimitive};
 pub enum SyntaxKind {
     Whitespace,
     FunctionKeyword,
-    VarIdent,
+    VariableIdent,
     PathIdent,
     Number,
     Plus,
@@ -56,7 +56,7 @@ impl From<TokenKind> for SyntaxKind {
         match token_kind {
             TokenKind::Whitespace => Self::Whitespace,
             TokenKind::FunctionKeyword => Self::FunctionKeyword,
-            TokenKind::VarIdent => Self::VarIdent,
+            TokenKind::VariableIdent => Self::VariableIdent,
             TokenKind::PathIdent => Self::PathIdent,
             TokenKind::Number => Self::Number,
             TokenKind::Plus => Self::Plus,
@@ -99,7 +99,7 @@ impl fmt::Display for SyntaxKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
             SyntaxKind::Whitespace => "whitespace",
-            SyntaxKind::VarIdent => "identifier",
+            SyntaxKind::VariableIdent => "identifier",
             SyntaxKind::Number => "number",
             SyntaxKind::FunctionKeyword => "‘function’",
             SyntaxKind::Plus => "‘+’",

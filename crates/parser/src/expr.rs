@@ -48,7 +48,7 @@ fn expr_binding_power(p: &mut Parser, minimum_binding_power: u8) -> Option<Compl
 fn lhs(p: &mut Parser) -> Option<CompletedMarker> {
     if p.at(SyntaxKind::Number) {
         literal(p)
-    } else if p.at(SyntaxKind::VarIdent) {
+    } else if p.at(SyntaxKind::VariableIdent) {
         variable(p)
     } else if p.at(SyntaxKind::Minus) {
         prefix_expr(p)
@@ -72,7 +72,7 @@ fn literal(p: &mut Parser) -> Option<CompletedMarker> {
 /// VariableDef: `$foo := 5`
 /// VariableRef: `$foo`
 fn variable(p: &mut Parser) -> Option<CompletedMarker> {
-    assert!(p.at(SyntaxKind::VarIdent));
+    assert!(p.at(SyntaxKind::VariableIdent));
 
     let m = p.start();
     p.bump();
@@ -230,7 +230,7 @@ mod tests {
             expect![[r#"
 Root@0..9
   VariableDef@0..9
-    Ident@0..4 "$foo"
+    VariableIdent@0..4 "$foo"
     Whitespace@4..5 " "
     ColonEquals@5..7 ":="
     Whitespace@7..8 " "
