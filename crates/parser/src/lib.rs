@@ -53,6 +53,8 @@ enum BinaryOp {
     Sub,
     Mul,
     Div,
+
+    Map,
 }
 
 impl BinaryOp {
@@ -61,6 +63,7 @@ impl BinaryOp {
         match self {
             Self::Add | Self::Sub => (1, 2),
             Self::Mul | Self::Div => (3, 4),
+            Self::Map => (4, 4),
         }
     }
 }

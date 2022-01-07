@@ -5,9 +5,10 @@ use syntax::SyntaxKind;
 
 pub(crate) fn expr(p: &mut Parser) -> Option<CompletedMarker> {
     if p.at_end() {
-        return None;
+        None
+    } else {
+        expr_binding_power(p, 0)
     }
-    expr_binding_power(p, 0)
 }
 
 fn expr_binding_power(p: &mut Parser, minimum_binding_power: u8) -> Option<CompletedMarker> {
@@ -22,8 +23,10 @@ fn expr_binding_power(p: &mut Parser, minimum_binding_power: u8) -> Option<Compl
             BinaryOp::Mul
         } else if p.at(SyntaxKind::Slash) {
             BinaryOp::Div
+        } else if p.at(SyntaxKind::Dot) {
+            BinaryOp::Map
         } else {
-            // We're not at an operator and don't know what to do next, so just return
+            // Not at an operator and don't know what to do next, so just return
             // and let the caller decide.
             break;
         };
@@ -50,6 +53,8 @@ fn lhs(p: &mut Parser) -> Option<CompletedMarker> {
         literal(p)
     } else if p.at(SyntaxKind::VariableIdent) {
         variable(p)
+    } else if p.at(SyntaxKind::PathIdent) {
+        path_ident(p)
     } else if p.at(SyntaxKind::Minus) {
         prefix_expr(p)
     } else if p.at(SyntaxKind::LParen) {
@@ -60,6 +65,11 @@ fn lhs(p: &mut Parser) -> Option<CompletedMarker> {
     }
 }
 
+/// Parses a literal expression including:
+/// Number: 5
+/// [todo] string
+/// [todo] float (change Number to int, maybe)
+/// [todo] bool
 fn literal(p: &mut Parser) -> Option<CompletedMarker> {
     assert!(p.at(SyntaxKind::Number));
 
@@ -88,6 +98,27 @@ fn variable(p: &mut Parser) -> Option<CompletedMarker> {
         // variable ref
         Some(m.complete(p, SyntaxKind::VariableRef))
     }
+}
+
+fn path_ident(p: &mut Parser) -> Option<CompletedMarker> {
+    assert!(p.at(SyntaxKind::PathIdent));
+
+    let m = p.start();
+    p.bump();
+    Some(m.complete(p, SyntaxKind::PathIdent))
+}
+
+fn path_expr(p: &mut Parser) -> Option<CompletedMarker> {
+    assert!(p.at(SyntaxKind::PathIdent));
+
+    let m = p.start();
+    p.bump();
+
+    if p.at(SyntaxKind::Dot) {
+        // map expression
+    }
+
+    Some(m.complete(p, SyntaxKind::PathExpr))
 }
 
 fn prefix_expr(p: &mut Parser) -> Option<CompletedMarker> {
@@ -249,7 +280,52 @@ Root@0..2
     LParen@0..1 "("
     Literal@1..2
       Number@1..2 "2"
-error at 1..2: expected ‘+’, ‘-’, ‘*’, ‘/’ or ‘)’"#]],
+error at 1..2: expected ‘+’, ‘-’, ‘*’, ‘/’, ‘.’, or ‘)’"#]],
+        )
+    }
+
+    #[test]
+    fn parse_one_level_path() {
+        check(
+            "Account",
+            expect![[r#"
+Root@0..7
+  PathIdent@0..7
+    PathIdent@0..7 "Account""#]],
+        )
+    }
+
+    #[test]
+    fn parse_single_map_expression() {
+        check(
+            "Account.History",
+            expect![[r#"
+Root@0..15
+  InfixExpr@0..15
+    PathIdent@0..7
+      PathIdent@0..7 "Account"
+    Dot@7..8 "."
+    PathIdent@8..15
+      PathIdent@8..15 "History""#]],
+        )
+    }
+
+    #[test]
+    fn parse_nested_map_expression() {
+        check(
+            "Account.History.Orders",
+            expect![[r#"
+Root@0..22
+  InfixExpr@0..22
+    PathIdent@0..7
+      PathIdent@0..7 "Account"
+    Dot@7..8 "."
+    InfixExpr@8..22
+      PathIdent@8..15
+        PathIdent@8..15 "History"
+      Dot@15..16 "."
+      PathIdent@16..22
+        PathIdent@16..22 "Orders""#]],
         )
     }
 }
