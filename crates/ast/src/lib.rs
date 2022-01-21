@@ -2,10 +2,11 @@ use syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
 #[derive(Debug)]
 pub enum Expr {
-    BinaryExpr(BinaryExpr),
-    Literal(Literal),
-    ParenExpr(ParenExpr),
-    UnaryExpr(UnaryExpr),
+    Binary(BinaryExpr),
+    Literal(LiteralExpr),
+    Paren(ParenExpr),
+    PathIdent(PathIdentExpr),
+    Unary(UnaryExpr),
     VariableRef(VariableRef),
     VariableDef(VariableDef),
 }
@@ -13,12 +14,13 @@ pub enum Expr {
 impl Expr {
     pub fn cast(node: SyntaxNode) -> Option<Self> {
         let result = match node.kind() {
-            SyntaxKind::InfixExpr => Self::BinaryExpr(BinaryExpr(node)),
-            SyntaxKind::Literal => Self::Literal(Literal(node)),
-            SyntaxKind::ParenExpr => Self::ParenExpr(ParenExpr(node)),
-            SyntaxKind::PrefixExpr => Self::UnaryExpr(UnaryExpr(node)),
+            SyntaxKind::InfixExpr => Self::Binary(BinaryExpr(node)),
+            SyntaxKind::Literal => Self::Literal(LiteralExpr(node)),
+            SyntaxKind::ParenExpr => Self::Paren(ParenExpr(node)),
+            SyntaxKind::PrefixExpr => Self::Unary(UnaryExpr(node)),
             SyntaxKind::VariableRef => Self::VariableRef(VariableRef(node)),
             SyntaxKind::VariableDef => Self::VariableDef(VariableDef(node)),
+            SyntaxKind::PathIdentExpr => Self::PathIdent(PathIdentExpr(node)),
             _ => return None,
         };
 
@@ -69,9 +71,9 @@ impl BinaryExpr {
 }
 
 #[derive(Debug)]
-pub struct Literal(SyntaxNode);
+pub struct LiteralExpr(SyntaxNode);
 
-impl Literal {
+impl LiteralExpr {
     pub fn parse(&self) -> u64 {
         self.0.first_token().unwrap().text().parse().unwrap()
     }
@@ -83,6 +85,15 @@ pub struct ParenExpr(SyntaxNode);
 impl ParenExpr {
     pub fn expr(&self) -> Option<Expr> {
         self.0.children().find_map(Expr::cast)
+    }
+}
+
+#[derive(Debug)]
+pub struct PathIdentExpr(SyntaxNode);
+
+impl PathIdentExpr {
+    pub fn name(&self) -> String {
+        self.0.first_token().unwrap().text().into()
     }
 }
 

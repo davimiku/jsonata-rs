@@ -16,6 +16,15 @@ pub enum Expr {
     Literal {
         n: u64,
     },
+    ParenExpr {
+        exprs: Vec<ExprIdx>,
+    },
+    PathIdent {
+        name: String,
+    },
+    PathExpr {
+        ident: String,
+    },
     Unary {
         op: UnaryOp,
         expr: ExprIdx,
@@ -35,6 +44,8 @@ pub enum BinaryOp {
     Sub,
     Mul,
     Div,
+
+    Map,
 }
 
 #[derive(Debug, PartialEq)]

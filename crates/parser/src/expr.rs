@@ -54,7 +54,7 @@ fn lhs(p: &mut Parser) -> Option<CompletedMarker> {
     } else if p.at(SyntaxKind::VariableIdent) {
         variable(p)
     } else if p.at(SyntaxKind::PathIdent) {
-        path_ident(p)
+        path_expr(p)
     } else if p.at(SyntaxKind::Minus) {
         prefix_expr(p)
     } else if p.at(SyntaxKind::LParen) {
@@ -100,14 +100,6 @@ fn variable(p: &mut Parser) -> Option<CompletedMarker> {
     }
 }
 
-fn path_ident(p: &mut Parser) -> Option<CompletedMarker> {
-    assert!(p.at(SyntaxKind::PathIdent));
-
-    let m = p.start();
-    p.bump();
-    Some(m.complete(p, SyntaxKind::PathIdent))
-}
-
 fn path_expr(p: &mut Parser) -> Option<CompletedMarker> {
     assert!(p.at(SyntaxKind::PathIdent));
 
@@ -116,9 +108,18 @@ fn path_expr(p: &mut Parser) -> Option<CompletedMarker> {
 
     if p.at(SyntaxKind::Dot) {
         // map expression
+        // todo!()
+    } else if p.at(SyntaxKind::LBracket) {
+        // filter
+        // } else if p.at(SyntaxKind::Caret) {
+        // order-by
+        // todo!()
+    } else if p.at(SyntaxKind::LBrace) {
+        // reduce
+        // todo!()
+    } else {
     }
-
-    Some(m.complete(p, SyntaxKind::PathExpr))
+    Some(m.complete(p, SyntaxKind::PathIdentExpr))
 }
 
 fn prefix_expr(p: &mut Parser) -> Option<CompletedMarker> {
@@ -290,7 +291,7 @@ error at 1..2: expected ‘+’, ‘-’, ‘*’, ‘/’, ‘.’, or ‘)’"
             "Account",
             expect![[r#"
 Root@0..7
-  PathIdent@0..7
+  PathIdentExpr@0..7
     PathIdent@0..7 "Account""#]],
         )
     }
@@ -302,10 +303,10 @@ Root@0..7
             expect![[r#"
 Root@0..15
   InfixExpr@0..15
-    PathIdent@0..7
+    PathIdentExpr@0..7
       PathIdent@0..7 "Account"
     Dot@7..8 "."
-    PathIdent@8..15
+    PathIdentExpr@8..15
       PathIdent@8..15 "History""#]],
         )
     }
@@ -317,14 +318,14 @@ Root@0..15
             expect![[r#"
 Root@0..22
   InfixExpr@0..22
-    PathIdent@0..7
+    PathIdentExpr@0..7
       PathIdent@0..7 "Account"
     Dot@7..8 "."
     InfixExpr@8..22
-      PathIdent@8..15
+      PathIdentExpr@8..15
         PathIdent@8..15 "History"
       Dot@15..16 "."
-      PathIdent@16..22
+      PathIdentExpr@16..22
         PathIdent@16..22 "Orders""#]],
         )
     }

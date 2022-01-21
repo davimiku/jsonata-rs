@@ -40,7 +40,7 @@ pub enum SyntaxKind {
     InfixExpr,
     PrefixExpr,
     ParenExpr,
-    PathExpr,
+    PathIdentExpr,
     Root,
     Comment,
     Error,
@@ -91,7 +91,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::InfixExpr => Self::InfixExpr,
             TokenKind::PrefixExpr => Self::PrefixExpr,
             TokenKind::ParenExpr => Self::ParenExpr,
-            TokenKind::PathExpr => Self::PathExpr,
+            TokenKind::PathIdentExpr => Self::PathIdentExpr,
             TokenKind::Root => Self::Root,
         }
     }

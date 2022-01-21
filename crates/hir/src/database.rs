@@ -12,10 +12,11 @@ impl Database {
     pub(crate) fn lower_expr(&mut self, ast: Option<ast::Expr>) -> Expr {
         if let Some(ast) = ast {
             match ast {
-                ast::Expr::BinaryExpr(ast) => self.lower_binary(ast),
+                ast::Expr::Binary(ast) => self.lower_binary(ast),
                 ast::Expr::Literal(ast) => Expr::Literal { n: ast.parse() },
-                ast::Expr::ParenExpr(ast) => self.lower_expr(ast.expr()),
-                ast::Expr::UnaryExpr(ast) => self.lower_unary(ast),
+                ast::Expr::Paren(ast) => self.lower_expr(ast.expr()),
+                ast::Expr::PathIdent(ast) => Expr::PathIdent { name: ast.name() },
+                ast::Expr::Unary(ast) => self.lower_unary(ast),
                 ast::Expr::VariableRef(ast) => Expr::VariableRef { var: ast.name() },
                 ast::Expr::VariableDef(ast) => self.lower_variable_def(ast),
             }
@@ -30,6 +31,7 @@ impl Database {
             SyntaxKind::Minus => BinaryOp::Sub,
             SyntaxKind::Star => BinaryOp::Mul,
             SyntaxKind::Slash => BinaryOp::Div,
+            SyntaxKind::Dot => BinaryOp::Map,
             _ => unreachable!(),
         };
 
@@ -144,6 +146,17 @@ mod tests {
                 value,
             },
             Database { exprs },
+        );
+    }
+
+    #[test]
+    fn lower_path_ident() {
+        check(
+            "Account",
+            Expr::PathIdent {
+                name: "Account".into(),
+            },
+            Database::default(),
         );
     }
 }
