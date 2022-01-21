@@ -78,9 +78,7 @@ mod tests {
 
     fn check(input: &str, expected_hir: Expr, expected_database: Database) {
         let root = parse(input);
-        dbg!(&root);
         let first_expr = root.expr();
-        dbg!(&first_expr);
         let mut database = Database::default();
         let hir = database.lower_expr(first_expr);
 
