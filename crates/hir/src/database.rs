@@ -92,7 +92,7 @@ mod tests {
     }
 
     #[test]
-    fn lower_binary_expr() {
+    fn lower_binary_add_expr() {
         let mut exprs = Arena::new();
         let lhs = exprs.alloc(Expr::Literal { n: 2 });
         let rhs = exprs.alloc(Expr::Literal { n: 3 });
@@ -156,5 +156,59 @@ mod tests {
             },
             Database::default(),
         );
+    }
+
+    #[test]
+    fn lower_binary_map_expression() {
+        let mut exprs = Arena::new();
+        let lhs = exprs.alloc(Expr::PathIdent {
+            name: "Account".into(),
+        });
+        let rhs = exprs.alloc(Expr::PathIdent {
+            name: "History".into(),
+        });
+
+        check(
+            "Account.History",
+            Expr::Binary {
+                op: BinaryOp::Map,
+                lhs,
+                rhs,
+            },
+            Database { exprs },
+        )
+    }
+
+    #[test]
+    fn lower_nested_binary_map_expression() {
+        let mut exprs = Arena::new();
+
+        let account_expr = exprs.alloc(Expr::PathIdent {
+            name: "Account".into(),
+        });
+
+        let history_expr = exprs.alloc(Expr::PathIdent {
+            name: "History".into(),
+        });
+
+        let lhs = exprs.alloc(Expr::Binary {
+            op: BinaryOp::Map,
+            lhs: account_expr,
+            rhs: history_expr,
+        });
+
+        let order_expr = exprs.alloc(Expr::PathIdent {
+            name: "Orders".into(),
+        });
+
+        check(
+            "Account.History.Orders",
+            Expr::Binary {
+                op: BinaryOp::Map,
+                lhs,
+                rhs: order_expr,
+            },
+            Database { exprs },
+        )
     }
 }

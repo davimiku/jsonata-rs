@@ -318,15 +318,15 @@ Root@0..15
             expect![[r#"
 Root@0..22
   InfixExpr@0..22
-    PathIdentExpr@0..7
-      PathIdent@0..7 "Account"
-    Dot@7..8 "."
-    InfixExpr@8..22
+    InfixExpr@0..15
+      PathIdentExpr@0..7
+        PathIdent@0..7 "Account"
+      Dot@7..8 "."
       PathIdentExpr@8..15
         PathIdent@8..15 "History"
-      Dot@15..16 "."
-      PathIdentExpr@16..22
-        PathIdent@16..22 "Orders""#]],
+    Dot@15..16 "."
+    PathIdentExpr@16..22
+      PathIdent@16..22 "Orders""#]],
         )
     }
 }

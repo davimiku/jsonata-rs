@@ -64,7 +64,11 @@ impl BinaryExpr {
             .find(|token| {
                 matches!(
                     token.kind(),
-                    SyntaxKind::Plus | SyntaxKind::Minus | SyntaxKind::Star | SyntaxKind::Slash,
+                    SyntaxKind::Plus
+                        | SyntaxKind::Minus
+                        | SyntaxKind::Star
+                        | SyntaxKind::Slash
+                        | SyntaxKind::Dot,
                 )
             })
     }

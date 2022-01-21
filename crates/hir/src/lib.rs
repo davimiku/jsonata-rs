@@ -16,14 +16,11 @@ pub enum Expr {
     Literal {
         n: u64,
     },
-    ParenExpr {
+    Paren {
         exprs: Vec<ExprIdx>,
     },
     PathIdent {
         name: String,
-    },
-    PathExpr {
-        ident: String,
     },
     Unary {
         op: UnaryOp,
