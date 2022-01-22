@@ -147,34 +147,9 @@ impl From<f64> for JSONataNumber {
     }
 }
 
-impl TryFrom<JSONataValue> for JSONataNumber {
-    type Error = EvaluationError;
-
-    fn try_from(value: JSONataValue) -> Result<Self, Self::Error> {
-        match value {
-            JSONataValue::Function(_) => Err(EvaluationError::CannotConvertToNumber),
-            JSONataValue::Value(value) => match value {
-                Value::Number(num) => Ok(num.into()),
-                _ => Err(EvaluationError::CannotConvertToNumber),
-            },
-        }
-    }
-}
-
 impl From<JSONataNumber> for Number {
     fn from(num: JSONataNumber) -> Self {
         num.0
-    }
-}
-
-impl TryFrom<&Value> for JSONataNumber {
-    type Error = EvaluationError;
-
-    fn try_from(val: &Value) -> Result<Self, Self::Error> {
-        match val {
-            Value::Number(num) => Ok(num.into()),
-            _ => Err(EvaluationError::CannotConvertToNumber),
-        }
     }
 }
 

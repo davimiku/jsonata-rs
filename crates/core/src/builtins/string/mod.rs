@@ -31,16 +31,8 @@ impl BuiltIns {
     /// [1..5].$string() => ["1", "2", "3", "4", "5"]
     /// ```
     /// `Signature: $string(arg, prettify)`
-    pub(crate) fn string(args: &[Option<JSONataValue>]) -> EvaluationResult {
-        let arg = args.get(0).unwrap(); // arg will exist
-        if let Some(arg) = arg {
-            Ok(Some(match arg {
-                JSONataValue::Value(val) => val.to_string().into(),
-                JSONataValue::Function(_) => "".into(),
-            }))
-        } else {
-            Ok(None)
-        }
+    pub(crate) fn string(arg: &JSONataValue) -> EvaluationResult {
+        Ok(Some(arg.to_string().into()))
     }
 
     /// Returns the number of characters in the string str. If str is not specified
@@ -55,7 +47,7 @@ impl BuiltIns {
     pub(crate) fn length(args: &[Option<JSONataValue>]) -> EvaluationResult {
         let arg = args.get(0).unwrap(); // arg will exist
         if let Some(arg) = arg {
-            if let JSONataValue::Value(val) = arg {
+            if let JSONataValue::JSONValue(val) = arg {
                 if let Value::String(s) = val {
                     Ok(Some(s.len().into()))
                 } else {

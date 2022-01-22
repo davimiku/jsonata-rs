@@ -1,19 +1,12 @@
 mod function;
 pub(crate) mod number;
-#[cfg(test)]
-mod tests;
 mod traits;
 
-use std::convert::TryFrom;
+use std::collections::HashMap;
 use std::fmt;
 use std::rc::Rc;
 
-use serde_json::Value;
-
-use crate::ast::dyadic::arithmetic::ArithmeticOpType;
-use crate::ast::literal::LiteralValue;
-use crate::evaluate::EvaluationError;
-use crate::evaluate::EvaluationResult;
+use crate::evaluate::{EvaluationError, EvaluationResult};
 
 use self::function::JSONataFunction;
 use self::number::JSONataNumber;
@@ -27,22 +20,21 @@ use self::traits::TryNumericOps;
 /// * `JSONataFunction`
 #[derive(Debug)]
 pub enum JSONataValue {
-    Value(Value),
+    JSONValue(JSONValue),
     Function(JSONataFunction),
 }
 
+pub(crate) type JSONataVariables = HashMap<String, JSONataValue>;
+
 impl JSONataValue {
-    /// Generates an Option<JSONataValue> from a Option<Value>
-    pub fn from_opt_value(val: Option<Value>) -> Option<JSONataValue> {
-        val.map(|v| JSONataValue::Value(v))
+    /// Generates an Option<JSONataValue> from a Option<serde_json::Value>
+    pub fn from_opt_value(val: Option<serde_json::Value>) -> Option<JSONataValue> {
+        val.map(|val| JSONataValue::JSONValue(val.into()))
     }
 
     /// Generates a JSONataValue that is a function from the given function
     /// and identifier.
-    ///
-    /// FIXME: 'static lifetime may work here for built-ins but is likely wrong
-    /// for user-defined functions.
-    pub fn from_func<F, I>(func: F, ident: I) -> Self
+    pub fn from_builtin<F, I>(func: F, ident: I) -> Self
     where
         F: 'static + Fn(&[Option<JSONataValue>]) -> EvaluationResult,
         I: Into<String>,
@@ -53,39 +45,6 @@ impl JSONataValue {
             signature: "".into(),
         }
         .into()
-    }
-
-    /// Returns the value as a &Value if possible
-    pub fn as_value(&self) -> Option<&Value> {
-        match self {
-            JSONataValue::Value(val) => Some(val),
-            JSONataValue::Function(_) => None,
-        }
-    }
-
-    /// Checks if the value is a serde_json::Value
-    pub fn is_value(&self) -> bool {
-        self.as_value().is_some()
-    }
-
-    /// Returns the value as a Vec<Value> if possible
-    ///
-    /// For a Value::Array, returns the internal vec,
-    /// otherwise creates a 1-item vec with the internal value.
-    pub fn as_vec(&self) -> Option<Vec<Value>> {
-        match self.as_value() {
-            Some(val) => match val {
-                Value::Array(vec) => Some(vec.to_vec()),
-                val => Some(vec![val.to_owned()]),
-            },
-            None => None,
-        }
-    }
-
-    /// Checks if the value is an instance of Value::Array
-    /// with an internal vec
-    pub fn is_vec(&self) -> bool {
-        self.as_vec().is_some()
     }
 
     // TODO: Perhaps use Cell<T> to be able to .take
@@ -105,109 +64,91 @@ impl JSONataValue {
 impl fmt::Display for JSONataValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            JSONataValue::Value(val) => write!(f, "{}", val),
+            JSONataValue::JSONValue(val) => write!(f, "{}", val),
             JSONataValue::Function(func) => write!(f, "{}", func),
         }
     }
 }
 
-impl From<Value> for JSONataValue {
-    fn from(val: Value) -> Self {
-        JSONataValue::Value(val)
+impl From<serde_json::Value> for JSONataValue {
+    fn from(val: serde_json::Value) -> Self {
+        JSONataValue::JSONValue(val.into())
     }
 }
 
-// TODO: See above, may be possible to avoid the clone
-impl From<&Value> for JSONataValue {
-    fn from(val: &Value) -> Self {
-        JSONataValue::Value(val.clone())
+impl From<&serde_json::Value> for JSONataValue {
+    fn from(val: &serde_json::Value) -> Self {
+        JSONataValue::JSONValue(val.clone().into())
     }
 }
 
-impl From<&mut Value> for JSONataValue {
-    fn from(val: &mut Value) -> Self {
-        JSONataValue::Value(val.take())
-    }
-}
+// impl From<&mut serde_json::Value> for JSONataValue {
+//     fn from(val: &mut Value) -> Self {
+//         JSONataValue::JSONValue(val.take())
+//     }
+// }
 
-impl From<Vec<Value>> for JSONataValue {
-    fn from(val: Vec<Value>) -> Self {
-        JSONataValue::Value(val.into())
+impl From<Vec<serde_json::Value>> for JSONataValue {
+    fn from(val: Vec<serde_json::Value>) -> Self {
+        JSONataValue::JSONValue(val.into())
     }
 }
 
 impl From<bool> for JSONataValue {
     fn from(val: bool) -> Self {
-        JSONataValue::Value(val.into())
+        JSONataValue::JSONValue(val.into())
     }
 }
 
-impl From<&str> for JSONataValue {
-    fn from(s: &str) -> Self {
-        JSONataValue::Value(s.into())
-    }
-}
+// impl From<&str> for JSONataValue {
+//     fn from(s: &str) -> Self {
+//         JSONataValue::JSONValue(s.into())
+//     }
+// }
 
 impl From<String> for JSONataValue {
     fn from(s: String) -> Self {
-        JSONataValue::Value(s.into())
+        JSONataValue::JSONValue(s.into())
     }
 }
 
 impl From<usize> for JSONataValue {
     fn from(u: usize) -> Self {
-        JSONataValue::Value(u.into())
+        JSONataValue::JSONValue(u.into())
     }
 }
 
 impl From<i32> for JSONataValue {
     fn from(i: i32) -> Self {
-        JSONataValue::Value(i.into())
+        JSONataValue::JSONValue(i.into())
     }
 }
 
 impl From<f64> for JSONataValue {
     fn from(f: f64) -> Self {
-        JSONataValue::Value(f.into())
-    }
-}
-
-impl From<LiteralValue> for JSONataValue {
-    fn from(val: LiteralValue) -> Self {
-        JSONataValue::Value(val.into())
+        JSONataValue::JSONValue(f.into())
     }
 }
 
 impl From<JSONataNumber> for JSONataValue {
     fn from(num: JSONataNumber) -> Self {
-        JSONataValue::Value(num.into())
-    }
-}
-
-impl TryFrom<JSONataValue> for Value {
-    type Error = EvaluationError;
-
-    fn try_from(value: JSONataValue) -> Result<Self, Self::Error> {
-        match value {
-            JSONataValue::Value(val) => Ok(val),
-            JSONataValue::Function(func) => Err(EvaluationError::FunctionCannotConvertToValue(
-                func.ident().to_string(),
-            )),
-        }
+        JSONataValue::JSONValue(num.into())
     }
 }
 
 impl PartialEq for JSONataValue {
     fn eq(&self, other: &Self) -> bool {
-        match (self.as_value(), other.as_value()) {
-            (Some(val1), Some(val2)) => match (val1, val2) {
-                (Value::Null, Value::Null) => true,
-                (Value::Bool(a), Value::Bool(b)) => a == b,
-                (Value::Number(a), Value::Number(b)) => {
+        match (self, other) {
+            (JSONataValue::JSONValue(s), JSONataValue::JSONValue(o)) => match (s.0, o.0) {
+                (serde_json::Value::Null, serde_json::Value::Null) => true,
+                (serde_json::Value::Bool(a), serde_json::Value::Bool(b)) => a == b,
+                (serde_json::Value::String(a), serde_json::Value::String(b)) => a == b,
+
+                (serde_json::Value::Number(a), serde_json::Value::Number(b)) => {
                     JSONataNumber::from(a) == JSONataNumber::from(b)
                 }
-                (Value::String(a), Value::String(b)) => a == b,
-                (Value::Array(a), Value::Array(b)) => {
+
+                (serde_json::Value::Array(a), serde_json::Value::Array(b)) => {
                     if a.len() != b.len() {
                         false
                     } else {
@@ -216,7 +157,8 @@ impl PartialEq for JSONataValue {
                             .all(|(l, h)| JSONataValue::from(l) == JSONataValue::from(h))
                     }
                 }
-                (Value::Object(a), Value::Object(b)) => {
+
+                (serde_json::Value::Object(a), serde_json::Value::Object(b)) => {
                     if a.len() != b.len() {
                         false
                     } else {
@@ -230,98 +172,159 @@ impl PartialEq for JSONataValue {
                 (_, _) => false,
             },
 
-            // In the JSONata exerciser "$sum = $sum" returns true, presumably due to
-            // Javascript's equality rules. The JSONata documentation does not define the equality
-            // behavior of functions, however, and we'll leave the behavior as an implementation
-            // detail until it becomes useful to be able to compare JSONata functions for equality.
+            // TODO: define equality behavior for functions
             (_, _) => false,
+        }
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        !(self == other)
+    }
+}
+
+fn parse_numbers<S>(
+    lhs: JSONataValue,
+    rhs: JSONataValue,
+    op: S,
+) -> Result<(JSONataNumber, JSONataNumber), EvaluationError>
+where
+    S: Into<String>,
+{
+    match (lhs, rhs) {
+        (JSONataValue::JSONValue(lhs), JSONataValue::JSONValue(rhs)) => match (lhs.0, rhs.0) {
+            (serde_json::Value::Number(lhs), serde_json::Value::Number(rhs)) => {
+                return Ok((lhs.into(), rhs.into()))
+            }
+            (_, _) => {}
+        },
+        (_, _) => {}
+    }
+    Err(EvaluationError::OperandsMustBeNumbers {
+        op: op.into(),
+        lhs: lhs.into(),
+        rhs: rhs.into(),
+    })
+}
+
+impl TryNumericOps for JSONataValue {
+    fn try_add(self, rhs: Self) -> Result<Self, EvaluationError> {
+        let (lhs, rhs) = parse_numbers(self, rhs, "+")?;
+        Ok((lhs + rhs).into())
+    }
+
+    fn try_sub(self, rhs: Self) -> Result<Self, EvaluationError> {
+        let (lhs, rhs) = parse_numbers(self, rhs, "-")?;
+        Ok((lhs - rhs).into())
+    }
+
+    fn try_mul(self, rhs: Self) -> Result<Self, EvaluationError> {
+        let (lhs, rhs) = parse_numbers(self, rhs, "*")?;
+        Ok((lhs * rhs).into())
+    }
+
+    fn try_div(self, rhs: Self) -> Result<Self, EvaluationError> {
+        let (lhs, rhs) = parse_numbers(self, rhs, "/")?;
+        Ok((lhs / rhs).into())
+    }
+
+    fn try_rem(self, rhs: Self) -> Result<Self, EvaluationError> {
+        let (lhs, rhs) = parse_numbers(self, rhs, "%")?;
+        Ok((lhs % rhs).into())
+    }
+}
+
+impl From<JSONataValue> for String {
+    fn from(val: JSONataValue) -> Self {
+        match val {
+            JSONataValue::JSONValue(val) => val.to_string(),
+            JSONataValue::Function(_) => String::from(""),
         }
     }
 }
 
-impl TryNumericOps for JSONataValue {
-    fn try_add(self, rhs: Self) -> Result<Value, EvaluationError> {
-        if let (Some(self_val), Some(rhs_val)) = (self.as_value(), rhs.as_value()) {
-            match (self_val, rhs_val) {
-                (Value::Number(left), Value::Number(right)) => {
-                    Ok((JSONataNumber::from(left) + JSONataNumber::from(right)).to_value())
-                }
-                (_, _) => Err(EvaluationError::DyadicMustBeNumber(
-                    ArithmeticOpType::Add.into(),
-                )),
-            }
-        } else {
-            Err(EvaluationError::DyadicMustBeNumber(
-                ArithmeticOpType::Add.into(),
-            ))
+#[derive(Debug)]
+struct JSONValue(serde_json::Value);
+
+impl fmt::Display for JSONValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl<T> From<T> for JSONValue
+where
+    T: Into<serde_json::Value>,
+{
+    fn from(val: T) -> Self {
+        JSONValue(val.into())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use crate::{
+        evaluate::EvaluationError,
+        value::{traits::TryNumericOps, JSONataValue},
+    };
+
+    #[test]
+    fn eq() {
+        let cases: Vec<(serde_json::Value, serde_json::Value)> = vec![
+            (json!(null), json!(null)),
+            (json!(true), json!(true)),
+            (json!(false), json!(false)),
+            (json!("yes"), json!("yes")),
+            (json!(1000), json!(1000)),
+            (json!(10.0), json!(10)),
+            (json!([1, 2]), json!([1.0, 2.0])),
+            (json!([1, [2.0]]), json!([1.0, [2]])),
+            (
+                json!({ "a": true, "b": false }),
+                json!({ "b": false, "a": true }),
+            ),
+        ];
+        for (a, b) in cases {
+            assert!(JSONataValue::JSONValue(a.into()) == JSONataValue::JSONValue(b.into()));
         }
     }
 
-    fn try_sub(self, rhs: Self) -> Result<Value, EvaluationError> {
-        if let (Some(self_val), Some(rhs_val)) = (self.as_value(), rhs.as_value()) {
-            match (self_val, rhs_val) {
-                (Value::Number(left), Value::Number(right)) => {
-                    Ok((JSONataNumber::from(left) - JSONataNumber::from(right)).to_value())
+    #[test]
+    fn add() {
+        // (lhs, rhs, expected)
+        let ok_cases: Vec<(serde_json::Value, serde_json::Value, serde_json::Value)> = vec![
+            (json!(1), json!(2), json!(3)),
+            (json!(1.5), json!(2.5), json!(4.0)),
+            (json!(-1.5), json!(2.5), json!(1.0)),
+            (json!(1), json!(2.5), json!(3.5)),
+            (json!(100), json!(-250), json!(-150)),
+        ];
+        for (lhs, rhs, expected) in ok_cases {
+            let lhs = JSONataValue::JSONValue(lhs.into());
+            let rhs = JSONataValue::JSONValue(rhs.into());
+            assert_eq!(lhs.try_add(rhs).unwrap(), expected.into())
+        }
+
+        // (lhs, rhs)
+        let err_cases: Vec<(serde_json::Value, serde_json::Value)> = vec![
+            (json!("hello"), json!("world")),
+            (json!(1), json!("1")),
+            (json!("1"), json!(1)),
+        ];
+        for (lhs, rhs) in err_cases {
+            let lhs = JSONataValue::JSONValue(lhs.into());
+            let rhs = JSONataValue::JSONValue(rhs.into());
+            assert_eq!(
+                lhs.try_add(rhs).unwrap_err(),
+                EvaluationError::OperandsMustBeNumbers {
+                    op: '+'.to_string(),
+                    lhs: lhs.to_string(),
+                    rhs: rhs.to_string()
                 }
-                (_, _) => Err(EvaluationError::DyadicMustBeNumber(
-                    ArithmeticOpType::Sub.into(),
-                )),
-            }
-        } else {
-            Err(EvaluationError::DyadicMustBeNumber(
-                ArithmeticOpType::Sub.into(),
-            ))
+            )
         }
     }
 
-    fn try_mul(self, rhs: Self) -> Result<Value, EvaluationError> {
-        if let (Some(self_val), Some(rhs_val)) = (self.as_value(), rhs.as_value()) {
-            match (self_val, rhs_val) {
-                (Value::Number(left), Value::Number(right)) => {
-                    Ok((JSONataNumber::from(left) * JSONataNumber::from(right)).to_value())
-                }
-                (_, _) => Err(EvaluationError::DyadicMustBeNumber(
-                    ArithmeticOpType::Mul.into(),
-                )),
-            }
-        } else {
-            Err(EvaluationError::DyadicMustBeNumber(
-                ArithmeticOpType::Mul.into(),
-            ))
-        }
-    }
-
-    fn try_div(self, rhs: Self) -> Result<Value, EvaluationError> {
-        if let (Some(self_val), Some(rhs_val)) = (self.as_value(), rhs.as_value()) {
-            match (self_val, rhs_val) {
-                (Value::Number(left), Value::Number(right)) => {
-                    Ok((JSONataNumber::from(left) / JSONataNumber::from(right)).to_value())
-                }
-                (_, _) => Err(EvaluationError::DyadicMustBeNumber(
-                    ArithmeticOpType::Div.into(),
-                )),
-            }
-        } else {
-            Err(EvaluationError::DyadicMustBeNumber(
-                ArithmeticOpType::Div.into(),
-            ))
-        }
-    }
-
-    fn try_rem(self, rhs: Self) -> Result<Value, EvaluationError> {
-        if let (Some(self_val), Some(rhs_val)) = (self.as_value(), rhs.as_value()) {
-            match (self_val, rhs_val) {
-                (Value::Number(left), Value::Number(right)) => {
-                    Ok((JSONataNumber::from(left) % JSONataNumber::from(right)).to_value())
-                }
-                (_, _) => Err(EvaluationError::DyadicMustBeNumber(
-                    ArithmeticOpType::Div.into(),
-                )),
-            }
-        } else {
-            Err(EvaluationError::DyadicMustBeNumber(
-                ArithmeticOpType::Div.into(),
-            ))
-        }
-    }
+    // TODO: tests for sub, mul, div, rem
 }

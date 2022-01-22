@@ -98,7 +98,7 @@ impl BuiltIns {
         if let Some(val) = arg {
             Ok(Some(
                 match val {
-                    JSONataValue::Value(val) => match val {
+                    JSONataValue::JSONValue(val) => match val {
                         Value::Null => "null",
                         Value::Bool(_) => "boolean",
                         Value::Number(_) => "number",

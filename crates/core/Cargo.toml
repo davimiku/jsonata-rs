@@ -6,6 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+ast = { path = "../ast" }
 parser = { path = "../parser" }
 # rand = "0.8"
-# serde_json = "1"
+serde_json = "1.0.75"
+thiserror = "1.0.30"

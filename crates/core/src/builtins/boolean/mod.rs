@@ -27,7 +27,7 @@ impl BuiltIns {
     /// **Signature**: `$boolean(arg)`
     pub fn boolean(arg: &JSONataValue) -> EvaluationResult {
         Ok(Some(match arg {
-            JSONataValue::Value(val) => BuiltIns::boolean_coerce(val).into(),
+            JSONataValue::JSONValue(val) => BuiltIns::boolean_coerce(val).into(),
             JSONataValue::Function(_) => false.into(),
         }))
     }
@@ -64,7 +64,7 @@ impl BuiltIns {
     /// **Signature**: `$not(arg)`
     pub fn not(arg: &JSONataValue) -> EvaluationResult {
         Ok(Some(match arg {
-            JSONataValue::Value(val) => (!BuiltIns::boolean_coerce(val)).into(),
+            JSONataValue::JSONValue(val) => (!BuiltIns::boolean_coerce(val)).into(),
             JSONataValue::Function(_) => true.into(),
         }))
     }

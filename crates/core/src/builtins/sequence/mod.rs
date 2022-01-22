@@ -46,7 +46,7 @@ impl BuiltIns {
         if let Some(val) = array {
             Ok(Some(
                 match val {
-                    JSONataValue::Value(val) => match val {
+                    JSONataValue::JSONValue(val) => match val {
                         Value::Null => 1,
                         Value::Bool(_) => 1,
                         Value::Number(_) => 1,
@@ -132,7 +132,7 @@ impl BuiltIns {
         let val = args.get(0).unwrap(); // arg will exist
         if let Some(val) = val {
             match val {
-                JSONataValue::Value(_) => todo!(),
+                JSONataValue::JSONValue(_) => todo!(),
                 JSONataValue::Function(_) => todo!(),
                 // Value::Array(mut vec) => {
                 //     vec.reverse();
@@ -151,7 +151,7 @@ impl BuiltIns {
         let arr = args.get(0).unwrap(); // arg will exist
         if let Some(arr) = arr {
             match arr {
-                JSONataValue::Value(_) => todo!(),
+                JSONataValue::JSONValue(_) => todo!(),
                 JSONataValue::Function(f) => todo!(),
             }
         }

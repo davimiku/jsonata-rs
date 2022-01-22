@@ -51,7 +51,7 @@ impl BuiltIns {
         let number = args.get(0).unwrap(); // arg will exist
         if let Some(number) = number {
             match number {
-                JSONataValue::Value(val) => match val {
+                JSONataValue::JSONValue(val) => match val {
                     Value::Number(n) => {
                         let n: JSONataNumber = n.into();
                         Ok(Some(n.abs().into()))
@@ -88,7 +88,7 @@ impl BuiltIns {
         let number = args.get(0);
         if let Some(number) = number {
             match number {
-                JSONataValue::Value(val) => match val {
+                JSONataValue::JSONValue(val) => match val {
                     Value::Number(n) => {
                         let n: JSONataNumber = n.into();
                         Ok(Some(n.floor().into()))
