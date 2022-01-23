@@ -1,29 +1,24 @@
 use serde_json::json;
 
-use crate::{builtins::BuiltIns, value::JSONataValue};
+use crate::builtins::BuiltIns;
+use crate::value::number::JSONataNumber;
+use crate::value::JSONataValue;
 
 #[test]
 fn number() {}
 
 #[test]
 fn abs() {
-    let cases = vec![
-        (
-            JSONataValue::Value(json!(-5)),
-            JSONataValue::Value(json!(5)),
-        ),
-        (JSONataValue::Value(json!(5)), JSONataValue::Value(json!(5))),
-        (
-            JSONataValue::Value(json!(-5.3)),
-            JSONataValue::Value(json!(5.3)),
-        ),
-        (
-            JSONataValue::Value(json!(5.3)),
-            JSONataValue::Value(json!(5.3)),
-        ),
+    let cases: Vec<(JSONataNumber, JSONataNumber)> = vec![
+        ((-5).into(), 5.into()),
+        (5.into(), 5.into()),
+        ((-5.3).into(), (5.3).into()),
+        ((5.3).into(), (5.3).into()),
     ];
-    for case in cases {
-        assert_eq!(BuiltIns::abs(&[Some(case.0)]), Ok(Some(case.1)));
+    for (input, expected) in cases {
+        let actual = BuiltIns::abs(&input);
+        let expected: JSONataValue = expected.into();
+        assert_eq!(actual, Ok(Some(expected)));
     }
 }
 

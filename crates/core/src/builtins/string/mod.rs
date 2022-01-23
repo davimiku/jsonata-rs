@@ -31,8 +31,8 @@ impl BuiltIns {
     /// [1..5].$string() => ["1", "2", "3", "4", "5"]
     /// ```
     /// `Signature: $string(arg, prettify)`
-    pub(crate) fn string(arg: &JSONataValue) -> EvaluationResult {
-        Ok(Some(arg.to_string().into()))
+    pub(crate) fn string(val: &JSONataValue) -> EvaluationResult {
+        Ok(Some(val.to_string().into()))
     }
 
     /// Returns the number of characters in the string str. If str is not specified
@@ -44,25 +44,8 @@ impl BuiltIns {
     /// ```
     /// $length("Hello World") => 11
     /// ```
-    pub(crate) fn length(args: &[Option<JSONataValue>]) -> EvaluationResult {
-        let arg = args.get(0).unwrap(); // arg will exist
-        if let Some(arg) = arg {
-            if let JSONataValue::JSONValue(val) = arg {
-                if let Value::String(s) = val {
-                    Ok(Some(s.len().into()))
-                } else {
-                    Err(EvaluationError::function_invalid_argument(
-                        "length", 1, "string",
-                    ))
-                }
-            } else {
-                Err(EvaluationError::function_invalid_argument(
-                    "length", 1, "string",
-                ))
-            }
-        } else {
-            Ok(None)
-        }
+    pub(crate) fn length(val: String) -> EvaluationResult {
+        Ok(Some(val.len().into()))
     }
 
     /// Returns a string containing the characters in the first parameter str starting at position

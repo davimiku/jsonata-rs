@@ -18,8 +18,7 @@ use self::traits::TryNumericOps;
 /// Composed of an enum for either:
 /// * `Value`
 /// * `JSONataFunction`
-#[derive(Debug)]
-pub enum JSONataValue {
+pub(crate) enum JSONataValue {
     JSONValue(JSONValue),
     Function(JSONataFunction),
 }
@@ -61,6 +60,15 @@ impl JSONataValue {
     // }
 }
 
+impl fmt::Debug for JSONataValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            JSONataValue::JSONValue(val) => write!(f, "{}", val),
+            JSONataValue::Function(func) => write!(f, "{}", func),
+        }
+    }
+}
+
 impl fmt::Display for JSONataValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -100,11 +108,11 @@ impl From<bool> for JSONataValue {
     }
 }
 
-// impl From<&str> for JSONataValue {
-//     fn from(s: &str) -> Self {
-//         JSONataValue::JSONValue(s.into())
-//     }
-// }
+impl From<&str> for JSONataValue {
+    fn from(s: &str) -> Self {
+        JSONataValue::JSONValue(s.into())
+    }
+}
 
 impl From<String> for JSONataValue {
     fn from(s: String) -> Self {
@@ -139,38 +147,42 @@ impl From<JSONataNumber> for JSONataValue {
 impl PartialEq for JSONataValue {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (JSONataValue::JSONValue(s), JSONataValue::JSONValue(o)) => match (s.0, o.0) {
-                (serde_json::Value::Null, serde_json::Value::Null) => true,
-                (serde_json::Value::Bool(a), serde_json::Value::Bool(b)) => a == b,
-                (serde_json::Value::String(a), serde_json::Value::String(b)) => a == b,
+            (JSONataValue::JSONValue(s), JSONataValue::JSONValue(o)) => {
+                match (s.0.clone(), o.0.clone()) {
+                    (serde_json::Value::Null, serde_json::Value::Null) => true,
+                    (serde_json::Value::Bool(a), serde_json::Value::Bool(b)) => a == b,
+                    (serde_json::Value::String(a), serde_json::Value::String(b)) => a == b,
 
-                (serde_json::Value::Number(a), serde_json::Value::Number(b)) => {
-                    JSONataNumber::from(a) == JSONataNumber::from(b)
-                }
-
-                (serde_json::Value::Array(a), serde_json::Value::Array(b)) => {
-                    if a.len() != b.len() {
-                        false
-                    } else {
-                        a.iter()
-                            .zip(b)
-                            .all(|(l, h)| JSONataValue::from(l) == JSONataValue::from(h))
+                    (serde_json::Value::Number(a), serde_json::Value::Number(b)) => {
+                        JSONataNumber::from(a) == JSONataNumber::from(b)
                     }
-                }
 
-                (serde_json::Value::Object(a), serde_json::Value::Object(b)) => {
-                    if a.len() != b.len() {
-                        false
-                    } else {
-                        a.iter().all(|(key, a_val)| match b.get(key) {
-                            Some(b_val) => JSONataValue::from(a_val) == JSONataValue::from(b_val),
-                            None => false,
-                        })
+                    (serde_json::Value::Array(a), serde_json::Value::Array(b)) => {
+                        if a.len() != b.len() {
+                            false
+                        } else {
+                            a.iter()
+                                .zip(b)
+                                .all(|(l, h)| JSONataValue::from(l) == JSONataValue::from(h))
+                        }
                     }
-                }
 
-                (_, _) => false,
-            },
+                    (serde_json::Value::Object(a), serde_json::Value::Object(b)) => {
+                        if a.len() != b.len() {
+                            false
+                        } else {
+                            a.iter().all(|(key, a_val)| match b.get(key) {
+                                Some(b_val) => {
+                                    JSONataValue::from(a_val) == JSONataValue::from(b_val)
+                                }
+                                None => false,
+                            })
+                        }
+                    }
+
+                    (_, _) => false,
+                }
+            }
 
             // TODO: define equality behavior for functions
             (_, _) => false,
@@ -183,20 +195,22 @@ impl PartialEq for JSONataValue {
 }
 
 fn parse_numbers<S>(
-    lhs: JSONataValue,
-    rhs: JSONataValue,
+    lhs: &JSONataValue,
+    rhs: &JSONataValue,
     op: S,
 ) -> Result<(JSONataNumber, JSONataNumber), EvaluationError>
 where
     S: Into<String>,
 {
     match (lhs, rhs) {
-        (JSONataValue::JSONValue(lhs), JSONataValue::JSONValue(rhs)) => match (lhs.0, rhs.0) {
-            (serde_json::Value::Number(lhs), serde_json::Value::Number(rhs)) => {
-                return Ok((lhs.into(), rhs.into()))
+        (JSONataValue::JSONValue(lhs), JSONataValue::JSONValue(rhs)) => {
+            match (lhs.0.clone(), rhs.0.clone()) {
+                (serde_json::Value::Number(lhs), serde_json::Value::Number(rhs)) => {
+                    return Ok((lhs.into(), rhs.into()))
+                }
+                (_, _) => {}
             }
-            (_, _) => {}
-        },
+        }
         (_, _) => {}
     }
     Err(EvaluationError::OperandsMustBeNumbers {
@@ -208,33 +222,33 @@ where
 
 impl TryNumericOps for JSONataValue {
     fn try_add(self, rhs: Self) -> Result<Self, EvaluationError> {
-        let (lhs, rhs) = parse_numbers(self, rhs, "+")?;
+        let (lhs, rhs) = parse_numbers(&self, &rhs, "+")?;
         Ok((lhs + rhs).into())
     }
 
     fn try_sub(self, rhs: Self) -> Result<Self, EvaluationError> {
-        let (lhs, rhs) = parse_numbers(self, rhs, "-")?;
+        let (lhs, rhs) = parse_numbers(&self, &rhs, "-")?;
         Ok((lhs - rhs).into())
     }
 
     fn try_mul(self, rhs: Self) -> Result<Self, EvaluationError> {
-        let (lhs, rhs) = parse_numbers(self, rhs, "*")?;
+        let (lhs, rhs) = parse_numbers(&self, &rhs, "*")?;
         Ok((lhs * rhs).into())
     }
 
     fn try_div(self, rhs: Self) -> Result<Self, EvaluationError> {
-        let (lhs, rhs) = parse_numbers(self, rhs, "/")?;
+        let (lhs, rhs) = parse_numbers(&self, &rhs, "/")?;
         Ok((lhs / rhs).into())
     }
 
     fn try_rem(self, rhs: Self) -> Result<Self, EvaluationError> {
-        let (lhs, rhs) = parse_numbers(self, rhs, "%")?;
+        let (lhs, rhs) = parse_numbers(&self, &rhs, "%")?;
         Ok((lhs % rhs).into())
     }
 }
 
-impl From<JSONataValue> for String {
-    fn from(val: JSONataValue) -> Self {
+impl From<&JSONataValue> for String {
+    fn from(val: &JSONataValue) -> Self {
         match val {
             JSONataValue::JSONValue(val) => val.to_string(),
             JSONataValue::Function(_) => String::from(""),
@@ -242,8 +256,17 @@ impl From<JSONataValue> for String {
     }
 }
 
-#[derive(Debug)]
-struct JSONValue(serde_json::Value);
+impl From<&JSONataValue> for bool {
+    fn from(val: &JSONataValue) -> Self {
+        match val {
+            JSONataValue::JSONValue(val) => val.into(),
+            JSONataValue::Function(_) => false,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct JSONValue(pub(crate) serde_json::Value);
 
 impl fmt::Display for JSONValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -257,6 +280,35 @@ where
 {
     fn from(val: T) -> Self {
         JSONValue(val.into())
+    }
+}
+
+impl From<&JSONValue> for bool {
+    fn from(val: &JSONValue) -> Self {
+        match &val.0 {
+            serde_json::Value::Null => false,
+            serde_json::Value::Bool(b) => *b,
+            serde_json::Value::Number(n) => {
+                if n.is_u64() {
+                    n.as_u64() == Some(0_u64)
+                } else if n.is_i64() {
+                    n.as_i64() == Some(0_i64)
+                } else if n.is_f64() {
+                    n.as_f64() == Some(0.0)
+                } else {
+                    false
+                }
+            }
+            serde_json::Value::String(s) => s.is_empty(),
+            serde_json::Value::Array(v) => {
+                if v.is_empty() {
+                    false
+                } else {
+                    v.iter().all(|val| (&JSONValue(val.clone())).into())
+                }
+            }
+            serde_json::Value::Object(o) => o.is_empty(),
+        }
     }
 }
 
@@ -319,8 +371,8 @@ mod tests {
                 lhs.try_add(rhs).unwrap_err(),
                 EvaluationError::OperandsMustBeNumbers {
                     op: '+'.to_string(),
-                    lhs: lhs.to_string(),
-                    rhs: rhs.to_string()
+                    lhs: "TODO".to_string(),
+                    rhs: "TODO".to_string(),
                 }
             )
         }

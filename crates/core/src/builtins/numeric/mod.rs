@@ -1,5 +1,3 @@
-use serde_json::Value;
-
 use crate::{
     evaluate::{EvaluationError, EvaluationResult},
     value::{number::JSONataNumber, JSONataValue},
@@ -47,26 +45,8 @@ impl BuiltIns {
     /// $abs(-5) => -5
     /// ```
     /// **Signature**: `$abs(number)`
-    pub(super) fn abs(args: &[Option<JSONataValue>]) -> EvaluationResult {
-        let number = args.get(0).unwrap(); // arg will exist
-        if let Some(number) = number {
-            match number {
-                JSONataValue::JSONValue(val) => match val {
-                    Value::Number(n) => {
-                        let n: JSONataNumber = n.into();
-                        Ok(Some(n.abs().into()))
-                    }
-                    _ => Err(EvaluationError::function_invalid_argument(
-                        "abs", 1, "number",
-                    )),
-                },
-                JSONataValue::Function(_) => Err(EvaluationError::function_invalid_argument(
-                    "abs", 1, "number",
-                )),
-            }
-        } else {
-            Ok(None)
-        }
+    pub(super) fn abs(num: &JSONataNumber) -> EvaluationResult {
+        Ok(Some(num.abs().into()))
     }
 
     /// Returns the value of `number` rounded down to the nearest integer that is smaller or
@@ -84,26 +64,8 @@ impl BuiltIns {
     /// $floor(-5.3) => -6
     /// ```
     /// **Signature**: `$floor(number)`
-    pub(super) fn floor(args: &[JSONataValue]) -> EvaluationResult {
-        let number = args.get(0);
-        if let Some(number) = number {
-            match number {
-                JSONataValue::JSONValue(val) => match val {
-                    Value::Number(n) => {
-                        let n: JSONataNumber = n.into();
-                        Ok(Some(n.floor().into()))
-                    }
-                    _ => Err(EvaluationError::function_invalid_argument(
-                        "floor", 1, "number",
-                    )),
-                },
-                JSONataValue::Function(_) => Err(EvaluationError::function_invalid_argument(
-                    "floor", 1, "number",
-                )),
-            }
-        } else {
-            Ok(None)
-        }
+    pub(super) fn floor(num: &JSONataNumber) -> EvaluationResult {
+        Ok(Some(num.floor().into()))
     }
 
     /// Returns the value of `number` rounded up to the nearest integer that is greater

@@ -93,26 +93,20 @@ impl BuiltIns {
     /// - "object"
     /// - "function"
     /// - None if input value is None
-    pub(crate) fn r#type(args: &[Option<JSONataValue>]) -> EvaluationResult {
-        let arg = args.get(0).unwrap();
-        if let Some(val) = arg {
-            Ok(Some(
-                match val {
-                    JSONataValue::JSONValue(val) => match val {
-                        Value::Null => "null",
-                        Value::Bool(_) => "boolean",
-                        Value::Number(_) => "number",
-                        Value::String(_) => "string",
-                        Value::Array(_) => "array",
-                        Value::Object(_) => "object",
-                    },
-
-                    JSONataValue::Function(_) => "function",
-                }
-                .into(),
-            ))
-        } else {
-            Ok(None)
-        }
+    pub(crate) fn r#type(val: &JSONataValue) -> EvaluationResult {
+        Ok(Some(
+            match val {
+                JSONataValue::JSONValue(val) => match val.0 {
+                    Value::Null => "null",
+                    Value::Bool(_) => "boolean",
+                    Value::Number(_) => "number",
+                    Value::String(_) => "string",
+                    Value::Array(_) => "array",
+                    Value::Object(_) => "object",
+                },
+                JSONataValue::Function(_) => "function",
+            }
+            .into(),
+        ))
     }
 }

@@ -12,7 +12,11 @@ pub(crate) enum EvaluationError {
     FunctionCannotConvertToValue,
 
     #[error("invalid argument to function")]
-    FunctionInvalidArgument,
+    FunctionInvalidArgument {
+        func_name: String,
+        arg_index: usize,
+        expected_format: String,
+    },
 
     #[error("incorrect number of arguments for function ‘{func_name}’: expected {expected} arguments, received {actual} arguments")]
     FunctionIncorrectNumberArguments {

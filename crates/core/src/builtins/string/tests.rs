@@ -1,16 +1,18 @@
 use serde_json::json;
 
-use crate::{builtins::BuiltIns, tests::make_val};
+use crate::builtins::BuiltIns;
+use crate::value::JSONataValue;
 
 #[test]
 fn string() {
-    let cases = vec![
-        (make_val(json!(null)), "null"),
-        (make_val(json!(true)), "true"),
-        (make_val(json!(false)), "false"),
+    let cases: Vec<(serde_json::Value, &'static str)> = vec![
+        (json!(null), "null"),
+        (json!(true), "true"),
+        (json!(false), "false"),
     ];
     for (input, expected) in cases {
-        let actual = BuiltIns::string(&[Some(input)]);
+        let input: JSONataValue = input.into();
+        let actual = BuiltIns::string(&input);
         assert_eq!(actual, Ok(Some(expected.into())));
     }
 }
@@ -18,12 +20,12 @@ fn string() {
 #[test]
 fn length() {
     let cases = vec![
-        (make_val(json!("hello")), 5),
-        (make_val(json!("test test")), 9),
+        (String::from("hello"), 5),
+        (String::from("test test"), 9),
         // TODO: test unicode
     ];
     for (input, expected) in cases {
-        let actual = BuiltIns::length(&[Some(input)]);
+        let actual = BuiltIns::length(input);
         assert_eq!(actual, Ok(Some(expected.into())));
     }
 }

@@ -1,7 +1,7 @@
 use serde_json::Value;
 
-use rand::seq::SliceRandom;
-use rand::thread_rng;
+// use rand::seq::SliceRandom;
+// use rand::thread_rng;
 
 use crate::{evaluate::EvaluationResult, value::JSONataValue};
 
@@ -40,13 +40,11 @@ impl BuiltIns {
     /// ```
     ///
     /// **Signature**: `$count(array)`
-    /// TODO: $count(i_dont_exist) returns 0 in try.jsonata.org ... do we want that?
-    pub(crate) fn count(args: &[Option<JSONataValue>]) -> EvaluationResult {
-        let array = args.get(0).unwrap(); // arg will exist
-        if let Some(val) = array {
-            Ok(Some(
-                match val {
-                    JSONataValue::JSONValue(val) => match val {
+    pub(crate) fn count(val: &Option<JSONataValue>) -> EvaluationResult {
+        Ok(Some(
+            match val {
+                Some(val) => match val {
+                    JSONataValue::JSONValue(val) => match &val.0 {
                         Value::Null => 1,
                         Value::Bool(_) => 1,
                         Value::Number(_) => 1,
@@ -55,12 +53,11 @@ impl BuiltIns {
                         Value::Object(_) => 1,
                     },
                     JSONataValue::Function(_) => 1,
-                }
-                .into(),
-            ))
-        } else {
-            Ok(Some(0.into()))
-        }
+                },
+                None => 0,
+            }
+            .into(),
+        ))
     }
 
     /// Returns an array containing the values in array1
@@ -147,18 +144,18 @@ impl BuiltIns {
 
     /// Returns an array containing all the values from the array parameter,
     /// but shuffled into random order.
-    pub(crate) fn shuffle(args: &[Option<JSONataValue>]) -> EvaluationResult {
-        let arr = args.get(0).unwrap(); // arg will exist
-        if let Some(arr) = arr {
-            match arr {
-                JSONataValue::JSONValue(_) => todo!(),
-                JSONataValue::Function(f) => todo!(),
-            }
-        }
-        let mut vec: Vec<u32> = (0..10).collect();
-        vec.shuffle(&mut thread_rng());
-        todo!()
-    }
+    // pub(crate) fn shuffle(args: &[Option<JSONataValue>]) -> EvaluationResult {
+    //     let arr = args.get(0).unwrap(); // arg will exist
+    //     if let Some(arr) = arr {
+    //         match arr {
+    //             JSONataValue::JSONValue(_) => todo!(),
+    //             JSONataValue::Function(f) => todo!(),
+    //         }
+    //     }
+    //     let mut vec: Vec<u32> = (0..10).collect();
+    //     vec.shuffle(&mut thread_rng());
+    //     todo!()
+    // }
 
     /// Returns an array containing all the values from the array parameter, but
     /// with any duplicates removed. Values are tested for deep equality as if by

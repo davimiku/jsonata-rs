@@ -1,17 +1,12 @@
-use std::{
-    cmp::Ordering,
-    convert::TryFrom,
-    ops::{Add, Div, Mul, Neg, Rem, Sub},
-};
-
-use serde_json::{Number, Value};
+use std::cmp::Ordering;
+use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 
 use crate::evaluate::EvaluationError;
 
 use super::JSONataValue;
 
 #[derive(Debug, Clone)]
-pub(crate) struct JSONataNumber(Number);
+pub(crate) struct JSONataNumber(serde_json::Number);
 
 #[derive(Debug, Clone, Copy)]
 enum NType {
@@ -21,8 +16,8 @@ enum NType {
 }
 
 impl JSONataNumber {
-    pub fn to_value(self) -> Value {
-        Value::Number(self.0)
+    pub fn to_value(self) -> serde_json::Value {
+        serde_json::Value::Number(self.0)
     }
 }
 
@@ -77,8 +72,8 @@ impl JSONataNumber {
     }
 }
 
-impl From<Number> for NType {
-    fn from(n: Number) -> Self {
+impl From<serde_json::Number> for NType {
+    fn from(n: serde_json::Number) -> Self {
         if n.is_u64() {
             NType::PosInt(n.as_u64().unwrap())
         } else if n.is_i64() {
@@ -94,8 +89,8 @@ impl From<Number> for NType {
     }
 }
 
-impl From<&Number> for NType {
-    fn from(n: &Number) -> Self {
+impl From<&serde_json::Number> for NType {
+    fn from(n: &serde_json::Number) -> Self {
         if n.is_u64() {
             NType::PosInt(n.as_u64().unwrap())
         } else if n.is_i64() {
@@ -111,14 +106,14 @@ impl From<&Number> for NType {
     }
 }
 
-impl From<Number> for JSONataNumber {
-    fn from(n: Number) -> Self {
+impl From<serde_json::Number> for JSONataNumber {
+    fn from(n: serde_json::Number) -> Self {
         JSONataNumber(n)
     }
 }
 
-impl From<&Number> for JSONataNumber {
-    fn from(n: &Number) -> Self {
+impl From<&serde_json::Number> for JSONataNumber {
+    fn from(n: &serde_json::Number) -> Self {
         JSONataNumber(n.clone())
     }
 }
@@ -143,19 +138,19 @@ impl From<u64> for JSONataNumber {
 
 impl From<f64> for JSONataNumber {
     fn from(f: f64) -> Self {
-        JSONataNumber(Number::from_f64(f).unwrap())
+        JSONataNumber(serde_json::Number::from_f64(f).unwrap())
     }
 }
 
-impl From<JSONataNumber> for Number {
+impl From<JSONataNumber> for serde_json::Number {
     fn from(num: JSONataNumber) -> Self {
         num.0
     }
 }
 
-impl From<JSONataNumber> for Value {
+impl From<JSONataNumber> for serde_json::Value {
     fn from(num: JSONataNumber) -> Self {
-        Value::Number(num.into())
+        serde_json::Value::Number(num.into())
     }
 }
 
