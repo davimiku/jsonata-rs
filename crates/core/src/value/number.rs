@@ -1,10 +1,6 @@
 use std::cmp::Ordering;
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 
-use crate::evaluate::EvaluationError;
-
-use super::JSONataValue;
-
 #[derive(Debug, Clone)]
 pub(crate) struct JSONataNumber(serde_json::Number);
 

@@ -1,7 +1,6 @@
-use crate::{
-    evaluate::{EvaluationError, EvaluationResult},
-    value::{number::JSONataNumber, JSONataValue, JSONataVariables},
-};
+use crate::evaluate::error::EvaluationError;
+use crate::evaluate::EvaluationResult;
+use crate::value::{number::JSONataNumber, JSONataValue, JSONataVariables};
 
 mod boolean;
 mod date;

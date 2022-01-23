@@ -6,7 +6,8 @@ use std::collections::HashMap;
 use std::fmt;
 use std::rc::Rc;
 
-use crate::evaluate::{EvaluationError, EvaluationResult};
+use crate::evaluate::error::EvaluationError;
+use crate::evaluate::EvaluationResult;
 
 use self::function::JSONataFunction;
 use self::number::JSONataNumber;
@@ -316,10 +317,8 @@ impl From<&JSONValue> for bool {
 mod tests {
     use serde_json::json;
 
-    use crate::{
-        evaluate::EvaluationError,
-        value::{traits::TryNumericOps, JSONataValue},
-    };
+    use crate::evaluate::error::EvaluationError;
+    use crate::value::{traits::TryNumericOps, JSONataValue};
 
     #[test]
     fn eq() {

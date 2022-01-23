@@ -1,6 +1,4 @@
-use serde_json::Value;
-
-use crate::evaluate::EvaluationError;
+use crate::evaluate::error::EvaluationError;
 
 pub(super) trait TryNumericOps<Rhs = Self> {
     /// Attempt addition between two values

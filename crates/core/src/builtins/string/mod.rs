@@ -1,9 +1,5 @@
-use serde_json::Value;
-
-use crate::{
-    evaluate::{EvaluationError, EvaluationResult},
-    value::JSONataValue,
-};
+use crate::evaluate::EvaluationResult;
+use crate::value::JSONataValue;
 
 #[cfg(test)]
 mod tests;

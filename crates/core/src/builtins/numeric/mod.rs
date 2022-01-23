@@ -1,7 +1,5 @@
-use crate::{
-    evaluate::{EvaluationError, EvaluationResult},
-    value::{number::JSONataNumber, JSONataValue},
-};
+use crate::evaluate::EvaluationResult;
+use crate::value::{number::JSONataNumber, JSONataValue};
 
 use super::BuiltIns;
 
