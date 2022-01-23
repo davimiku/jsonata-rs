@@ -7,8 +7,8 @@ pub enum Expr {
     Paren(ParenExpr),
     PathIdent(PathIdentExpr),
     Unary(UnaryExpr),
-    VariableRef(VariableRef),
-    VariableDef(VariableDef),
+    VariableRef(VariableRefExpr),
+    VariableDef(VariableDefExpr),
 }
 
 impl Expr {
@@ -18,8 +18,8 @@ impl Expr {
             SyntaxKind::Literal => Self::Literal(LiteralExpr(node)),
             SyntaxKind::ParenExpr => Self::Paren(ParenExpr(node)),
             SyntaxKind::PrefixExpr => Self::Unary(UnaryExpr(node)),
-            SyntaxKind::VariableRef => Self::VariableRef(VariableRef(node)),
-            SyntaxKind::VariableDef => Self::VariableDef(VariableDef(node)),
+            SyntaxKind::VariableRef => Self::VariableRef(VariableRefExpr(node)),
+            SyntaxKind::VariableDef => Self::VariableDef(VariableDefExpr(node)),
             SyntaxKind::PathIdentExpr => Self::PathIdent(PathIdentExpr(node)),
             _ => return None,
         };
@@ -118,18 +118,18 @@ impl UnaryExpr {
 }
 
 #[derive(Debug)]
-pub struct VariableRef(SyntaxNode);
+pub struct VariableRefExpr(SyntaxNode);
 
-impl VariableRef {
+impl VariableRefExpr {
     pub fn name(&self) -> String {
         self.0.first_token().unwrap().text().into()
     }
 }
 
 #[derive(Debug)]
-pub struct VariableDef(SyntaxNode);
+pub struct VariableDefExpr(SyntaxNode);
 
-impl VariableDef {
+impl VariableDefExpr {
     pub fn name(&self) -> Option<SyntaxToken> {
         self.0
             .children_with_tokens()
