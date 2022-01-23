@@ -34,7 +34,7 @@ impl BuiltIns {
     ///
     /// ### Examples
     ///
-    /// ```
+    /// ```text
     /// $count([1,2,3,1]) => 4
     /// $count("hello") => 1
     /// ```
@@ -101,7 +101,7 @@ impl BuiltIns {
     ///
     /// ## Example
     ///
-    /// ```
+    /// ```text
     /// $sort(Account.Order.Product, function($l, $r) {
     ///   $l.Description.Weight > $r.Description.Weight
     /// })
@@ -120,7 +120,7 @@ impl BuiltIns {
     ///
     /// ##Examples
     ///
-    /// ```
+    /// ```text
     /// $reverse(["Hello", "World"]) => ["World", "Hello"]
     /// [1..5] ~> $reverse() => [5, 4, 3, 2, 1]
     /// ```
@@ -163,7 +163,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $distinct([1,2,3,3,4,3,5]) => [1, 2, 3, 4, 5]
     /// $distinct(Account.Order.Product.Description.Colour) => [ "Purple", "Orange", "Black" ]
     /// ```
@@ -179,7 +179,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $zip([1,2,3], [4,5,6]) => [[1,4] ,[2,5], [3,6]]
     /// $zip([1,2,3],[4,5],[7,8,9]) => [[1,4,7], [2,5,8]]
     /// ```
@@ -221,7 +221,7 @@ impl BuiltIns {
     ///
     /// ## Example
     ///
-    /// ```
+    /// ```text
     /// $max([5,1,3,7,4]) => 7
     /// ```
     pub(crate) fn max(array: Value) {
@@ -233,7 +233,7 @@ impl BuiltIns {
     ///
     /// ## Example
     ///
-    /// ```
+    /// ```text
     /// $min([5,1,3,7,4]) => 1
     /// ```
     pub(crate) fn min(array: Value) {
@@ -245,7 +245,7 @@ impl BuiltIns {
     ///
     /// ## Example
     ///
-    /// ```
+    /// ```text
     /// $average([5,1,3,7,4]) => 4
     /// ```
     pub(crate) fn average(array: Value) {

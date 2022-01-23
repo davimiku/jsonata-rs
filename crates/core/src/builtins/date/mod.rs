@@ -13,7 +13,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $now() => "2017-05-15T15:12:59.152Z"
     /// ```
     pub(crate) fn now(picture: Option<String>, timezone: Option<String>) {
@@ -26,7 +26,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $millis() => 1502700297574
     /// ```
     pub(crate) fn millis() {
@@ -52,7 +52,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $fromMillis(1510067557121) => "2017-11-07T15:12:37.121Z"
     /// $fromMillis(1510067557121, '[M01]/[D01]/[Y0001] [h#1]:[m01][P]') => "11/07/2017 3:12pm"
     /// $fromMillis(1510067557121, '[H01]:[m01]:[s01] [z]', '-0500') => "10:12:37 GMT-05:00"
@@ -73,7 +73,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $toMillis("2017-11-07T15:07:54.972Z") => 1510067274972
     /// ```
     pub(crate) fn to_millis() {

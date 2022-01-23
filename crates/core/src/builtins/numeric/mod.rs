@@ -20,7 +20,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $number("5") => 5
     /// ["1", "2", "3", "4", "5"].$number() => [1, 2, 3, 4, 5]
     /// ```
@@ -38,7 +38,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $abs(5) => 5
     /// $abs(-5) => -5
     /// ```
@@ -55,7 +55,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $floor(5) => 5
     /// $floor(5.3) => 5
     /// $floor(5.8) => 5
@@ -74,7 +74,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $ceil(5) => 5
     /// $ceil(5.3) => 6
     /// $ceil(5.8) => 6
@@ -101,7 +101,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $round(123.456) => 123
     /// $round(123.456, 2) => 123.46
     /// $round(123.456, -1) => 120
@@ -123,7 +123,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $power(2, 8) => 8
     /// $power(2, 0.5) => 1.414213562373
     /// $power(2, -2) => 0.25
@@ -142,7 +142,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $sqrt(4) => 2
     /// $sqrt(2) => 1.414213562373
     /// ```
@@ -154,7 +154,8 @@ impl BuiltIns {
     /// Returns a pseudo random number greater than or equal to zero and less than one (0 ≤ n < 1)
     ///
     /// ## Examples
-    /// ```
+    ///
+    /// ```text
     /// $random() => 0.7973541067127
     /// $random() => 0.4029142127028
     /// $random() => 0.6558078550072
@@ -182,7 +183,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $formatNumber(12345.6, '#,###.00') => "12,345.60"
     /// $formatNumber(1234.5678, "00.000e0") => "12.346e2"
     /// $formatNumber(34.555, "#0.00;(#0.00)") => "34.56"
@@ -202,7 +203,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $formatBase(100, 2) => "1100100"
     /// $formatBase(2555, 16) => "9fb"
     /// ```
@@ -221,7 +222,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $formatInteger(2789, 'w') => "two thousand, seven hundred and eighty-nine"
     /// $formatInteger(1999, 'I') => "MCMXCIX"
     /// ```
@@ -238,7 +239,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $parseInteger("twelve thousand, four hundred and seventy-six", 'w') => 12476
     /// $parseInteger('12,345,678', '#,##0') => 12345678
     /// ```

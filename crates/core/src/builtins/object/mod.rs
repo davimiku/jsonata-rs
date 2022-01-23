@@ -52,11 +52,11 @@ impl BuiltIns {
     ///
     /// ## Example
     ///
-    /// ```
+    /// ```text
     /// $each(Address, function($v, $k) {$k & ": " & $v})
     /// ```
     /// Results in:
-    /// ```
+    /// ```json
     /// [
     ///   "Street: Hursley Park",
     ///   "City: Winchester",

@@ -22,7 +22,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $string(5) => "5"
     /// [1..5].$string() => ["1", "2", "3", "4", "5"]
     /// ```
@@ -37,7 +37,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $length("Hello World") => 11
     /// ```
     pub(crate) fn length(val: String) -> EvaluationResult {
@@ -56,7 +56,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $substring("Hello World", 3) => "lo World"
     /// $substring("Hello World", 3, 5) => "lo Wo"
     /// $substring("Hello World", -4) => "orld"
@@ -73,7 +73,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $substringBefore("Hello World", " ") => "Hello"
     /// ```
     pub(crate) fn substring_before(args: &[Option<JSONataValue>]) -> EvaluationResult {
@@ -87,7 +87,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $substringAfter("Hello World", " ") => "World"
     /// ```
     pub(crate) fn substring_after(args: &[Option<JSONataValue>]) -> EvaluationResult {
@@ -100,7 +100,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $uppercase("Hello World") => "HELLO WORLD"
     /// ```
     pub(crate) fn uppercase(args: &[Option<JSONataValue>]) -> EvaluationResult {
@@ -113,7 +113,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $lowercase("Hello World") => "hello world"
     /// ```
     pub(crate) fn lowercase(args: &[Option<JSONataValue>]) -> EvaluationResult {
@@ -131,7 +131,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $trim(" Hello \n World ") => "Hello World"
     /// ```
     pub(crate) fn trim(args: &[Option<JSONataValue>]) -> EvaluationResult {
@@ -146,7 +146,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $pad("foo", 5) => "foo "
     /// $pad("foo", -5) => " foo"
     /// $pad("foo", -5, "#") => "##foo"
@@ -167,7 +167,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $contains("abracadabra", "bra") => true
     /// $contains("abracadabra", /a.*a/) => true
     /// $contains("abracadabra", /ar.*a/) => false
@@ -193,7 +193,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $split("so many words", " ") => [ "so", "many", "words" ]
     /// $split("so many words", " ", 2) => [ "so", "many" ]
     /// $split("too much, punctuation. hard; to read", /[ ,.;]+/) => ["too", "much", "punctuation", "hard", "to", "read"]
@@ -212,7 +212,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $join(['a','b','c']) => "abc"
     /// $split("too much, punctuation. hard; to read", /[ ,.;]+/, 3) ~> $join(', ') => "too, much, punctuation"
     ///
@@ -235,7 +235,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $match("ababbabbcc",/a(b+)/) =>
     /// ```
     /// ```json
@@ -297,7 +297,8 @@ impl BuiltIns {
     /// using the current context as the context for evaluation.
     ///
     /// ## Examples
-    /// ```
+    ///
+    /// ```text
     /// $eval("[1,2,3]") -> [1, 2, 3]
     /// $eval('[1,$string(2),3]') -> [1,"2",3]
     /// ```
@@ -314,7 +315,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $base64encode("myuser:mypass") => "bXl1c2VyOm15cGFzcw=="
     /// ```
     pub(crate) fn base64_encode(args: &[Option<JSONataValue>]) -> EvaluationResult {
@@ -325,7 +326,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $base64decode("bXl1c2VyOm15cGFzcw==") => "myuser:mypass"
     /// ```
     pub(crate) fn base64_decode(args: &[Option<JSONataValue>]) -> EvaluationResult {
@@ -338,7 +339,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $encodeUrlComponent("?x=test") => "%3Fx%3Dtest"
     /// ```
 
@@ -352,7 +353,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $encodeUrl("https://mozilla.org/?x=шеллы") => "https://mozilla.org/?x=%D1%88%D0%B5%D0%BB%D0%BB%D1%8B"
     /// ```
     pub(crate) fn encode_url(args: &[Option<JSONataValue>]) -> EvaluationResult {
@@ -363,7 +364,7 @@ impl BuiltIns {
     ///
     /// ## Examples
     ///
-    /// ```
+    /// ```text
     /// $decodeUrlComponent("%3Fx%3Dtest") => "?x=test"
     /// ```
     pub(crate) fn decode_url_component(args: &[Option<JSONataValue>]) -> EvaluationResult {
@@ -373,7 +374,8 @@ impl BuiltIns {
     /// Decodes a Uniform Resource Locator (URL) previously created by `encodeUrl`.
     ///
     /// ## Examples
-    /// ```
+    ///
+    /// ```text
     /// $decodeUrl("https://mozilla.org/?x=%D1%88%D0%B5%D0%BB%D0%BB%D1%8B") => "https://mozilla.org/?x=шеллы"
     /// ```
     pub(crate) fn decode_url(args: &[Option<JSONataValue>]) -> EvaluationResult {
