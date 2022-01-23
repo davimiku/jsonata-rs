@@ -46,19 +46,6 @@ impl JSONataValue {
         }
         .into()
     }
-
-    // TODO: Perhaps use Cell<T> to be able to .take
-    // from a Value so that a JSONataValue can take ownership
-    // of a Value to avoid the clone
-    //
-    // pub fn from_val(val: &Value) -> Self {
-    //     let mut val = val;
-    //     JSONataValue::from_val_internal(val)
-    // }
-
-    // fn from_val_internal(val: &mut Value) -> Self {
-    //     JSONataValue(val.take())
-    // }
 }
 
 impl fmt::Debug for JSONataValue {
@@ -79,6 +66,12 @@ impl fmt::Display for JSONataValue {
     }
 }
 
+impl From<JSONValue> for JSONataValue {
+    fn from(val: JSONValue) -> Self {
+        JSONataValue::JSONValue(val)
+    }
+}
+
 impl From<serde_json::Value> for JSONataValue {
     fn from(val: serde_json::Value) -> Self {
         JSONataValue::JSONValue(val.into())
@@ -90,12 +83,6 @@ impl From<&serde_json::Value> for JSONataValue {
         JSONataValue::JSONValue(val.clone().into())
     }
 }
-
-// impl From<&mut serde_json::Value> for JSONataValue {
-//     fn from(val: &mut Value) -> Self {
-//         JSONataValue::JSONValue(val.take())
-//     }
-// }
 
 impl From<Vec<serde_json::Value>> for JSONataValue {
     fn from(val: Vec<serde_json::Value>) -> Self {
@@ -269,6 +256,19 @@ impl From<&JSONataValue> for bool {
 #[derive(Debug, Clone)]
 pub(crate) struct JSONValue(pub(crate) serde_json::Value);
 
+impl JSONValue {
+    /// Index into a JSON array or map. A string index can be used to access a value
+    /// in a map, and a usize index can be used to access an element of an array.
+    ///
+    /// Returns None if the type of self does not match the type of the index,
+    /// for example if the index is a string and self is an array or a number.
+    /// Also returns None if the given key does not exist in the map or the given
+    /// index is not within the bounds of the array.
+    pub(crate) fn get<I: serde_json::value::Index>(&self, index: I) -> Option<JSONValue> {
+        self.0.get(index).map(|v| v.clone().into())
+    }
+}
+
 impl fmt::Display for JSONValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.0)
@@ -364,14 +364,16 @@ mod tests {
             (json!("1"), json!(1)),
         ];
         for (lhs, rhs) in err_cases {
+            let lhs_string = lhs.to_string();
+            let rhs_string = rhs.to_string();
             let lhs = JSONataValue::JSONValue(lhs.into());
             let rhs = JSONataValue::JSONValue(rhs.into());
             assert_eq!(
                 lhs.try_add(rhs).unwrap_err(),
                 EvaluationError::OperandsMustBeNumbers {
                     op: '+'.to_string(),
-                    lhs: "TODO".to_string(),
-                    rhs: "TODO".to_string(),
+                    lhs: lhs_string,
+                    rhs: rhs_string,
                 }
             )
         }

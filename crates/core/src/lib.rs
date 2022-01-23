@@ -1,6 +1,7 @@
 use parser::Parse;
 
 mod builtins;
+mod context;
 mod evaluate;
 mod value;
 
